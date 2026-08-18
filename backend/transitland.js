@@ -9,6 +9,7 @@ const CACHE_DIR = path.join(DATA_DIR, "transitland");
 const GEO_CACHE_PATH = path.join(CACHE_DIR, "geocodes.json");
 const API_BASE_URL = "https://transit.land/api/v2/rest";
 const API_KEY = String(process.env.TRANSITLAND_API_KEY || process.env.TRANSITLAND_APIKEY || "");
+const CTS_DEFAULT_ONESTOP_ID = "o-clarksville~tn~us";
 let lastGeocodeRequestAt = 0;
 
 fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -194,6 +195,54 @@ async function importGtfsForOperator(onestopId) {
     ok: true,
     onestopId,
     feedUrl: zipUrl,
+    stopsCount: stops.length,
+    stopTimesCount: stop_times.length,
+  };
+}
+
+function resolveLocalGtfsZipPath(filePath) {
+  const candidates = [];
+  if (filePath) candidates.push(filePath);
+  if (process.env.CTS_GTFS_ZIP_PATH) candidates.push(process.env.CTS_GTFS_ZIP_PATH);
+  candidates.push(
+    path.join(process.env.USERPROFILE || "", "Downloads", "CTS_gtfs_84 (1)_202511250912075697.zip"),
+    path.join(process.env.USERPROFILE || "", "Downloads", "CTS_gtfs.zip")
+  );
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+async function importGtfsFromLocalZip({ filePath, onestopId = CTS_DEFAULT_ONESTOP_ID, feedUrl = "local-zip" } = {}) {
+  const zipFile = resolveLocalGtfsZipPath(filePath);
+  if (!zipFile) {
+    throw new Error("No local CTS GTFS zip file was found");
+  }
+  const { stops, stop_times } = await extractGtfsArtifacts(zipFile);
+  const payload = {
+    importedAt: new Date().toISOString(),
+    onestopId,
+    feedUrl,
+    zipFile,
+    feed: {
+      id: onestopId,
+      spec: "gtfs",
+      urls: {
+        static_current: feedUrl,
+      },
+    },
+    stops,
+    stop_times,
+  };
+  fs.writeFileSync(cachePathFor(onestopId), JSON.stringify(payload, null, 2), "utf8");
+  return {
+    ok: true,
+    onestopId,
+    feedUrl,
+    zipFile,
     stopsCount: stops.length,
     stopTimesCount: stop_times.length,
   };
@@ -572,6 +621,7 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
 
 module.exports = {
   importGtfsForOperator,
+  importGtfsFromLocalZip,
   loadGtfsCache,
   nearestStops,
   geocodeAddress,

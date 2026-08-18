@@ -931,6 +931,27 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "POST" && url.pathname === "/api/import-cts-zip") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const filePath = String((body && typeof body === "object" && (body.file_path || body.filePath)) || "").trim();
+    const result = await transitland.importGtfsFromLocalZip({
+      filePath,
+      onestopId: "o-clarksville~tn~us",
+      feedUrl: "local-cts-zip",
+    }).catch((error) => ({
+      ok: false,
+      error: String(error && error.message ? error.message : error),
+    }));
+    json(res, result.ok === false ? 500 : 200, result.ok === false ? result : { ok: true, result });
+    return;
+  }
+
   if (method === "GET" && url.pathname === "/api/gtfs/status") {
     if (!requireAuth(req, res)) return;
     const onestopId = String(url.searchParams.get("onestop_id") || url.searchParams.get("onestopId") || "").trim();

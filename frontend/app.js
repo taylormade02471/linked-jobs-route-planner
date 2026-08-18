@@ -25,6 +25,7 @@ const originLat = document.querySelector("#originLat");
 const originLon = document.querySelector("#originLon");
 const useLocationButton = document.querySelector("#useLocationButton");
 const importTransitButton = document.querySelector("#importTransitButton");
+const importCtsZipButton = document.querySelector("#importCtsZipButton");
 const planTransitButton = document.querySelector("#planTransitButton");
 
 const storageKeys = {
@@ -516,6 +517,25 @@ async function importTransitFeed() {
   setRoutePlanStatus(`Imported ${payload.result?.stopsCount || 0} stops`);
 }
 
+async function importCtsZip() {
+  setRoutePlanStatus("Loading CTS zip");
+  const response = await fetch("/api/import-cts-zip", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({}),
+  });
+  if (response.status === 401) return;
+  const payload = await response.json();
+  if (!response.ok) {
+    setRoutePlanStatus(payload.error || "CTS zip import failed");
+    return;
+  }
+  setRoutePlanStatus(`Loaded CTS zip: ${payload.result?.stopsCount || 0} stops`);
+}
+
 async function planTransitRoute() {
   const onestopId = String(transitOnestopId?.value || "").trim();
   const origin = currentOrigin();
@@ -684,6 +704,10 @@ if (useLocationButton) {
 
 if (importTransitButton) {
   importTransitButton.addEventListener("click", importTransitFeed);
+}
+
+if (importCtsZipButton) {
+  importCtsZipButton.addEventListener("click", importCtsZip);
 }
 
 if (planTransitButton) {
