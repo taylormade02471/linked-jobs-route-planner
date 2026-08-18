@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "linked_jobs_route_planner";
     private static final String KEY_BASE_URL = "base_url";
-    private static final String DEFAULT_BASE_URL = "";
+    private static final String DEFAULT_BASE_URL = "http://127.0.0.1:3300";
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private SharedPreferences getPrefs() {
@@ -364,11 +364,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(buildLayout(webView, baseUrlInput, statusText, saveButton, detectButton, testButton));
 
-        if (getSavedBaseUrl().isEmpty()) {
-            autoDetectBaseUrl(baseUrlInput, statusText, detectButton, webView, false);
-        } else {
-            webView.loadUrl(getSavedBaseUrl() + "/");
-        }
+        webView.loadUrl(getSavedBaseUrl() + "/");
 
         testButton.setText("Test connection");
         testButton.setOnClickListener(v -> {
