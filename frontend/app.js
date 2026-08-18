@@ -20,6 +20,7 @@ const sourceStatus = document.querySelector("#sourceStatus");
 const template = document.querySelector("#jobRowTemplate");
 const routePlanStatus = document.querySelector("#routePlanStatus");
 const routePlanOutput = document.querySelector("#routePlanOutput");
+const routeLegOverlay = document.querySelector("#routeLegOverlay");
 const transitOnestopId = document.querySelector("#transitOnestopId");
 const originLat = document.querySelector("#originLat");
 const originLon = document.querySelector("#originLon");
@@ -41,6 +42,8 @@ let expandedJobs = new Set();
 let activeTab = "active";
 let routeMap = null;
 let routeLayer = null;
+let planRefreshTimer = null;
+let lastPlan = null;
 
 function setConnection(text) {
   connectionState.textContent = text;
@@ -288,6 +291,33 @@ function renderRouteMap(plan) {
   }
 }
 
+function renderRouteLegOverlay(plan) {
+  if (!routeLegOverlay) return;
+  if (!plan || !Array.isArray(plan.route) || !plan.route.length) {
+    routeLegOverlay.innerHTML = `
+      <strong>No active route</strong>
+      <span>Select jobs and plan a route to see turn-by-turn steps here.</span>
+    `;
+    return;
+  }
+
+  const current = plan.route[0];
+  const nextStop = plan.route[1];
+  const legSummary = Array.isArray(current.legs)
+    ? current.legs
+        .map((leg) => `${leg.mode || "walk"}: ${formatKm(leg.distance_km)}`)
+        .join(" | ")
+    : "No leg details";
+
+  routeLegOverlay.innerHTML = `
+    <strong>Current leg</strong>
+    <span>${escapeHtml(current.title || "Job")}</span>
+    <em>${escapeHtml(current.summary || "Route step ready")}</em>
+    <span>${escapeHtml(legSummary)}</span>
+    <span>${escapeHtml(nextStop ? `Next: ${nextStop.title || "Job"}` : "Last stop in this route")}</span>
+  `;
+}
+
 function renderRoutePlan(plan) {
   if (!routePlanOutput) return;
 
@@ -299,7 +329,9 @@ function renderRoutePlan(plan) {
   const summary = plan.summary || {};
   const origin = plan.origin || {};
   const route = Array.isArray(plan.route) ? plan.route : [];
+  lastPlan = plan;
   renderRouteMap(plan);
+  renderRouteLegOverlay(plan);
 
   routePlanOutput.innerHTML = `
     <div class="route-summary-card">
@@ -563,10 +595,7 @@ function openRoute() {
   }
   activeTab = "active";
   render();
-  planTransitRoute().then(() => {
-    const routeMap = document.querySelector("#routeMap");
-    if (routeMap) routeMap.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  planTransitRoute();
 }
 
 function exportCsv() {
@@ -682,6 +711,17 @@ async function planTransitRoute() {
 
   setRoutePlanStatus(`Planned ${payload.summary?.jobs || 0} jobs`);
   renderRoutePlan(payload);
+}
+
+async function autoPlanRoute() {
+  const jobs = getPlanningJobs();
+  const origin = currentOrigin();
+  const onestopId = String(transitOnestopId?.value || "").trim();
+  if (!jobs.length || !origin || !onestopId) return;
+  if (routePlanStatus && !/planning/i.test(routePlanStatus.textContent || "")) {
+    setRoutePlanStatus("Updating route");
+  }
+  await planTransitRoute().catch(() => {});
 }
 
 function useLiveLocation() {
@@ -808,3 +848,10 @@ loadSourceStatus();
 importCtsZip().catch(() => {});
 refreshLiveOrigin().catch(() => {});
 ensureRouteMap();
+
+if (planRefreshTimer) {
+  clearInterval(planRefreshTimer);
+}
+planRefreshTimer = setInterval(() => {
+  autoPlanRoute().catch(() => {});
+}, 60000);
