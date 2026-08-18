@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { URL } = require("url");
+const os = require("os");
 const { chromium } = require("playwright-core");
 const transitland = require("./transitland");
 
@@ -125,6 +126,18 @@ function json(res, statusCode, payload) {
     "Cache-Control": "no-store",
   });
   res.end(JSON.stringify(payload));
+}
+
+function getLocalIpv4Addresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const entries of Object.values(interfaces)) {
+    for (const item of entries || []) {
+      if (!item || item.family !== "IPv4" || item.internal) continue;
+      addresses.push(item.address);
+    }
+  }
+  return addresses;
 }
 
 function sendText(res, statusCode, text, headers = {}) {
@@ -829,6 +842,18 @@ const server = http.createServer(async (req, res) => {
       service: "linked-jobs-route-planner",
       port: PORT,
       auth_enabled: true,
+    });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/network-info") {
+    if (!requireAuth(req, res)) return;
+    const addresses = getLocalIpv4Addresses();
+    json(res, 200, {
+      ok: true,
+      addresses,
+      preferred_url: addresses.length ? `http://${addresses[0]}:${PORT}` : `http://127.0.0.1:${PORT}`,
+      port: PORT,
     });
     return;
   }

@@ -15,11 +15,18 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "linked_jobs_route_planner";
     private static final String KEY_BASE_URL = "base_url";
     private static final String DEFAULT_BASE_URL = "http://127.0.0.1:3300";
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private SharedPreferences getPrefs() {
         return getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -51,7 +58,41 @@ public class MainActivity extends AppCompatActivity {
         return getSavedBaseUrl() + "/login";
     }
 
-    private LinearLayout buildLayout(WebView webView, EditText baseUrlInput, TextView statusText, Button saveButton) {
+    private String fetchUrl(String requestUrl) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("Authorization", "Basic " + android.util.Base64.encodeToString("kyle:taylor".getBytes(), android.util.Base64.NO_WRAP));
+        int code = connection.getResponseCode();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                code >= 200 && code < 400 ? connection.getInputStream() : connection.getErrorStream()
+        ));
+        StringBuilder out = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            out.append(line);
+        }
+        reader.close();
+        connection.disconnect();
+        if (code < 200 || code >= 400) {
+            throw new RuntimeException(out.toString());
+        }
+        return out.toString();
+    }
+
+    private String extractPreferredUrl(String json) {
+        if (json == null) return null;
+        int keyIndex = json.indexOf("\"preferred_url\"");
+        if (keyIndex < 0) return null;
+        int colonIndex = json.indexOf(":", keyIndex);
+        int startQuote = json.indexOf("\"", colonIndex + 1);
+        int endQuote = json.indexOf("\"", startQuote + 1);
+        if (colonIndex < 0 || startQuote < 0 || endQuote < 0) return null;
+        return json.substring(startQuote + 1, endQuote);
+    }
+
+    private LinearLayout buildLayout(WebView webView, EditText baseUrlInput, TextView statusText, Button saveButton, Button detectButton) {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setLayoutParams(new LinearLayout.LayoutParams(
@@ -83,6 +124,35 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl(normalized + "/login");
         });
 
+        detectButton.setText("Detect LAN IP");
+        detectButton.setOnClickListener(v -> {
+            detectButton.setEnabled(false);
+            statusText.setText("Detecting LAN IP...");
+            executor.execute(() -> {
+                try {
+                    String base = getSavedBaseUrl();
+                    String json = fetchUrl(base + "/api/network-info");
+                    String preferredUrl = extractPreferredUrl(json);
+                    runOnUiThread(() -> {
+                        detectButton.setEnabled(true);
+                        if (preferredUrl != null && !preferredUrl.isEmpty()) {
+                            baseUrlInput.setText(preferredUrl);
+                            getPrefs().edit().putString(KEY_BASE_URL, preferredUrl).apply();
+                            statusText.setText("Detected: " + preferredUrl);
+                            webView.loadUrl(preferredUrl + "/login");
+                        } else {
+                            statusText.setText("Could not detect LAN IP");
+                        }
+                    });
+                } catch (Exception error) {
+                    runOnUiThread(() -> {
+                        detectButton.setEnabled(true);
+                        statusText.setText("Detection failed: " + error.getMessage());
+                    });
+                }
+            });
+        });
+
         statusText.setText("Using: " + getSavedBaseUrl());
         statusText.setPadding(0, 12, 0, 12);
 
@@ -91,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
         header.addView(title);
         header.addView(subtitle);
         header.addView(baseUrlInput);
+        header.addView(detectButton);
         header.addView(saveButton);
         header.addView(statusText);
 
@@ -119,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
         EditText baseUrlInput = new EditText(this);
         TextView statusText = new TextView(this);
         Button saveButton = new Button(this);
+        Button detectButton = new Button(this);
         WebView webView = new WebView(this);
 
         WebSettings settings = webView.getSettings();
@@ -131,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.setWebViewClient(new WebViewClient());
-        setContentView(buildLayout(webView, baseUrlInput, statusText, saveButton));
+        setContentView(buildLayout(webView, baseUrlInput, statusText, saveButton, detectButton));
         webView.loadUrl(getLaunchUrl());
     }
 }
