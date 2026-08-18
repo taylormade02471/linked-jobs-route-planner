@@ -12,7 +12,7 @@ loadEnvFile(path.join(__dirname, '.env'));
 const port = Number(process.env.PORT || 3300);
 const maxBodyBytes = 5 * 1024 * 1024;
 const appUser = process.env.APP_USER || process.env.BASIC_AUTH_USER || '';
-const appPassword = process.env.APP_PASSWORD || process.env.BASIC_AUTH_PASSWORD || '';
+const appPassword = process.env.APP_PASSWORD || process.env.BASIC_AUTH_PASSWORD || process.env.BASIC_AUTH_PASS || '';
 const authEnabled = Boolean(appUser && appPassword);
 const sseClients = new Set();
 let heartbeatTimer = null;
