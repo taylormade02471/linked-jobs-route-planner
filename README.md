@@ -44,11 +44,21 @@ You can override them in `backend/.env`.
 
 ## Live data sync
 
-The browser extension posts visible job rows to:
+The browser extension posts visible job rows from the main Jobslinger page to:
 
 - `POST /api/jobs`
 
 That endpoint is left open for sync so the app does not depend on a browser session staying open.
+
+## Install the browser extension
+
+1. Open Chrome and go to `chrome://extensions`
+2. Turn on `Developer mode`
+3. Click `Load unpacked`
+4. Select the [`browser-extension`](browser-extension) folder from this repository
+5. Open the main Jobslinger page in the browser and keep the dashboard running at `http://localhost:3300/`
+
+If the page layout changes, the extension may need selector tweaks, but it will stay live as long as the page is open and the local route planner is running.
 
 ## API
 
@@ -62,4 +72,3 @@ That endpoint is left open for sync so the app does not depend on a browser sess
 ## Android
 
 The `android/` folder is a starter WebView app that loads the local route-planner UI.
-
