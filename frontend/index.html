@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Synced job-account route planner for maps and town travel.">
+    <title>Linked Jobs Route Planner</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Route planner</p>
+          <h1>Linked Jobs Route Planner</h1>
+        </div>
+        <div class="topbar-actions">
+          <button id="refreshJobs" type="button">Refresh jobs</button>
+          <button id="downloadCsv" type="button">Export CSV</button>
+        </div>
+      </header>
+
+      <section class="metrics" aria-label="Saved job status">
+        <article>
+          <span>Saved jobs</span>
+          <strong id="jobCount">0</strong>
+        </article>
+        <article>
+          <span>Selected stops</span>
+          <strong id="selectedCount">0</strong>
+        </article>
+        <article>
+          <span>Last update</span>
+          <strong id="lastSync">Never</strong>
+        </article>
+      </section>
+
+      <section class="planner-grid">
+        <aside class="route-panel" aria-labelledby="routeTitle">
+          <p class="eyebrow">Maps route</p>
+          <h2 id="routeTitle">Build today&apos;s route</h2>
+          <label>
+            Start address
+            <input id="startAddress" type="text" autocomplete="street-address" placeholder="Current location or home base">
+          </label>
+          <label>
+            End address
+            <input id="endAddress" type="text" autocomplete="street-address" placeholder="Optional final stop">
+          </label>
+          <label>
+            Filter jobs
+            <input id="jobFilter" type="search" placeholder="Search title, city, pay, status">
+          </label>
+          <div class="route-actions">
+            <button id="selectVisible" type="button">Select visible</button>
+            <button id="clearSelected" type="button">Clear</button>
+          </div>
+          <button id="openMaps" class="primary-action" type="button">Open in maps</button>
+          <p id="routeStatus" class="quiet">Select jobs with locations to create a maps route.</p>
+        </aside>
+
+        <section class="jobs-panel" aria-labelledby="jobsTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Synced account jobs</p>
+              <h2 id="jobsTitle">Saved job feed</h2>
+            </div>
+            <p id="sourceUrl" class="source">No linked account page has synced yet.</p>
+          </div>
+          <div class="table-wrap">
+            <table id="jobsTable">
+              <thead>
+                <tr>
+                  <th>Use</th>
+                  <th>Job</th>
+                  <th>Location</th>
+                  <th>Pay</th>
+                  <th>Due</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="sync-panel" aria-labelledby="syncTitle">
+        <div>
+          <p class="eyebrow">Linked account sync</p>
+          <h2 id="syncTitle">Keep job data updated</h2>
+          <p>The Chrome extension in this project syncs the visible MegaLog table into this app while you stay signed in normally. The manual snippet is a backup for browsers where unpacked extensions are not available.</p>
+        </div>
+        <div class="snippet-box">
+          <textarea id="syncSnippet" readonly spellcheck="false"></textarea>
+          <button id="copySnippet" type="button">Copy manual sync snippet</button>
+          <p id="copyStatus" class="quiet">Use the extension for automatic updates. Use the snippet only as a fallback.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

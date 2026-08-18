@@ -1,0 +1,24 @@
+# Never publish credentials, browser/session data, or private MegaLog exports.
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Local synced data and generated exports.
+data/
+imports/
+backend/jobs.db
+backend/jobs.db-*
+*.cookie
+*.session
+megalog-export*.html
+megalog-jobs*.csv
+
+# Dependency/build folders if added later.
+node_modules/
+dist/
+build/
+
+# Android local/build files.
+android/.gradle/
+android/local.properties
+android/**/build/

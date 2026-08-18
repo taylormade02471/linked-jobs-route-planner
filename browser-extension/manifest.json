@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Linked Jobs Local Sync",
+  "version": "1.0.0",
+  "description": "Syncs visible linked-account job tables to a local route-planning app.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.jobslingerplus.com/MegaLog*",
+        "https://jobslingerplus.com/MegaLog*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:3300/*",
+    "http://localhost:3300/*"
+  ]
+}

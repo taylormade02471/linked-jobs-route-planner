@@ -1,0 +1,14 @@
+{
+  "name": "linked-jobs-route-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A GitHub-ready local web app for synced job-account data and route planning.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
