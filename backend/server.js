@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { URL } = require("url");
 const { chromium } = require("playwright-core");
+const transitland = require("./transitland");
 
 const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
@@ -282,6 +283,28 @@ function normalizeJob(job, index = 0) {
   const now = new Date().toISOString();
   const lat = Number(job.lat ?? job.latitude ?? "");
   const lng = Number(job.lng ?? job.longitude ?? "");
+  const rawDetails = String(job.detail_fields?.raw || job.details || job.notes || "");
+  const statusText = String(job.status || job.job_status || job.detail_fields?.status || "");
+  const normalizedStatus = /awaiting[_\s-]?payment/i.test(statusText)
+    ? "awaiting_payment"
+    : /(?:\bcompleted\b|\bdone\b|\bpaid\b)/i.test(statusText)
+    ? "completed"
+    : /(?:\bsubmitted\b|\bsubmitted on\b|\bshopped on\b)/i.test(statusText)
+    ? "awaiting_payment"
+    : "active";
+  const completedSignal = /(?:\bcompleted\b|\bdone\b|\bshopped on\b|\bsubmitted on\b)/i.test(
+    `${statusText} ${rawDetails}`
+  );
+  const isCompleted = Boolean(job.is_completed ?? job.completed ?? completedSignal);
+  const infoUrl = String(
+    job.info_url ||
+      job.infoUrl ||
+      job.job_url ||
+      job.jobUrl ||
+      job.source_url ||
+      ""
+  );
+  const mapsUrl = String(job.maps_url || job.mapsUrl || job.map_url || job.mapUrl || "");
   return {
     id: String(job.id || crypto.randomUUID()),
     title: String(job.title || job.name || "Job"),
@@ -297,9 +320,14 @@ function normalizeJob(job, index = 0) {
     lng: Number.isFinite(lng) ? lng : null,
     source: String(job.source || "browser-extension"),
     source_url: String(job.source_url || job.sourceUrl || ""),
+    info_url: infoUrl,
+    maps_url: mapsUrl,
+    status: String(job.status || job.job_status || normalizedStatus || (isCompleted ? "completed" : "active")),
+    workflow_status: String(job.workflow_status || normalizedStatus),
+    is_completed: isCompleted,
     notes: String(job.notes || ""),
     details: String(job.details || job.notes || ""),
-    detail_fields: extractDetailFields(job.detail_fields?.raw || job.details || job.notes || ""),
+    detail_fields: extractDetailFields(rawDetails),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
   };
@@ -322,6 +350,10 @@ function extractDetailFields(detailText = "") {
   const bonus = read(/Bonus:\s*([^\s].*?)(?=\s+Expenses:|\s+Special Expenses:|$)/i);
   const expensesUpTo = read(/Expenses:\s*up to\s*([^\s].*?)(?=\s+Special Expenses:|$)/i) || read(/Expenses:\s*([^\s].*?)(?=\s+Special Expenses:|$)/i);
   const specialExpensesUpTo = read(/Special Expenses:\s*up to\s*([^\s].*?)$/i) || read(/Special Expenses:\s*([^\s].*?)$/i);
+  const completedOn =
+    read(/Shopped on:\s*([^\s].*?)(?=\s+Submitted on:|$)/i) ||
+    read(/Submitted on:\s*([^\s].*?)$/i);
+  const status = /(completed|done|shopped on|submitted on)/i.test(text) ? "completed" : "active";
 
   return {
     survey,
@@ -334,6 +366,8 @@ function extractDetailFields(detailText = "") {
     bonus,
     expenses_up_to: expensesUpTo,
     special_expenses_up_to: specialExpensesUpTo,
+    completed_on: completedOn,
+    status,
     raw: text,
   };
 }
@@ -461,6 +495,21 @@ async function extractJobsFromPage(page) {
       return (node && node.textContent ? node.textContent : "").replace(/\s+/g, " ").trim();
     }
 
+    function firstHref(root, selector) {
+      const node = root.querySelector(selector);
+      return node && node.href ? String(node.href) : "";
+    }
+
+    function detectCompleted(summary, detailsText) {
+      const className = String(summary.className || "");
+      return (
+        /\bcomplete\b/i.test(className) ||
+        /\bcompleted\b/i.test(className) ||
+        /\bdone\b/i.test(className) ||
+        /(?:\bcompleted\b|\bdone\b|\bshopped on\b|\bsubmitted on\b)/i.test(detailsText)
+      );
+    }
+
     function clean(text) {
       return String(text || "").replace(/\s+/g, " ").trim();
     }
@@ -482,9 +531,18 @@ async function extractJobsFromPage(page) {
       const detailsId = String(summary.id || "").replace(/^summary-/, "details-");
       const details = detailsId ? document.getElementById(detailsId) : null;
       const detailsText = clean(details ? details.textContent : "");
+      const infoUrl =
+        firstHref(details || summary, 'a[href*="/Info" i]') ||
+        firstHref(details || summary, 'a[href^="http" i]') ||
+        "";
+      const mapsUrl =
+        firstHref(details || summary, 'a[href*="maps.google" i]') ||
+        firstHref(details || summary, 'a[href*="google.com/maps" i]') ||
+        "";
       const addressMatch = detailsText.match(/Details\s+Help\/Contact\s+(.+?)\s+Due:/i);
       const address = addressMatch ? clean(addressMatch[1]) : "";
       const detailNotes = detailsText || clean(summary.textContent);
+      const isCompleted = detectCompleted(summary, detailNotes);
       const rowKey = `${title}::${company}::${distance}::${due}::${pay}`;
       if (seen.has(rowKey)) continue;
       seen.add(rowKey);
@@ -499,6 +557,10 @@ async function extractJobsFromPage(page) {
         address,
         notes: detailNotes,
         details: detailNotes,
+        info_url: infoUrl,
+        maps_url: mapsUrl,
+        status: isCompleted ? "completed" : "active",
+        is_completed: isCompleted,
       });
     }
 
@@ -641,6 +703,36 @@ function upsertJobs(nextJobs) {
   jobs = Array.from(byId.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
   saveJobs();
   broadcast("jobs", { jobs });
+}
+
+function updateJobStatus(jobId, nextStatus) {
+  const normalizedStatus = String(nextStatus || "").trim();
+  if (!jobId || !normalizedStatus) return null;
+
+  const byId = new Map(jobs.map((job) => [String(job.id), job]));
+  const existing = byId.get(String(jobId));
+  if (!existing) return null;
+
+  const status =
+    /awaiting[_\s-]?payment/i.test(normalizedStatus)
+      ? "awaiting_payment"
+      : /(?:\bcompleted\b|\bpaid\b)/i.test(normalizedStatus)
+      ? "completed"
+      : "active";
+
+  const isCompleted = status === "completed";
+  const updatedJob = {
+    ...existing,
+    status,
+    workflow_status: status,
+    is_completed: isCompleted,
+    updated_at: new Date().toISOString(),
+  };
+  byId.set(String(jobId), updatedJob);
+  jobs = Array.from(byId.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
+  saveJobs();
+  broadcast("jobs", { jobs });
+  return updatedJob;
 }
 
 function serveStatic(filePath, res) {
@@ -795,6 +887,142 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "POST" && url.pathname === "/api/import-gtfs") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+
+    const onestopId = String(
+      (body && typeof body === "object" && (body.onestop_id || body.onestopId)) ||
+        url.searchParams.get("onestop_id") ||
+        url.searchParams.get("onestopId") ||
+        ""
+    ).trim();
+
+    if (!onestopId) {
+      json(res, 400, { ok: false, error: "Missing onestop_id" });
+      return;
+    }
+
+    const result = await transitland.importGtfsForOperator(onestopId).catch((error) => ({
+      ok: false,
+      error: String(error && error.message ? error.message : error),
+    }));
+    json(res, result.ok === false ? 500 : 200, result.ok === false ? result : { ok: true, result });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/gtfs/status") {
+    if (!requireAuth(req, res)) return;
+    const onestopId = String(url.searchParams.get("onestop_id") || url.searchParams.get("onestopId") || "").trim();
+    if (!onestopId) {
+      json(res, 400, { ok: false, error: "Missing onestop_id" });
+      return;
+    }
+    const cache = transitland.loadGtfsCache(onestopId);
+    if (!cache) {
+      json(res, 200, { ok: true, imported: false });
+      return;
+    }
+    json(res, 200, {
+      ok: true,
+      imported: true,
+      feedUrl: cache.feedUrl,
+      stops: Array.isArray(cache.stops) ? cache.stops.length : 0,
+      stop_times: Array.isArray(cache.stop_times) ? cache.stop_times.length : 0,
+      importedAt: cache.importedAt || "",
+    });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/gtfs/nearest") {
+    if (!requireAuth(req, res)) return;
+    const onestopId = String(url.searchParams.get("onestop_id") || url.searchParams.get("onestopId") || "").trim();
+    const lat = String(url.searchParams.get("lat") || "").trim();
+    const lon = String(url.searchParams.get("lon") || "").trim();
+    const count = Number.parseInt(url.searchParams.get("count") || "5", 10);
+    if (!onestopId || !lat || !lon) {
+      json(res, 400, { ok: false, error: "Missing params: onestop_id, lat, lon" });
+      return;
+    }
+    const stops = transitland.nearestStops(onestopId, lat, lon, Number.isFinite(count) ? count : 5);
+    if (!stops) {
+      json(res, 404, { ok: false, error: "No GTFS cache found for that operator" });
+      return;
+    }
+    json(res, 200, { ok: true, stops });
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/route-plan") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const onestopId = String(body.onestop_id || body.onestopId || "").trim();
+    const originInput = body.origin && typeof body.origin === "object" ? body.origin : {};
+    const selectedIds = Array.isArray(body.selected_job_ids)
+      ? body.selected_job_ids
+      : Array.isArray(body.selectedJobIds)
+      ? body.selectedJobIds
+      : Array.isArray(body.job_ids)
+      ? body.job_ids
+      : Array.isArray(body.jobIds)
+      ? body.jobIds
+      : [];
+    let jobsInput = [];
+
+    if (selectedIds.length) {
+      const wanted = new Set(selectedIds.map((value) => String(value)));
+      jobsInput = jobs.filter((job) => wanted.has(String(job.id)));
+    } else if (Array.isArray(body)) {
+      jobsInput = body;
+    } else if (Array.isArray(body.jobs)) {
+      jobsInput = body.jobs;
+    } else if (body.jobs && typeof body.jobs === "object") {
+      jobsInput = Object.values(body.jobs).filter((item) => item && typeof item === "object");
+    } else if (typeof body.jobs === "string") {
+      try {
+        const parsedJobs = JSON.parse(body.jobs);
+        jobsInput = Array.isArray(parsedJobs) ? parsedJobs : [];
+      } catch {
+        jobsInput = [];
+      }
+    } else {
+      jobsInput = jobs.filter((job) => {
+        const source = String(job.source || "");
+        const sourceUrl = String(job.source_url || "");
+        return !job.is_completed && (!source || source !== "browser-extension" || /jobslingerplus\.com/i.test(sourceUrl));
+      });
+    }
+
+    if (!onestopId) {
+      json(res, 400, { ok: false, error: "Missing onestop_id" });
+      return;
+    }
+    if (!jobsInput.length) {
+      json(res, 400, { ok: false, error: "Missing jobs array" });
+      return;
+    }
+
+    const result = await transitland.buildTransitRoutePlan({
+      onestopId,
+      origin: originInput,
+      jobs: jobsInput,
+    }).catch((error) => ({
+      ok: false,
+      error: String(error && error.message ? error.message : error),
+    }));
+
+    json(res, result.ok === false ? 500 : 200, result);
+    return;
+  }
+
   if (method === "POST" && url.pathname === "/api/jobs") {
     const body = await parseBody(req).catch((error) => {
       json(res, 400, { ok: false, error: error.message });
@@ -820,6 +1048,30 @@ const server = http.createServer(async (req, res) => {
 
     upsertJobs(incoming);
     json(res, 200, { ok: true, count: jobs.length });
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/jobs/status") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const jobId = String(body.job_id || body.jobId || body.id || "").trim();
+    const status = String(body.status || body.workflow_status || "").trim();
+    if (!jobId || !status) {
+      json(res, 400, { ok: false, error: "Missing job_id and status" });
+      return;
+    }
+
+    const updated = updateJobStatus(jobId, status);
+    if (!updated) {
+      json(res, 404, { ok: false, error: "Job not found" });
+      return;
+    }
+    json(res, 200, { ok: true, job: updated });
     return;
   }
 

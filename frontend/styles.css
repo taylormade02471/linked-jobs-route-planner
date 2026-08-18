@@ -103,6 +103,46 @@ h1 {
   align-items: center;
 }
 
+.job-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+}
+
+.job-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(16, 33, 51, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-weight: 800;
+}
+
+.job-tab span {
+  display: inline-flex;
+  min-width: 2rem;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--accent-strong);
+}
+
+.job-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: white;
+  border-color: transparent;
+}
+
+.job-tab.active span {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
 .settings {
   padding: 18px;
 }
@@ -137,6 +177,12 @@ h1 {
   gap: 14px;
 }
 
+.route-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .settings-form label {
   display: grid;
   gap: 8px;
@@ -144,6 +190,20 @@ h1 {
 }
 
 .settings-form input {
+  border: 1px solid rgba(16, 33, 51, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.route-grid label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.route-grid input {
   border: 1px solid rgba(16, 33, 51, 0.12);
   border-radius: 14px;
   padding: 14px 16px;
@@ -226,7 +286,154 @@ button.secondary {
   background: rgba(15, 118, 110, 0.04);
 }
 
+.jobs-table tbody tr.is-completed {
+  background: rgba(16, 33, 51, 0.03);
+}
+
+.jobs-table tbody tr.is-awaiting {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.jobs-table tbody tr.is-completed .job-title {
+  color: var(--muted);
+}
+
 .job-title {
+  font-weight: 700;
+}
+
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.job-actions .status-action {
+  min-width: 118px;
+}
+
+.route-planner {
+  padding: 18px;
+}
+
+.route-output {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.route-empty {
+  color: var(--muted);
+  font-weight: 700;
+  padding: 10px 0 0;
+}
+
+.route-summary-card,
+.route-card {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(16, 33, 51, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(16, 33, 51, 0.08);
+}
+
+.route-summary-card {
+  display: grid;
+  gap: 6px;
+}
+
+.route-summary-card strong {
+  font-size: 1.05rem;
+}
+
+.route-list {
+  display: grid;
+  gap: 14px;
+}
+
+.route-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.route-card-index {
+  display: block;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.route-link {
+  color: var(--accent-strong);
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.route-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.route-card-meta span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.route-card-address {
+  font-weight: 700;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.route-card-legs ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.route-card-legs li {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.06);
+}
+
+.route-card-legs span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.route-card-legs strong {
+  line-height: 1.4;
+}
+
+.route-card-legs em {
+  font-style: normal;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.route-warning {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #7c4a05;
   font-weight: 700;
 }
 
@@ -314,8 +521,17 @@ button.secondary {
   font-size: 0.86rem;
 }
 
+.open-job {
+  padding: 10px 14px;
+  font-size: 0.86rem;
+}
+
 @media (max-width: 900px) {
   .job-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-grid {
     grid-template-columns: 1fr;
   }
 }

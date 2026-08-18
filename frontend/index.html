@@ -54,7 +54,22 @@
         </label>
       </section>
 
-      <section class="panel settings">
+      <section class="panel job-tabs" aria-label="Job tabs">
+        <button type="button" class="job-tab active" data-tab="active">
+          Active jobs <span id="activeJobCount">0</span>
+        </button>
+        <button type="button" class="job-tab" data-tab="awaiting_payment">
+          Awaiting payment <span id="awaitingJobCount">0</span>
+        </button>
+        <button type="button" class="job-tab" data-tab="completed">
+          Completed jobs <span id="completedJobCount">0</span>
+        </button>
+        <button type="button" class="job-tab" data-tab="source">
+          Live source
+        </button>
+      </section>
+
+      <section class="panel settings" id="sourcePanel">
         <div class="settings-head">
           <div>
             <p class="eyebrow">Live source</p>
@@ -96,6 +111,40 @@
         </p>
       </section>
 
+      <section class="panel route-planner">
+        <div class="settings-head">
+          <div>
+            <p class="eyebrow">Transit planner</p>
+            <h2>Plan around your live location and bus stops</h2>
+          </div>
+          <span id="routePlanStatus" class="pill">Waiting</span>
+        </div>
+        <div class="route-grid">
+          <label>
+            Transit feed Onestop ID
+            <input id="transitOnestopId" placeholder="o-clarksvilletnus" />
+          </label>
+          <label>
+            Live latitude
+            <input id="originLat" inputmode="decimal" placeholder="37.0" />
+          </label>
+          <label>
+            Live longitude
+            <input id="originLon" inputmode="decimal" placeholder="-87.0" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" id="useLocationButton" class="secondary">Use my live location</button>
+          <button type="button" id="importTransitButton" class="secondary">Import transit feed</button>
+          <button type="button" id="planTransitButton" class="primary">Plan transit route</button>
+        </div>
+        <p class="helper">
+          The planner compares your current location, nearby transit stops, and each job address.
+          It prefers walk-plus-transit routes, then walking, and marks the rest for a later fallback.
+        </p>
+        <div id="routePlanOutput" class="route-output"></div>
+      </section>
+
       <section class="panel">
         <table class="jobs-table">
           <thead>
@@ -106,7 +155,7 @@
               <th>Location</th>
               <th>Due / Pay</th>
               <th>Source</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="jobsTableBody"></tbody>
@@ -122,7 +171,13 @@
         <td class="job-location"></td>
         <td class="job-duepay"></td>
         <td class="job-source"></td>
-        <td><button type="button" class="details-toggle secondary">Details</button></td>
+        <td>
+          <div class="job-actions">
+            <button type="button" class="open-job secondary">Open</button>
+            <button type="button" class="status-action secondary"></button>
+            <button type="button" class="details-toggle secondary">Details</button>
+          </div>
+        </td>
       </tr>
       <tr class="job-details-row" hidden>
         <td colspan="7">

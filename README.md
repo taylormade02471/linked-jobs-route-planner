@@ -8,7 +8,10 @@ It is not the Shopify project.
 
 - Uses a local dashboard login that lasts 7 days
 - Keeps live job data coming in from a signed-in browser tab or browser extension
+- Splits active jobs and completed jobs into separate tabs
+- Lets you open a job page in a new tab from the app
 - Lets you filter jobs, select stops, and open a route in Google Maps
+- Can import Transitland GTFS feeds for transit stop lookup
 - Includes a free Android skeleton that points at the local app
 
 ## Local login
@@ -86,6 +89,9 @@ If the page layout changes, the extension may need selector tweaks, but it will 
 - `GET /api/events`
 - `POST /api/start`
 - `POST /api/scrape`
+- `POST /api/import-gtfs`
+- `GET /api/gtfs/status`
+- `GET /api/gtfs/nearest`
 
 ## Android
 

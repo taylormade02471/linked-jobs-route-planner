@@ -3,6 +3,7 @@
 
     <application
         android:allowBackup="true"
+        android:usesCleartextTraffic="true"
         android:label="Linked Jobs Route Planner"
         android:supportsRtl="true"
         android:theme="@style/Theme.LinkedJobsRoutePlanner">
@@ -16,4 +17,3 @@
         </activity>
     </application>
 </manifest>
-
