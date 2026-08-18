@@ -31,8 +31,6 @@ public class MainActivity extends Activity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<JobStop> stops = new ArrayList<>();
     private EditText baseUrlInput;
-    private EditText usernameInput;
-    private EditText passwordInput;
     private EditText startInput;
     private TextView statusView;
     private TextView jobsView;
@@ -56,14 +54,9 @@ public class MainActivity extends Activity {
         title.setPadding(0, 0, 0, 24);
         layout.addView(title);
 
-        baseUrlInput = input("Server URL", "http://10.0.2.2:3300");
-        usernameInput = input("Username", "");
-        passwordInput = input("Password", "");
-        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        baseUrlInput = input("Server URL", "http://<PC_IP>:3300");
         startInput = input("Start address", "Current Location");
         layout.addView(baseUrlInput);
-        layout.addView(usernameInput);
-        layout.addView(passwordInput);
         layout.addView(startInput);
 
         Button refresh = new Button(this);
@@ -130,13 +123,6 @@ public class MainActivity extends Activity {
     private String getJson(String urlText) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(urlText).openConnection();
         connection.setRequestMethod("GET");
-        String username = usernameInput.getText().toString();
-        String password = passwordInput.getText().toString();
-        if (!username.isEmpty() || !password.isEmpty()) {
-            String raw = username + ":" + password;
-            String encoded = Base64.encodeToString(raw.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
-            connection.setRequestProperty("Authorization", "Basic " + encoded);
-        }
         int status = connection.getResponseCode();
         BufferedReader reader = new BufferedReader(new InputStreamReader(
             status >= 400 ? connection.getErrorStream() : connection.getInputStream(),
