@@ -62,7 +62,12 @@ public class MainActivity extends AppCompatActivity {
 
     private String getSavedBaseUrl() {
         String saved = getPrefs().getString(KEY_BASE_URL, DEFAULT_BASE_URL);
-        return saved == null ? "" : normalizeBaseUrl(saved);
+        String normalized = saved == null ? DEFAULT_BASE_URL : normalizeBaseUrl(saved);
+        if (normalized.isEmpty()) {
+            normalized = DEFAULT_BASE_URL;
+        }
+        getPrefs().edit().putString(KEY_BASE_URL, normalized).apply();
+        return normalized;
     }
 
     private String getSavedBridgeUrl() {
@@ -264,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
             TextView statusText,
             Button saveButton,
             Button detectButton,
-            Button testButton,
             Button saveBridgeButton,
             Button syncBridgeButton
     ) {
@@ -297,13 +301,14 @@ public class MainActivity extends AppCompatActivity {
         bridgeTitle.setPadding(0, 18, 0, 4);
 
         TextView bridgeHelp = new TextView(this);
-        bridgeHelp.setText("Optional: save a bridge endpoint for later live transit forwarding.");
+        bridgeHelp.setText("Placeholder for a later live transit forwarding bridge.");
         bridgeHelp.setPadding(0, 0, 0, 8);
 
-        bridgeUrlInput.setHint("Bridge URL or endpoint");
-        bridgeUrlInput.setText(getSavedBridgeUrl());
-        bridgeUrlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        bridgeUrlInput.setHint("Bridge placeholder");
+        bridgeUrlInput.setText("Coming soon");
+        bridgeUrlInput.setInputType(InputType.TYPE_CLASS_TEXT);
         bridgeUrlInput.setSingleLine(true);
+        bridgeUrlInput.setEnabled(false);
 
         saveButton.setText("Save and open");
         saveButton.setOnClickListener(v -> {
@@ -313,22 +318,10 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl(normalized + "/");
         });
 
-        saveBridgeButton.setText("Save bridge");
-        saveBridgeButton.setOnClickListener(v -> {
-            String normalized = normalizeBaseUrl(bridgeUrlInput.getText().toString());
-            getPrefs().edit().putString(KEY_BRIDGE_URL, normalized).apply();
-            statusText.setText("Bridge saved: " + normalized);
-        });
-
-        syncBridgeButton.setText("Sync bridge");
-        syncBridgeButton.setOnClickListener(v -> {
-            String bridgeUrl = getSavedBridgeUrl();
-            if (bridgeUrl.isEmpty()) {
-                statusText.setText("Save a bridge URL first.");
-                return;
-            }
-            statusText.setText("Bridge endpoint saved: " + bridgeUrl);
-        });
+        saveBridgeButton.setText("Bridge placeholder");
+        saveBridgeButton.setEnabled(false);
+        syncBridgeButton.setText("Bridge placeholder");
+        syncBridgeButton.setEnabled(false);
 
         detectButton.setText("Connect to my PC");
         detectButton.setOnClickListener(v -> autoDetectBaseUrl(baseUrlInput, statusText, detectButton, webView, true));
@@ -347,7 +340,6 @@ public class MainActivity extends AppCompatActivity {
         header.addView(saveBridgeButton);
         header.addView(syncBridgeButton);
         header.addView(detectButton);
-        header.addView(testButton);
         header.addView(saveButton);
         header.addView(statusText);
 
@@ -385,7 +377,6 @@ public class MainActivity extends AppCompatActivity {
         Button saveButton = new Button(this);
         Button detectButton = new Button(this);
         WebView webView = new WebView(this);
-        Button testButton = new Button(this);
         Button saveBridgeButton = new Button(this);
         Button syncBridgeButton = new Button(this);
 
@@ -424,40 +415,9 @@ public class MainActivity extends AppCompatActivity {
                 statusText,
                 saveButton,
                 detectButton,
-                testButton,
                 saveBridgeButton,
                 syncBridgeButton
         ));
-
-        webView.loadUrl(getSavedBaseUrl() + "/");
-
-        testButton.setText("Test connection");
-        testButton.setOnClickListener(v -> {
-            testButton.setEnabled(false);
-            statusText.setText("Testing connection...");
-            executor.execute(() -> {
-                try {
-                    String base = getSavedBaseUrl();
-                    if (base.isEmpty()) {
-                        runOnUiThread(() -> {
-                            testButton.setEnabled(true);
-                            statusText.setText("Save your PC LAN IP first.");
-                        });
-                        return;
-                    }
-                    String json = fetchUrl(base + "/api/health");
-                    runOnUiThread(() -> {
-                        testButton.setEnabled(true);
-                        statusText.setText("Connection OK: " + json);
-                    });
-                } catch (Exception error) {
-                    runOnUiThread(() -> {
-                        testButton.setEnabled(true);
-                        statusText.setText("Connection failed: " + error.getMessage());
-                    });
-                }
-            });
-        });
 
         webView.loadUrl(getLaunchUrl());
     }

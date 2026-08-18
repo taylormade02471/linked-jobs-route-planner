@@ -122,6 +122,34 @@ function saveOrigin(lat, lon) {
   }
 }
 
+async function refreshLiveOrigin() {
+  if (!navigator.geolocation) {
+    setRoutePlanStatus("Geolocation is not available in this browser");
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = Number(position.coords.latitude);
+        const lon = Number(position.coords.longitude);
+        saveOrigin(lat, lon);
+        setRoutePlanStatus("Current location saved");
+        resolve({ lat, lon });
+      },
+      (error) => {
+        setRoutePlanStatus(error.message || "Could not read your location");
+        resolve(null);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000,
+      }
+    );
+  });
+}
+
 function currentOrigin() {
   const lat = Number.parseFloat(originLat?.value || "");
   const lon = Number.parseFloat(originLon?.value || "");
@@ -457,14 +485,16 @@ function openRoute() {
     alert("Select one or more jobs first.");
     return;
   }
+  const originLocation = currentOrigin();
   const stops = selected
     .map((job) => job.address || [job.city, job.state].filter(Boolean).join(", "))
     .filter(Boolean);
   const destination = stops.at(-1) || "";
-  const origin = stops[0] || "";
   const mapsUrl = new URL("https://www.google.com/maps/dir/");
-  if (origin) mapsUrl.searchParams.set("api", "1");
-  if (origin) mapsUrl.searchParams.set("origin", origin);
+  if (originLocation) {
+    mapsUrl.searchParams.set("api", "1");
+    mapsUrl.searchParams.set("origin", `${originLocation.lat},${originLocation.lon}`);
+  }
   if (destination) mapsUrl.searchParams.set("destination", destination);
   if (stops.length > 2) {
     mapsUrl.searchParams.set("waypoints", stops.slice(1, -1).join("|"));
@@ -588,28 +618,12 @@ async function planTransitRoute() {
 }
 
 function useLiveLocation() {
-  if (!navigator.geolocation) {
-    setRoutePlanStatus("Geolocation is not available in this browser");
-    return;
-  }
-
   setRoutePlanStatus("Getting live location");
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = Number(position.coords.latitude);
-      const lon = Number(position.coords.longitude);
-      saveOrigin(lat, lon);
+  refreshLiveOrigin().then((result) => {
+    if (result) {
       setRoutePlanStatus("Live location saved");
-    },
-    (error) => {
-      setRoutePlanStatus(error.message || "Could not read your location");
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 60000,
     }
-  );
+  });
 }
 
 refreshButton.addEventListener("click", (event) => {
@@ -721,3 +735,4 @@ loadJobs();
 loadSourceConfig();
 loadSourceStatus();
 importCtsZip().catch(() => {});
+refreshLiveOrigin().catch(() => {});
