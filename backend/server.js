@@ -49,6 +49,17 @@ let sourceStatus = {
   browserOpen: false,
 };
 
+async function ensureDefaultTransitFeed() {
+  const defaultId = transitland.CTS_DEFAULT_ONESTOP_ID || "o-clarksville~tn~us";
+  if (transitland.hasGtfsCache(defaultId)) return;
+  try {
+    await transitland.importGtfsFromLocalZip({ onestopId: defaultId, feedUrl: "local-cts-zip" });
+    console.log(`Loaded default transit feed for ${defaultId}`);
+  } catch (error) {
+    console.warn("Default CTS import skipped:", error && error.message ? error.message : error);
+  }
+}
+
 function loadJobs() {
   try {
     const raw = fs.readFileSync(jobsPath, "utf8");
@@ -1160,3 +1171,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on http://127.0.0.1:${PORT}`);
 });
+
+ensureDefaultTransitFeed();

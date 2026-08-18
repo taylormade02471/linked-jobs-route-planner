@@ -216,6 +216,10 @@ function resolveLocalGtfsZipPath(filePath) {
   return null;
 }
 
+function hasGtfsCache(onestopId) {
+  return fs.existsSync(cachePathFor(onestopId));
+}
+
 async function importGtfsFromLocalZip({ filePath, onestopId = CTS_DEFAULT_ONESTOP_ID, feedUrl = "local-zip" } = {}) {
   const zipFile = resolveLocalGtfsZipPath(filePath);
   if (!zipFile) {
@@ -623,7 +627,9 @@ module.exports = {
   importGtfsForOperator,
   importGtfsFromLocalZip,
   loadGtfsCache,
+  hasGtfsCache,
   nearestStops,
   geocodeAddress,
   buildTransitRoutePlan,
+  CTS_DEFAULT_ONESTOP_ID,
 };

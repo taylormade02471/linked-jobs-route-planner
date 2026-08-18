@@ -106,8 +106,9 @@ function loadStoredOrigin() {
   const lon = Number.parseFloat(localStorage.getItem(storageKeys.originLon) || "");
   if (originLat && Number.isFinite(lat)) originLat.value = String(lat);
   if (originLon && Number.isFinite(lon)) originLon.value = String(lon);
-  const onestop = localStorage.getItem(storageKeys.onestopId) || "";
-  if (transitOnestopId && onestop) transitOnestopId.value = onestop;
+  const onestop = localStorage.getItem(storageKeys.onestopId) || "o-clarksville~tn~us";
+  if (transitOnestopId) transitOnestopId.value = onestop;
+  localStorage.setItem(storageKeys.onestopId, onestop);
 }
 
 function saveOrigin(lat, lon) {
@@ -719,3 +720,4 @@ renderRoutePlan(null);
 loadJobs();
 loadSourceConfig();
 loadSourceStatus();
+importCtsZip().catch(() => {});

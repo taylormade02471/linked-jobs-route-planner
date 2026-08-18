@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "linked_jobs_route_planner";
     private static final String KEY_BASE_URL = "base_url";
+    private static final String KEY_BRIDGE_URL = "bridge_url";
     private static final String DEFAULT_BASE_URL = "http://127.0.0.1:3300";
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -61,6 +62,11 @@ public class MainActivity extends AppCompatActivity {
 
     private String getSavedBaseUrl() {
         String saved = getPrefs().getString(KEY_BASE_URL, DEFAULT_BASE_URL);
+        return saved == null ? "" : normalizeBaseUrl(saved);
+    }
+
+    private String getSavedBridgeUrl() {
+        String saved = getPrefs().getString(KEY_BRIDGE_URL, "");
         return saved == null ? "" : normalizeBaseUrl(saved);
     }
 
@@ -251,7 +257,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private LinearLayout buildLayout(WebView webView, EditText baseUrlInput, TextView statusText, Button saveButton, Button detectButton, Button testButton) {
+    private LinearLayout buildLayout(
+            WebView webView,
+            EditText baseUrlInput,
+            EditText bridgeUrlInput,
+            TextView statusText,
+            Button saveButton,
+            Button detectButton,
+            Button testButton,
+            Button saveBridgeButton,
+            Button syncBridgeButton
+    ) {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setLayoutParams(new LinearLayout.LayoutParams(
@@ -275,12 +291,43 @@ public class MainActivity extends AppCompatActivity {
         baseUrlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         baseUrlInput.setSingleLine(true);
 
+        TextView bridgeTitle = new TextView(this);
+        bridgeTitle.setText("Mobile bridge");
+        bridgeTitle.setTextSize(18);
+        bridgeTitle.setPadding(0, 18, 0, 4);
+
+        TextView bridgeHelp = new TextView(this);
+        bridgeHelp.setText("Optional: save a bridge endpoint for later live transit forwarding.");
+        bridgeHelp.setPadding(0, 0, 0, 8);
+
+        bridgeUrlInput.setHint("Bridge URL or endpoint");
+        bridgeUrlInput.setText(getSavedBridgeUrl());
+        bridgeUrlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        bridgeUrlInput.setSingleLine(true);
+
         saveButton.setText("Save and open");
         saveButton.setOnClickListener(v -> {
             String normalized = normalizeBaseUrl(baseUrlInput.getText().toString());
             getPrefs().edit().putString(KEY_BASE_URL, normalized).apply();
             statusText.setText("Saved: " + normalized);
             webView.loadUrl(normalized + "/");
+        });
+
+        saveBridgeButton.setText("Save bridge");
+        saveBridgeButton.setOnClickListener(v -> {
+            String normalized = normalizeBaseUrl(bridgeUrlInput.getText().toString());
+            getPrefs().edit().putString(KEY_BRIDGE_URL, normalized).apply();
+            statusText.setText("Bridge saved: " + normalized);
+        });
+
+        syncBridgeButton.setText("Sync bridge");
+        syncBridgeButton.setOnClickListener(v -> {
+            String bridgeUrl = getSavedBridgeUrl();
+            if (bridgeUrl.isEmpty()) {
+                statusText.setText("Save a bridge URL first.");
+                return;
+            }
+            statusText.setText("Bridge endpoint saved: " + bridgeUrl);
         });
 
         detectButton.setText("Connect to my PC");
@@ -294,6 +341,11 @@ public class MainActivity extends AppCompatActivity {
         header.addView(title);
         header.addView(subtitle);
         header.addView(baseUrlInput);
+        header.addView(bridgeTitle);
+        header.addView(bridgeHelp);
+        header.addView(bridgeUrlInput);
+        header.addView(saveBridgeButton);
+        header.addView(syncBridgeButton);
         header.addView(detectButton);
         header.addView(testButton);
         header.addView(saveButton);
@@ -328,11 +380,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         EditText baseUrlInput = new EditText(this);
+        EditText bridgeUrlInput = new EditText(this);
         TextView statusText = new TextView(this);
         Button saveButton = new Button(this);
         Button detectButton = new Button(this);
         WebView webView = new WebView(this);
         Button testButton = new Button(this);
+        Button saveBridgeButton = new Button(this);
+        Button syncBridgeButton = new Button(this);
 
         configureWebView(webView);
 
@@ -362,7 +417,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        setContentView(buildLayout(webView, baseUrlInput, statusText, saveButton, detectButton, testButton));
+        setContentView(buildLayout(
+                webView,
+                baseUrlInput,
+                bridgeUrlInput,
+                statusText,
+                saveButton,
+                detectButton,
+                testButton,
+                saveBridgeButton,
+                syncBridgeButton
+        ));
 
         webView.loadUrl(getSavedBaseUrl() + "/");
 
