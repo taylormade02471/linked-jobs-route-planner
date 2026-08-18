@@ -242,6 +242,22 @@ function mapPointFromJob(job) {
   return { lat, lon, label: job.title || "Job" };
 }
 
+function duePriorityClass(step) {
+  const rank = Number(step?.due_priority?.rank ?? 4);
+  if (rank <= 0) return "overdue";
+  if (rank === 1) return "today";
+  if (rank === 2) return "tomorrow";
+  return "later";
+}
+
+function priorityLabel(step) {
+  const rank = Number(step?.due_priority?.rank ?? 4);
+  if (rank <= 0) return "Overdue";
+  if (rank === 1) return "Today";
+  if (rank === 2) return "Tomorrow";
+  return "Later";
+}
+
 function renderRouteMap(plan) {
   const map = ensureRouteMap();
   if (!map || !routeLayer) return;
@@ -262,8 +278,25 @@ function renderRouteMap(plan) {
   route.forEach((step, index) => {
     const point = mapPointFromJob(step.to || step.destination || step);
     if (!point) return;
-    const marker = L.marker([point.lat, point.lon]).addTo(routeLayer);
-    marker.bindPopup(`<strong>${escapeHtml(step.title || `Stop ${index + 1}`)}</strong><br/>${escapeHtml([step.address, step.city, step.state].filter(Boolean).join(", "))}`);
+    const priority = duePriorityClass(step);
+    const colors = {
+      overdue: "#dc2626",
+      today: "#ea580c",
+      tomorrow: "#2563eb",
+      later: "#0f766e",
+    };
+    const marker = L.circleMarker([point.lat, point.lon], {
+      radius: index === 0 ? 13 : 10,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: colors[priority] || "#0f766e",
+      fillOpacity: 0.95,
+    }).addTo(routeLayer);
+    marker.bindPopup(
+      `<strong>${escapeHtml(step.title || `Stop ${index + 1}`)}</strong><br/>` +
+        `${escapeHtml(priorityLabel(step))}<br/>` +
+        `${escapeHtml([step.address, step.city, step.state].filter(Boolean).join(", "))}`
+    );
     bounds.push([point.lat, point.lon]);
   });
 
@@ -277,9 +310,11 @@ function renderRouteMap(plan) {
     }
     if (polylinePoints.length >= 2) {
       L.polyline(polylinePoints, {
-        color: "#0f766e",
-        weight: 5,
-        opacity: 0.85,
+        color: "#1d4ed8",
+        weight: 6,
+        opacity: 0.9,
+        lineCap: "round",
+        lineJoin: "round",
       }).addTo(routeLayer);
     }
   }
@@ -314,7 +349,7 @@ function renderRouteLegOverlay(plan) {
     <span>${escapeHtml(current.title || "Job")}</span>
     <em>${escapeHtml(current.summary || "Route step ready")}</em>
     <span>${escapeHtml(legSummary)}</span>
-    <span>${escapeHtml(nextStop ? `Next: ${nextStop.title || "Job"}` : "Last stop in this route")}</span>
+    <span>${escapeHtml(nextStop ? `Next job: ${nextStop.title || "Job"}` : "Last stop in this route")}</span>
   `;
 }
 
@@ -360,11 +395,12 @@ function renderRoutePlan(plan) {
                 .join("")
             : "";
           return `
-            <article class="route-card ${escapeHtml(step.mode || "walk_only")}">
+            <article class="route-card ${escapeHtml(step.mode || "walk_only")} ${escapeHtml(duePriorityClass(step))}">
               <div class="route-card-head">
                 <div>
                   <span class="route-card-index">Stop ${index + 1}</span>
                   <strong>${escapeHtml(step.title || "Job")}</strong>
+                  <span class="route-priority-badge">${escapeHtml(priorityLabel(step))}</span>
                 </div>
               </div>
               <div class="route-card-meta">

@@ -378,6 +378,26 @@ button.secondary {
   box-shadow: 0 16px 40px rgba(16, 33, 51, 0.08);
 }
 
+.route-card.overdue {
+  border-left: 6px solid #dc2626;
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.1), rgba(255, 255, 255, 0.82));
+}
+
+.route-card.today {
+  border-left: 6px solid #ea580c;
+  background: linear-gradient(90deg, rgba(234, 88, 12, 0.1), rgba(255, 255, 255, 0.82));
+}
+
+.route-card.tomorrow {
+  border-left: 6px solid #2563eb;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.1), rgba(255, 255, 255, 0.82));
+}
+
+.route-card.later {
+  border-left: 6px solid #0f766e;
+  background: linear-gradient(90deg, rgba(15, 118, 110, 0.09), rgba(255, 255, 255, 0.82));
+}
+
 .route-summary-card {
   display: grid;
   gap: 6px;
@@ -406,6 +426,35 @@ button.secondary {
   letter-spacing: 0.16em;
   color: var(--muted);
   margin-bottom: 4px;
+}
+
+.route-priority-badge {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #0f766e;
+}
+
+.route-card.overdue .route-priority-badge {
+  background: #dc2626;
+}
+
+.route-card.today .route-priority-badge {
+  background: #ea580c;
+}
+
+.route-card.tomorrow .route-priority-badge {
+  background: #2563eb;
+}
+
+.route-card.later .route-priority-badge {
+  background: #0f766e;
 }
 
 .route-link {
