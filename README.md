@@ -49,6 +49,13 @@ The browser extension posts visible job rows from the main Jobslinger page to:
 - `POST /api/jobs`
 
 That endpoint is left open for sync so the app does not depend on a browser session staying open.
+The extension also polls on a timer, so updates keep flowing even when the page does not mutate.
+
+The Jobslinger login page includes a square-click challenge, so the reliable flow is:
+
+1. Log in on the main Jobslinger page in Chrome
+2. Load the unpacked extension
+3. Keep the route planner running and the extension will stream live rows into it
 
 ## Install the browser extension
 

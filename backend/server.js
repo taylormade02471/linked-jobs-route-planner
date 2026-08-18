@@ -214,6 +214,7 @@ function normalizeJob(job, index = 0) {
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
     source: String(job.source || "browser-extension"),
+    source_url: String(job.source_url || job.sourceUrl || ""),
     notes: String(job.notes || ""),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
@@ -410,4 +411,3 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`Linked Jobs Route Planner running on http://localhost:${PORT}`);
 });
-

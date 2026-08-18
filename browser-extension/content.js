@@ -1,5 +1,12 @@
+const SOURCE_URL = "http://127.0.0.1:3300/api/jobs";
+const POLL_INTERVAL_MS = 10000;
+
 function readVisibleJobs() {
-  const rows = Array.from(document.querySelectorAll("table tr"));
+  const tables = Array.from(document.querySelectorAll("table"));
+  const targetTable = tables.find((table) => table.querySelectorAll("tr").length > 1) || tables[0];
+  if (!targetTable) return [];
+
+  const rows = Array.from(targetTable.querySelectorAll("tr"));
   const jobs = [];
 
   rows.forEach((row, index) => {
@@ -17,6 +24,7 @@ function readVisibleJobs() {
       state: state || "",
       postcode: postcode || "",
       source: "browser-extension",
+      source_url: window.location.href,
       order: index + 1,
     });
   });
@@ -29,7 +37,7 @@ async function syncJobs() {
   if (!jobs.length) return;
 
   try {
-    await fetch("http://127.0.0.1:3300/api/jobs", {
+    await fetch(SOURCE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,4 +55,4 @@ const observer = new MutationObserver(() => {
 
 observer.observe(document.documentElement, { childList: true, subtree: true });
 syncJobs();
-
+setInterval(syncJobs, POLL_INTERVAL_MS);
