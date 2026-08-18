@@ -38,7 +38,6 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "linked_jobs_route_planner";
     private static final String KEY_BASE_URL = "base_url";
-    private static final String KEY_BRIDGE_URL = "bridge_url";
     private static final String DEFAULT_BASE_URL = "http://127.0.0.1:3300";
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -68,11 +67,6 @@ public class MainActivity extends AppCompatActivity {
         }
         getPrefs().edit().putString(KEY_BASE_URL, normalized).apply();
         return normalized;
-    }
-
-    private String getSavedBridgeUrl() {
-        String saved = getPrefs().getString(KEY_BRIDGE_URL, "");
-        return saved == null ? "" : normalizeBaseUrl(saved);
     }
 
     private String getLaunchUrl() {
@@ -265,12 +259,9 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout buildLayout(
             WebView webView,
             EditText baseUrlInput,
-            EditText bridgeUrlInput,
             TextView statusText,
             Button saveButton,
-            Button detectButton,
-            Button saveBridgeButton,
-            Button syncBridgeButton
+            Button detectButton
     ) {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -287,28 +278,13 @@ public class MainActivity extends AppCompatActivity {
         title.setPadding(0, 0, 0, 8);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Enter your PC LAN IP or full URL, then save and load the dashboard.");
+        subtitle.setText("Use your PC server URL, then save and load the route planner.");
         subtitle.setPadding(0, 0, 0, 16);
 
         baseUrlInput.setHint("Example: 192.168.1.25:3300 or http://192.168.1.25:3300");
         baseUrlInput.setText(getSavedBaseUrl());
         baseUrlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         baseUrlInput.setSingleLine(true);
-
-        TextView bridgeTitle = new TextView(this);
-        bridgeTitle.setText("Mobile bridge");
-        bridgeTitle.setTextSize(18);
-        bridgeTitle.setPadding(0, 18, 0, 4);
-
-        TextView bridgeHelp = new TextView(this);
-        bridgeHelp.setText("Placeholder for a later live transit forwarding bridge.");
-        bridgeHelp.setPadding(0, 0, 0, 8);
-
-        bridgeUrlInput.setHint("Bridge placeholder");
-        bridgeUrlInput.setText("Coming soon");
-        bridgeUrlInput.setInputType(InputType.TYPE_CLASS_TEXT);
-        bridgeUrlInput.setSingleLine(true);
-        bridgeUrlInput.setEnabled(false);
 
         saveButton.setText("Save and open");
         saveButton.setOnClickListener(v -> {
@@ -317,11 +293,6 @@ public class MainActivity extends AppCompatActivity {
             statusText.setText("Saved: " + normalized);
             webView.loadUrl(normalized + "/");
         });
-
-        saveBridgeButton.setText("Bridge placeholder");
-        saveBridgeButton.setEnabled(false);
-        syncBridgeButton.setText("Bridge placeholder");
-        syncBridgeButton.setEnabled(false);
 
         detectButton.setText("Connect to my PC");
         detectButton.setOnClickListener(v -> autoDetectBaseUrl(baseUrlInput, statusText, detectButton, webView, true));
@@ -334,11 +305,6 @@ public class MainActivity extends AppCompatActivity {
         header.addView(title);
         header.addView(subtitle);
         header.addView(baseUrlInput);
-        header.addView(bridgeTitle);
-        header.addView(bridgeHelp);
-        header.addView(bridgeUrlInput);
-        header.addView(saveBridgeButton);
-        header.addView(syncBridgeButton);
         header.addView(detectButton);
         header.addView(saveButton);
         header.addView(statusText);
@@ -372,13 +338,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         EditText baseUrlInput = new EditText(this);
-        EditText bridgeUrlInput = new EditText(this);
         TextView statusText = new TextView(this);
         Button saveButton = new Button(this);
         Button detectButton = new Button(this);
         WebView webView = new WebView(this);
-        Button saveBridgeButton = new Button(this);
-        Button syncBridgeButton = new Button(this);
 
         configureWebView(webView);
 
@@ -411,12 +374,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(buildLayout(
                 webView,
                 baseUrlInput,
-                bridgeUrlInput,
                 statusText,
                 saveButton,
-                detectButton,
-                saveBridgeButton,
-                syncBridgeButton
+                detectButton
         ));
 
         webView.loadUrl(getLaunchUrl());
