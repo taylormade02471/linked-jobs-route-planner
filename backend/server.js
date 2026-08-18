@@ -299,8 +299,42 @@ function normalizeJob(job, index = 0) {
     source_url: String(job.source_url || job.sourceUrl || ""),
     notes: String(job.notes || ""),
     details: String(job.details || job.notes || ""),
+    detail_fields: extractDetailFields(job.detail_fields?.raw || job.details || job.notes || ""),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
+  };
+}
+
+function extractDetailFields(detailText = "") {
+  const text = String(detailText || "").replace(/\s+/g, " ").trim();
+  const read = (pattern) => {
+    const match = text.match(pattern);
+    return match ? String(match[1] || "").replace(/\s+/g, " ").trim() : "";
+  };
+
+  const survey = read(/Survey:\s*(.+?)(?=\s+(?:Details|Help\/Contact)\b|$)/i);
+  const contact = read(/Details\s*(?:Help\/Contact)?\s*(.+?)(?=\s+Due:|$)/i);
+  const address = read(/Help\/Contact\s+(.+?)(?=\s+Due:|$)/i) || read(/Details\s+Help\/Contact\s+(.+?)(?=\s+Due:|$)/i);
+  const due = read(/(?:^|\s)Due:\s*([^\s].*?)(?=\s+Submit Due:|\s+Do not shop before:|\s+Shop Pay:|\s+Bonus:|\s+Expenses:|\s+Special Expenses:|$)/i);
+  const submitDue = read(/Submit Due:\s*([^\s].*?)(?=\s+Do not shop before:|\s+Shop Pay:|\s+Bonus:|\s+Expenses:|\s+Special Expenses:|$)/i);
+  const doNotShopBefore = read(/Do not shop before:\s*([^\s].*?)(?=\s+Shop Pay:|\s+Bonus:|\s+Expenses:|\s+Special Expenses:|$)/i);
+  const shopPay = read(/Shop Pay:\s*([^\s].*?)(?=\s+Bonus:|\s+Expenses:|\s+Special Expenses:|$)/i);
+  const bonus = read(/Bonus:\s*([^\s].*?)(?=\s+Expenses:|\s+Special Expenses:|$)/i);
+  const expensesUpTo = read(/Expenses:\s*up to\s*([^\s].*?)(?=\s+Special Expenses:|$)/i) || read(/Expenses:\s*([^\s].*?)(?=\s+Special Expenses:|$)/i);
+  const specialExpensesUpTo = read(/Special Expenses:\s*up to\s*([^\s].*?)$/i) || read(/Special Expenses:\s*([^\s].*?)$/i);
+
+  return {
+    survey,
+    contact,
+    address,
+    due,
+    submit_due: submitDue,
+    do_not_shop_before: doNotShopBefore,
+    shop_pay: shopPay,
+    bonus,
+    expenses_up_to: expensesUpTo,
+    special_expenses_up_to: specialExpensesUpTo,
+    raw: text,
   };
 }
 

@@ -52,6 +52,10 @@ function escapeHtml(value) {
   });
 }
 
+function fieldBlock(label, value) {
+  return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || "—")}</strong></div>`;
+}
+
 function render() {
   const query = searchInput.value.trim().toLowerCase();
   filteredJobs = allJobs.filter((job) => {
@@ -107,16 +111,35 @@ function render() {
       : "Details";
 
     detailsRow.hidden = !expandedJobs.has(job.id);
+    const detailFields = job.detail_fields || {};
     detailsRow.querySelector(".job-details").innerHTML = `
-      <div class="job-details-grid">
-        <div><span>Client</span><strong>${escapeHtml(job.client || "—")}</strong></div>
-        <div><span>Distance</span><strong>${escapeHtml(job.distance || "—")}</strong></div>
-        <div><span>Due</span><strong>${escapeHtml(job.due || "—")}</strong></div>
-        <div><span>Pay</span><strong>${escapeHtml(job.pay || "—")}</strong></div>
-        <div class="job-details-notes"><span>Notes</span><strong>${escapeHtml(
-          job.details || job.notes || "—"
-        )}</strong></div>
+      <div class="job-details-head">
+        <div>
+          <span class="job-details-kicker">Survey</span>
+          <strong class="job-details-title">${escapeHtml(detailFields.survey || "—")}</strong>
+        </div>
+        <a class="job-details-link" href="https://www.jobslingerplus.com/Info" target="_blank" rel="noreferrer">
+          Open job info
+        </a>
       </div>
+      <div class="job-details-grid">
+        ${fieldBlock("Client", job.client || "—")}
+        ${fieldBlock("Address", detailFields.address || job.address || "—")}
+        ${fieldBlock("Distance", job.distance || "—")}
+        ${fieldBlock("Due", detailFields.due || job.due || "—")}
+        ${fieldBlock("Submit Due", detailFields.submit_due || "—")}
+        ${fieldBlock("Do not shop before", detailFields.do_not_shop_before || "—")}
+        ${fieldBlock("Shop Pay", detailFields.shop_pay || job.pay || "—")}
+        ${fieldBlock("Bonus", detailFields.bonus || "—")}
+        ${fieldBlock("Expenses up to", detailFields.expenses_up_to || "—")}
+        ${fieldBlock("Special expenses", detailFields.special_expenses_up_to || "—")}
+        ${fieldBlock("Contact", detailFields.contact || "—")}
+      </div>
+      <div class="job-details-notes">
+        <span>Job description</span>
+        <strong>${escapeHtml(job.details || job.notes || detailFields.raw || "—")}</strong>
+      </div>
+      <div class="job-details-meta">${escapeHtml([job.client, job.distance].filter(Boolean).join(" • "))}</div>
     `;
 
     jobsTableBody.appendChild(fragment);

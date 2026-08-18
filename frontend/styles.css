@@ -238,10 +238,41 @@ button.secondary {
   padding: 4px 0 10px;
 }
 
+.job-details-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.job-details-kicker {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-bottom: 4px;
+}
+
+.job-details-title {
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.job-details-link {
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .job-details-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  margin-bottom: 14px;
 }
 
 .job-details-grid div {
@@ -263,6 +294,19 @@ button.secondary {
 
 .job-details-notes {
   grid-column: 1 / -1;
+}
+
+.job-details-notes strong {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.job-details-meta {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(16, 33, 51, 0.12);
 }
 
 .details-toggle {
