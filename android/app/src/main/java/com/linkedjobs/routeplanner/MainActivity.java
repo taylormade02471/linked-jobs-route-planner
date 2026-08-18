@@ -69,6 +69,19 @@ public class MainActivity extends AppCompatActivity {
         return normalized;
     }
 
+    private boolean isLoopbackOrDefault(String baseUrl) {
+        if (baseUrl == null || baseUrl.isEmpty()) {
+            return true;
+        }
+        return DEFAULT_BASE_URL.equals(baseUrl)
+                || baseUrl.startsWith("http://127.0.0.1")
+                || baseUrl.startsWith("https://127.0.0.1")
+                || baseUrl.startsWith("http://localhost")
+                || baseUrl.startsWith("https://localhost")
+                || baseUrl.startsWith("http://10.0.2.2")
+                || baseUrl.startsWith("https://10.0.2.2");
+    }
+
     private String getLaunchUrl() {
         Uri data = getIntent() != null ? getIntent().getData() : null;
         if (data != null) {
@@ -333,6 +346,15 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl(url);
     }
 
+    private void loadBestAvailableUrl(WebView webView, EditText baseUrlInput, TextView statusText, Button detectButton) {
+        String saved = getSavedBaseUrl();
+        if (!isLoopbackOrDefault(saved)) {
+            webView.loadUrl(saved + "/");
+            return;
+        }
+        autoDetectBaseUrl(baseUrlInput, statusText, detectButton, webView, true);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -379,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
                 detectButton
         ));
 
-        webView.loadUrl(getLaunchUrl());
+        webView.loadUrl("about:blank");
+        loadBestAvailableUrl(webView, baseUrlInput, statusText, detectButton);
     }
 }
