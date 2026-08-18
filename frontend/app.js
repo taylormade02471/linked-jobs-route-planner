@@ -353,6 +353,8 @@ function renderRouteModal(plan) {
       const routeUrl = step.route_url || "";
       const originStop = step.origin_stop?.name || step.origin_stop?.stop_id || "-";
       const destinationStop = step.destination_stop?.name || step.destination_stop?.stop_id || "-";
+      const originStops = Array.isArray(step.origin_stop_candidates) ? step.origin_stop_candidates : [];
+      const destinationStops = Array.isArray(step.destination_stop_candidates) ? step.destination_stop_candidates : [];
       const legText = Array.isArray(step.legs)
         ? step.legs
             .map((leg) => `${leg.mode || "walk"} ${formatKm(leg.distance_km)}`)
@@ -377,6 +379,35 @@ function renderRouteModal(plan) {
             <span class="route-modal-chip">${escapeHtml(step.due_date ? new Date(step.due_date).toLocaleDateString() : step.due || "-")}</span>
             <span class="route-modal-chip">${escapeHtml(`Origin stop: ${originStop}`)}</span>
             <span class="route-modal-chip">${escapeHtml(`Job stop: ${destinationStop}`)}</span>
+          </div>
+          <div class="route-modal-bus">
+            <strong>Nearby transit</strong>
+            <div class="route-modal-bus-grid">
+              <div>
+                <span>From current leg</span>
+                <ul>
+                  ${
+                    originStops.length
+                      ? originStops
+                          .map((stop) => `<li>${escapeHtml(stop.name || stop.stop_id || "-")}</li>`)
+                          .join("")
+                      : "<li>No nearby stops found</li>"
+                  }
+                </ul>
+              </div>
+              <div>
+                <span>At job</span>
+                <ul>
+                  ${
+                    destinationStops.length
+                      ? destinationStops
+                          .map((stop) => `<li>${escapeHtml(stop.name || stop.stop_id || "-")}</li>`)
+                          .join("")
+                      : "<li>No nearby stops found</li>"
+                  }
+                </ul>
+              </div>
+            </div>
           </div>
           <div>${escapeHtml(legText)}</div>
           <div class="route-modal-stop-links">
