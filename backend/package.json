@@ -1,0 +1,12 @@
+{
+  "name": "linked-jobs-route-planner-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local route planner backend with 7-day login sessions and live job sync.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}
+

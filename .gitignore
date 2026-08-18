@@ -1,0 +1,14 @@
+backend/.env
+backend/.env.local
+data/
+node_modules/
+frontend/.next/
+frontend/out/
+outputs/
+work/
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+.DS_Store
+Thumbs.db

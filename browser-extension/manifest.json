@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Linked Jobs Route Planner Sync",
+  "version": "1.0.0",
+  "description": "Posts visible job rows from the signed-in page to the local route planner.",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["http://127.0.0.1:3300/*", "http://localhost:3300/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.jobslingerplus.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
+
