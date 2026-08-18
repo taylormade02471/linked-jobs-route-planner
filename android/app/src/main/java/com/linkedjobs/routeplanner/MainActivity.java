@@ -43,6 +43,7 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "linked_jobs_route_planner";
     private static final String KEY_BASE_URL = "base_url";
+    private static final String KEY_LOCATION_PERMISSION_PROMPTED = "location_permission_prompted";
     private static final String DEFAULT_BASE_URL = "http://127.0.0.1:3300";
     private static final int LOCATION_PERMISSION_REQUEST = 1101;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -123,7 +124,12 @@ public class MainActivity extends AppCompatActivity {
                 == PackageManager.PERMISSION_GRANTED;
         boolean coarseGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
+        boolean alreadyPrompted = getPrefs().getBoolean(KEY_LOCATION_PERMISSION_PROMPTED, false);
         if (!fineGranted || !coarseGranted) {
+            if (alreadyPrompted) {
+                return;
+            }
+            getPrefs().edit().putBoolean(KEY_LOCATION_PERMISSION_PROMPTED, true).apply();
             ActivityCompat.requestPermissions(
                     this,
                     new String[] {
