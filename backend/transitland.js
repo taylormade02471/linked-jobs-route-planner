@@ -443,6 +443,34 @@ function estimateCompletionMinutes(job, plan) {
   return 55;
 }
 
+function getDuePriority(job) {
+  const dueDate = job?.due_date instanceof Date ? job.due_date : parseDueDateText(job);
+  if (!dueDate) {
+    return { rank: 4, days: Number.POSITIVE_INFINITY };
+  }
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const due = Date.UTC(dueDate.getUTCFullYear(), dueDate.getUTCMonth(), dueDate.getUTCDate());
+  const days = Math.floor((due - today) / 86400000);
+  if (days < 0) return { rank: 0, days };
+  if (days === 0) return { rank: 1, days };
+  if (days === 1) return { rank: 2, days };
+  if (days <= 3) return { rank: 3, days };
+  return { rank: 4, days };
+}
+
+function routeScore(job, plan, directKm, fromCursorKm) {
+  const duePriority = getDuePriority(job);
+  const transitBonus = plan?.mode === "transit_walk" ? 18 : plan?.mode === "walk_only" ? 8 : -8;
+  const walkPenalty = Number.isFinite(plan?.legs?.[0]?.distance_km) ? plan.legs[0].distance_km * 12 : 0;
+  const visitPenalty = Number.isFinite(job?.estimated_minutes) ? job.estimated_minutes / 3 : 0;
+  const urgencyBoost = [120, 100, 82, 62, 35][duePriority.rank] || 20;
+  const proximityBoost = Number.isFinite(directKm) ? Math.max(0, 40 - directKm * 10) : 0;
+  const cursorClusterBoost = Number.isFinite(fromCursorKm) ? Math.max(0, 24 - fromCursorKm * 8) : 0;
+  const daysPenalty = Number.isFinite(duePriority.days) ? Math.max(0, duePriority.days) * 6 : 20;
+  return urgencyBoost + transitBonus + proximityBoost + cursorClusterBoost - walkPenalty - visitPenalty - daysPenalty;
+}
+
 function stopLabel(stop) {
   if (!stop) return "";
   return stop.name || stop.stop_name || stop.stop_id || "";
@@ -582,15 +610,15 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       destination_stop: jobStops[0] || null,
       due_date: parseDueDateText(job),
       estimated_minutes: estimateCompletionMinutes(job, plan),
+      due_priority: getDuePriority(job),
       ...plan,
     });
   }
 
-  const now = Date.now();
   candidateJobs.sort((left, right) => {
-    const leftDue = left.due_date ? Math.max(0, left.due_date.getTime() - now) : Number.POSITIVE_INFINITY;
-    const rightDue = right.due_date ? Math.max(0, right.due_date.getTime() - now) : Number.POSITIVE_INFINITY;
-    if (leftDue !== rightDue) return leftDue - rightDue;
+    if ((left.due_priority?.rank ?? 4) !== (right.due_priority?.rank ?? 4)) {
+      return (left.due_priority?.rank ?? 4) - (right.due_priority?.rank ?? 4);
+    }
     const leftEffort = (left.estimated_minutes || 0) + (left.legs[0]?.distance_km || 0) * 8;
     const rightEffort = (right.estimated_minutes || 0) + (right.legs[0]?.distance_km || 0) * 8;
     if (leftEffort !== rightEffort) return leftEffort - rightEffort;
@@ -610,7 +638,8 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
     for (let index = 0; index < remaining.length; index += 1) {
       const item = remaining[index];
       const directKm = haversineKm(cursor, item.destination);
-      const duePenalty = item.due_date ? Math.max(0, (item.due_date.getTime() - now) / 86400000) : 10;
+      const duePriority = item.due_priority || getDuePriority(item);
+      const duePenalty = duePriority.rank * 12 + Math.max(0, duePriority.days || 0) * 3;
       const effortPenalty = (item.estimated_minutes || 0) / 30;
       const originStops = transitEnabled
         ? nearestStops(onestopId, cursor.lat, cursor.lon, 3) || []
@@ -625,7 +654,16 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
         jobStops[0],
         directKm
       );
-      const dynamicScore = plan.score - route.length * 1.5 - directKm * 1.5 - duePenalty * 4 - effortPenalty;
+      const clusterBoost = Number.isFinite(directKm) ? Math.max(0, 20 - directKm * 7) : 0;
+      const transitClusterBoost = plan.mode === "transit_walk" ? 12 : plan.mode === "walk_only" ? 4 : 0;
+      const dynamicScore =
+        plan.score +
+        clusterBoost +
+        transitClusterBoost -
+        route.length * 1.5 -
+        directKm * 1.25 -
+        duePenalty -
+        effortPenalty;
       if (dynamicScore > bestScore) {
         bestScore = dynamicScore;
         bestIndex = index;
