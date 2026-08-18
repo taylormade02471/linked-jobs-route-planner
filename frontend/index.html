@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Linked Jobs Route Planner</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
     <link rel="stylesheet" href="/frontend/styles.css" />
   </head>
   <body>
@@ -140,6 +146,7 @@
           The planner compares your current location, nearby transit stops, and each job address.
           It prefers walk-plus-transit routes, then walking, and marks the rest for a later fallback.
         </p>
+        <div id="routeMap" class="route-map" aria-label="In-app map view"></div>
         <div id="routePlanOutput" class="route-output"></div>
       </section>
 
@@ -184,6 +191,11 @@
       </tr>
     </template>
 
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
     <script src="/frontend/app.js" type="module"></script>
   </body>
 </html>

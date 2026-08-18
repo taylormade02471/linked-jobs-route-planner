@@ -316,6 +316,16 @@ button.secondary {
   padding: 18px;
 }
 
+.route-map {
+  height: 420px;
+  margin-top: 18px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 33, 51, 0.08);
+  box-shadow: 0 16px 40px rgba(16, 33, 51, 0.08);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(15, 118, 110, 0.06));
+}
+
 .route-output {
   margin-top: 18px;
   display: grid;

@@ -27,6 +27,7 @@ const useLocationButton = document.querySelector("#useLocationButton");
 const importTransitButton = document.querySelector("#importTransitButton");
 const importCtsZipButton = document.querySelector("#importCtsZipButton");
 const planTransitButton = document.querySelector("#planTransitButton");
+const routeMapElement = document.querySelector("#routeMap");
 
 const storageKeys = {
   originLat: "route_planner_origin_lat",
@@ -38,6 +39,8 @@ let allJobs = [];
 let filteredJobs = [];
 let expandedJobs = new Set();
 let activeTab = "active";
+let routeMap = null;
+let routeLayer = null;
 
 function setConnection(text) {
   connectionState.textContent = text;
@@ -201,8 +204,8 @@ function formatMetersFromKm(value) {
 
 function buildMapsLink(origin, destination, mode) {
   if (!origin || !destination) return "";
-  const url = new URL("https://www.google.com/maps/dir/");
-  url.searchParams.set("api", "1");
+  const url = new URL(window.location.origin);
+  url.pathname = "/route";
   url.searchParams.set("origin", `${origin.lat},${origin.lon}`);
   url.searchParams.set("destination", `${destination.lat},${destination.lon}`);
   url.searchParams.set("travelmode", mode || "transit");
@@ -212,6 +215,77 @@ function buildMapsLink(origin, destination, mode) {
 function openJob(job) {
   const url = job.info_url || job.source_url || "https://www.jobslingerplus.com/Info";
   window.open(url, "_blank", "noopener");
+}
+
+function ensureRouteMap() {
+  if (!routeMapElement || typeof L === "undefined") return null;
+  if (routeMap) return routeMap;
+  routeMap = L.map(routeMapElement, {
+    zoomControl: true,
+    preferCanvas: true,
+  }).setView([36.5298, -87.3595], 11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(routeMap);
+  routeLayer = L.layerGroup().addTo(routeMap);
+  return routeMap;
+}
+
+function mapPointFromJob(job) {
+  const lat = Number(job?.lat);
+  const lon = Number(job?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { lat, lon, label: job.title || "Job" };
+}
+
+function renderRouteMap(plan) {
+  const map = ensureRouteMap();
+  if (!map || !routeLayer) return;
+  routeLayer.clearLayers();
+
+  const bounds = [];
+  const origin = plan?.origin && Number.isFinite(plan.origin.lat) && Number.isFinite(plan.origin.lon)
+    ? { lat: plan.origin.lat, lon: plan.origin.lon, label: "Live location" }
+    : currentOrigin();
+
+  if (origin) {
+    const marker = L.marker([origin.lat, origin.lon]).addTo(routeLayer);
+    marker.bindPopup(`<strong>Start</strong><br/>${escapeHtml(origin.label || "Live location")}`);
+    bounds.push([origin.lat, origin.lon]);
+  }
+
+  const route = Array.isArray(plan?.route) ? plan.route : [];
+  route.forEach((step, index) => {
+    const point = mapPointFromJob(step.to || step.destination || step);
+    if (!point) return;
+    const marker = L.marker([point.lat, point.lon]).addTo(routeLayer);
+    marker.bindPopup(`<strong>${escapeHtml(step.title || `Stop ${index + 1}`)}</strong><br/>${escapeHtml([step.address, step.city, step.state].filter(Boolean).join(", "))}`);
+    bounds.push([point.lat, point.lon]);
+  });
+
+  if (route.length > 1) {
+    const polylinePoints = route
+      .map((step) => mapPointFromJob(step.to || step.destination || step))
+      .filter(Boolean)
+      .map((point) => [point.lat, point.lon]);
+    if (origin) {
+      polylinePoints.unshift([origin.lat, origin.lon]);
+    }
+    if (polylinePoints.length >= 2) {
+      L.polyline(polylinePoints, {
+        color: "#0f766e",
+        weight: 5,
+        opacity: 0.85,
+      }).addTo(routeLayer);
+    }
+  }
+
+  if (bounds.length === 1) {
+    map.setView(bounds[0], 13);
+  } else if (bounds.length > 1) {
+    map.fitBounds(bounds, { padding: [24, 24] });
+  }
 }
 
 function renderRoutePlan(plan) {
@@ -225,6 +299,7 @@ function renderRoutePlan(plan) {
   const summary = plan.summary || {};
   const origin = plan.origin || {};
   const route = Array.isArray(plan.route) ? plan.route : [];
+  renderRouteMap(plan);
 
   routePlanOutput.innerHTML = `
     <div class="route-summary-card">
@@ -489,9 +564,7 @@ function openRoute() {
   render();
   planTransitRoute().then(() => {
     const routeSection = document.querySelector(".route-planner");
-    if (routeSection) {
-      routeSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (routeSection) routeSection.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -729,3 +802,4 @@ loadSourceConfig();
 loadSourceStatus();
 importCtsZip().catch(() => {});
 refreshLiveOrigin().catch(() => {});
+ensureRouteMap();
