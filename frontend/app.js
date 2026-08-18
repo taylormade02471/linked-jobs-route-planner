@@ -334,12 +334,13 @@ function renderRoutePlan(plan) {
                   <span class="route-card-index">Stop ${index + 1}</span>
                   <strong>${escapeHtml(step.title || "Job")}</strong>
                 </div>
-                <a class="route-link" href="${escapeHtml(step.route_url || "")}" target="_blank" rel="noreferrer">Open directions</a>
               </div>
               <div class="route-card-meta">
                 <span>${escapeHtml(step.summary || "No summary")}</span>
                 <span>Mode: ${escapeHtml(step.mode || "walk_only")}</span>
                 <span>Direct: ${escapeHtml(formatKm(step.direct_distance_km))}</span>
+                <span>Time: ${escapeHtml(step.estimated_minutes ? `${step.estimated_minutes} min` : "-")}</span>
+                <span>Due: ${escapeHtml(step.due_date ? new Date(step.due_date).toLocaleDateString() : step.due || "-")}</span>
                 <span>Origin stop: ${escapeHtml(originStop)}</span>
                 <span>Job stop: ${escapeHtml(destinationStop)}</span>
               </div>
@@ -563,8 +564,8 @@ function openRoute() {
   activeTab = "active";
   render();
   planTransitRoute().then(() => {
-    const routeSection = document.querySelector(".route-planner");
-    if (routeSection) routeSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    const routeMap = document.querySelector("#routeMap");
+    if (routeMap) routeMap.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -746,6 +747,10 @@ if (sourceConfigForm) {
     setSourceStatus(payload.config?.has_password ? "Saved" : "Needs password");
     sourceConfigForm.source_password.value = "";
   });
+}
+
+if (sourcePanel) {
+  sourcePanel.hidden = true;
 }
 
 if (reloadSourceButton) {

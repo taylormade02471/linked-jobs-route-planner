@@ -399,6 +399,50 @@ function directionsUrl(origin, destination, mode = "transit") {
   return url.toString();
 }
 
+function parseDueDateText(job) {
+  const fields = job?.detail_fields || {};
+  const raw = String(
+    fields.submit_due ||
+    fields.due ||
+    job?.due ||
+    job?.deadline ||
+    ""
+  ).trim();
+  if (!raw) return null;
+
+  const dateMatch = raw.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+  if (!dateMatch) return null;
+
+  const month = Number(dateMatch[1]);
+  const day = Number(dateMatch[2]);
+  const year = dateMatch[3] ? Number(dateMatch[3].length === 2 ? `20${dateMatch[3]}` : dateMatch[3]) : new Date().getFullYear();
+  const dueDate = new Date(Date.UTC(year, month - 1, day));
+  return Number.isFinite(dueDate.getTime()) ? dueDate : null;
+}
+
+function estimateCompletionMinutes(job, plan) {
+  const details = job?.detail_fields || {};
+  const raw = String(
+    details.estimated_time ||
+    details.estimated_minutes ||
+    details.time_to_complete ||
+    job?.time_to_complete ||
+    job?.duration ||
+    ""
+  ).toLowerCase();
+  const numericMatch = raw.match(/(\d+(?:\.\d+)?)\s*(?:min|mins|minute|minutes)/i);
+  if (numericMatch) {
+    return Math.max(10, Number(numericMatch[1]));
+  }
+  if (/hour/.test(raw)) {
+    const hours = Number((raw.match(/(\d+(?:\.\d+)?)\s*hour/i) || [])[1] || 1);
+    return Math.max(30, Math.round(hours * 60));
+  }
+  if (plan?.mode === "transit_walk") return 45;
+  if (plan?.mode === "walk_only") return 35;
+  return 55;
+}
+
 function stopLabel(stop) {
   if (!stop) return "";
   return stop.name || stop.stop_name || stop.stop_id || "";
@@ -536,11 +580,20 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       destination: resolved,
       origin_stop: originStops[0] || null,
       destination_stop: jobStops[0] || null,
+      due_date: parseDueDateText(job),
+      estimated_minutes: estimateCompletionMinutes(job, plan),
       ...plan,
     });
   }
 
+  const now = Date.now();
   candidateJobs.sort((left, right) => {
+    const leftDue = left.due_date ? Math.max(0, left.due_date.getTime() - now) : Number.POSITIVE_INFINITY;
+    const rightDue = right.due_date ? Math.max(0, right.due_date.getTime() - now) : Number.POSITIVE_INFINITY;
+    if (leftDue !== rightDue) return leftDue - rightDue;
+    const leftEffort = (left.estimated_minutes || 0) + (left.legs[0]?.distance_km || 0) * 8;
+    const rightEffort = (right.estimated_minutes || 0) + (right.legs[0]?.distance_km || 0) * 8;
+    if (leftEffort !== rightEffort) return leftEffort - rightEffort;
     if (right.score !== left.score) return right.score - left.score;
     const leftDistance = left.legs[0]?.distance_km || Number.POSITIVE_INFINITY;
     const rightDistance = right.legs[0]?.distance_km || Number.POSITIVE_INFINITY;
@@ -557,6 +610,8 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
     for (let index = 0; index < remaining.length; index += 1) {
       const item = remaining[index];
       const directKm = haversineKm(cursor, item.destination);
+      const duePenalty = item.due_date ? Math.max(0, (item.due_date.getTime() - now) / 86400000) : 10;
+      const effortPenalty = (item.estimated_minutes || 0) / 30;
       const originStops = transitEnabled
         ? nearestStops(onestopId, cursor.lat, cursor.lon, 3) || []
         : [];
@@ -570,7 +625,7 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
         jobStops[0],
         directKm
       );
-      const dynamicScore = plan.score - route.length * 1.5 - directKm * 1.5;
+      const dynamicScore = plan.score - route.length * 1.5 - directKm * 1.5 - duePenalty * 4 - effortPenalty;
       if (dynamicScore > bestScore) {
         bestScore = dynamicScore;
         bestIndex = index;
@@ -599,6 +654,7 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       from: { ...cursor, label: route.length ? route[route.length - 1].title : "Live location" },
       to: chosen.destination,
       direct_distance_km: directKm,
+      estimated_minutes: chosen.estimated_minutes || null,
       origin_walk_km: chosen.legs[0]?.distance_km || null,
       destination_walk_km: chosen.legs[2]?.distance_km || chosen.legs[0]?.distance_km || null,
       transit_distance_km: chosen.legs[1]?.distance_km || null,
