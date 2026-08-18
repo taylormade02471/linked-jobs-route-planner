@@ -12,7 +12,6 @@ const awaitingJobCount = document.querySelector("#awaitingJobCount");
 const completedJobCount = document.querySelector("#completedJobCount");
 const jobTabs = Array.from(document.querySelectorAll(".job-tab"));
 const sourcePanel = document.querySelector("#sourcePanel");
-const logoutForm = document.querySelector("#logoutForm");
 const sourceConfigForm = document.querySelector("#sourceConfigForm");
 const reloadSourceButton = document.querySelector("#reloadSourceButton");
 const openSourceButton = document.querySelector("#openSourceButton");
@@ -270,7 +269,6 @@ async function setJobStatus(job, status) {
     }),
   });
   if (response.status === 401) {
-    window.location.href = "/login";
     return;
   }
   if (!response.ok) {
@@ -285,7 +283,6 @@ async function loadJobs() {
   setConnection("Loading");
   const response = await fetch("/api/jobs", { credentials: "include" });
   if (response.status === 401) {
-    window.location.href = "/login";
     return;
   }
   const payload = await response.json();
@@ -300,7 +297,6 @@ async function loadSourceConfig() {
   setSourceStatus("Loading");
   const response = await fetch("/api/source-config", { credentials: "include" });
   if (response.status === 401) {
-    window.location.href = "/login";
     return;
   }
   const payload = await response.json();
@@ -315,7 +311,6 @@ async function loadSourceConfig() {
 async function loadSourceStatus() {
   const response = await fetch("/api/source-status", { credentials: "include" });
   if (response.status === 401) {
-    window.location.href = "/login";
     return;
   }
   const payload = await response.json();
@@ -511,7 +506,6 @@ async function importTransitFeed() {
     body: JSON.stringify({ onestop_id: onestopId }),
   });
   if (response.status === 401) {
-    window.location.href = "/login";
     return;
   }
   const payload = await response.json();
@@ -558,7 +552,6 @@ async function planTransitRoute() {
   });
 
   if (response.status === 401) {
-    window.location.href = "/login";
     return;
   }
 
@@ -629,12 +622,6 @@ selectAll.addEventListener("change", (event) => {
   render();
 });
 
-if (logoutForm) {
-  logoutForm.addEventListener("submit", () => {
-    setConnection("Logged out");
-  });
-}
-
 if (sourceConfigForm) {
   sourceConfigForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -653,10 +640,7 @@ if (sourceConfigForm) {
         source_password: sourceConfigForm.source_password.value,
       }),
     });
-    if (response.status === 401) {
-      window.location.href = "/login";
-      return;
-    }
+    if (response.status === 401) return;
     const payload = await response.json();
     setSourceStatus(payload.config?.has_password ? "Saved" : "Needs password");
     sourceConfigForm.source_password.value = "";
@@ -676,10 +660,7 @@ if (openSourceButton) {
       method: "POST",
       credentials: "include",
     });
-    if (response.status === 401) {
-      window.location.href = "/login";
-      return;
-    }
+    if (response.status === 401) return;
     await loadSourceStatus();
   });
 }
@@ -691,10 +672,7 @@ if (scrapeNowButton) {
       method: "POST",
       credentials: "include",
     });
-    if (response.status === 401) {
-      window.location.href = "/login";
-      return;
-    }
+    if (response.status === 401) return;
     await loadJobs();
     await loadSourceStatus();
   });

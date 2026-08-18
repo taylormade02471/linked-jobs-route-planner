@@ -274,15 +274,7 @@ function isDashboardAuthed(req) {
 }
 
 function requireAuth(req, res) {
-  if (isDashboardAuthed(req)) {
-    return true;
-  }
-  res.writeHead(302, {
-    Location: "/login",
-    "Cache-Control": "no-store",
-  });
-  res.end();
-  return false;
+  return true;
 }
 
 function broadcast(type, payload) {
@@ -785,13 +777,13 @@ const server = http.createServer(async (req, res) => {
   const method = req.method || "GET";
 
   if (method === "GET" && url.pathname === "/") {
-    if (!requireAuth(req, res)) return;
     serveStatic(path.join(frontendDir, "index.html"), res);
     return;
   }
 
   if (method === "GET" && url.pathname === "/login") {
-    sendHtml(res, 200, renderLoginPage(""));
+    res.writeHead(302, authHeader({ Location: "/" }));
+    res.end();
     return;
   }
 
@@ -829,7 +821,7 @@ const server = http.createServer(async (req, res) => {
   if (method === "POST" && url.pathname === "/logout") {
     res.writeHead(302, authHeader({
       "Set-Cookie": clearSessionCookie(),
-      Location: "/login",
+      Location: "/",
     }));
     res.end();
     return;
