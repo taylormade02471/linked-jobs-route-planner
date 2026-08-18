@@ -527,6 +527,155 @@ button.secondary {
   font-weight: 700;
 }
 
+.route-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+}
+
+.route-modal.is-open {
+  display: block;
+}
+
+.route-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 15, 28, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.route-modal-sheet {
+  position: absolute;
+  inset: 12px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #eef3f8;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.route-modal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(248, 250, 252, 0.9));
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.route-modal-map {
+  min-height: 0;
+  background: #dbeafe;
+}
+
+.route-modal-drawer {
+  background: rgba(255, 255, 255, 0.97);
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 10px 16px 18px;
+  max-height: 44vh;
+  overflow: auto;
+}
+
+.route-modal-drawer-handle {
+  width: 52px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.35);
+  margin: 0 auto 12px;
+}
+
+.route-modal-summary {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.route-modal-summary-card {
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.route-modal-summary-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.route-modal-stops {
+  display: grid;
+  gap: 12px;
+}
+
+.route-modal-stop {
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.route-modal-stop-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.route-modal-stop-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.route-modal-chip {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+}
+
+.route-modal-chip.overdue {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.route-modal-chip.today {
+  background: rgba(234, 88, 12, 0.12);
+  color: #ea580c;
+}
+
+.route-modal-chip.tomorrow {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.route-modal-chip.later {
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+}
+
+.route-modal-stop-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.route-modal-stop-links a {
+  color: #0f766e;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .job-details-row {
   background: rgba(15, 118, 110, 0.03);
 }

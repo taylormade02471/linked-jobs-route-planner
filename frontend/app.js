@@ -29,6 +29,10 @@ const importTransitButton = document.querySelector("#importTransitButton");
 const importCtsZipButton = document.querySelector("#importCtsZipButton");
 const planTransitButton = document.querySelector("#planTransitButton");
 const routeMapElement = document.querySelector("#routeMap");
+const routeModal = document.querySelector("#routeModal");
+const routeModalMapElement = document.querySelector("#routeModalMap");
+const routeModalSummary = document.querySelector("#routeModalSummary");
+const routeModalStops = document.querySelector("#routeModalStops");
 
 const storageKeys = {
   originLat: "route_planner_origin_lat",
@@ -42,6 +46,8 @@ let expandedJobs = new Set();
 let activeTab = "active";
 let routeMap = null;
 let routeLayer = null;
+let routeModalMap = null;
+let routeModalLayer = null;
 let planRefreshTimer = null;
 let lastPlan = null;
 
@@ -256,6 +262,131 @@ function priorityLabel(step) {
   if (rank === 1) return "Today";
   if (rank === 2) return "Tomorrow";
   return "Later";
+}
+
+function openRouteModal() {
+  if (!routeModal) return;
+  routeModal.classList.add("is-open");
+  routeModal.setAttribute("aria-hidden", "false");
+  ensureRouteModalMap();
+  if (lastPlan) {
+    renderRouteModal(lastPlan);
+  }
+}
+
+function closeRouteModal() {
+  if (!routeModal) return;
+  routeModal.classList.remove("is-open");
+  routeModal.setAttribute("aria-hidden", "true");
+}
+
+function ensureRouteModalMap() {
+  if (!routeModalMapElement || typeof L === "undefined") return null;
+  if (routeModalMap) return routeModalMap;
+  routeModalMap = L.map(routeModalMapElement, {
+    zoomControl: true,
+    preferCanvas: true,
+  }).setView([36.5298, -87.3595], 11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(routeModalMap);
+  routeModalLayer = L.layerGroup().addTo(routeModalMap);
+  return routeModalMap;
+}
+
+function renderRouteModal(plan) {
+  const map = ensureRouteModalMap();
+  if (!routeModalSummary || !routeModalStops) return;
+  if (!plan || !Array.isArray(plan.route)) {
+    routeModalSummary.innerHTML = `<div class="route-modal-summary-card"><strong>No planned route</strong><span>Plan a route to open the full-screen map.</span></div>`;
+    routeModalStops.innerHTML = "";
+    if (map && routeModalLayer) routeModalLayer.clearLayers();
+    return;
+  }
+
+  if (map && routeModalLayer) {
+    routeModalLayer.clearLayers();
+    const route = plan.route;
+    const origin = plan.origin && Number.isFinite(plan.origin.lat) && Number.isFinite(plan.origin.lon)
+      ? { lat: plan.origin.lat, lon: plan.origin.lon, label: "Live location" }
+      : currentOrigin();
+    const points = [];
+    if (origin) {
+      L.marker([origin.lat, origin.lon]).addTo(routeModalLayer).bindPopup("<strong>Start</strong>");
+      points.push([origin.lat, origin.lon]);
+    }
+    route.forEach((step, index) => {
+      const point = mapPointFromJob(step.to || step.destination || step);
+      if (!point) return;
+      const chip = priorityLabel(step);
+      const marker = L.circleMarker([point.lat, point.lon], {
+        radius: index === 0 ? 14 : 11,
+        color: "#ffffff",
+        weight: 2,
+        fillColor: duePriorityClass(step) === "overdue" ? "#dc2626" : duePriorityClass(step) === "today" ? "#ea580c" : duePriorityClass(step) === "tomorrow" ? "#2563eb" : "#0f766e",
+        fillOpacity: 0.95,
+      }).addTo(routeModalLayer);
+      marker.bindPopup(`<strong>${escapeHtml(step.title || `Stop ${index + 1}`)}</strong><br/>${escapeHtml(chip)}<br/>${escapeHtml([step.address, step.city, step.state].filter(Boolean).join(", "))}`);
+      points.push([point.lat, point.lon]);
+    });
+    if (points.length > 1) {
+      L.polyline(points, { color: "#2563eb", weight: 6, opacity: 0.9 }).addTo(routeModalLayer);
+      map.fitBounds(points, { padding: [28, 28] });
+    } else if (points.length === 1) {
+      map.setView(points[0], 13);
+    }
+  }
+
+  const summary = plan.summary || {};
+  routeModalSummary.innerHTML = `
+    <div class="route-modal-summary-card">
+      <strong>${escapeHtml(String(summary.jobs || 0))} planned jobs</strong>
+      <span>${escapeHtml(String(summary.transit_enabled || 0))} transit legs | ${escapeHtml(String(summary.walk_only || 0))} walk-only | ${escapeHtml(String(summary.no_route || 0))} no-route</span>
+    </div>
+  `;
+
+  routeModalStops.innerHTML = plan.route
+    .map((step, index) => {
+      const dueClass = duePriorityClass(step);
+      const providerUrl = step.info_url || step.source_url || "https://www.jobslingerplus.com/Info";
+      const routeUrl = step.route_url || "";
+      const originStop = step.origin_stop?.name || step.origin_stop?.stop_id || "-";
+      const destinationStop = step.destination_stop?.name || step.destination_stop?.stop_id || "-";
+      const legText = Array.isArray(step.legs)
+        ? step.legs
+            .map((leg) => `${leg.mode || "walk"} ${formatKm(leg.distance_km)}`)
+            .join(" • ")
+        : "No leg details";
+      return `
+        <article class="route-modal-stop ${escapeHtml(dueClass)}">
+          <div class="route-modal-stop-head">
+            <div>
+              <span class="route-card-index">Stop ${index + 1}</span>
+              <strong>${escapeHtml(step.title || "Job")}</strong>
+              <div class="route-modal-stop-meta">
+                <span class="route-modal-chip ${escapeHtml(dueClass)}">${escapeHtml(priorityLabel(step))}</span>
+                <span class="route-modal-chip">${escapeHtml(step.mode || "walk_only")}</span>
+              </div>
+            </div>
+          </div>
+          <div>${escapeHtml(step.summary || "No summary")}</div>
+          <div class="route-card-address">${escapeHtml([step.address, step.city, step.state, step.postcode].filter(Boolean).join(", "))}</div>
+          <div class="route-modal-stop-meta">
+            <span class="route-modal-chip">${escapeHtml(step.estimated_minutes ? `${step.estimated_minutes} min` : "-")}</span>
+            <span class="route-modal-chip">${escapeHtml(step.due_date ? new Date(step.due_date).toLocaleDateString() : step.due || "-")}</span>
+            <span class="route-modal-chip">${escapeHtml(`Origin stop: ${originStop}`)}</span>
+            <span class="route-modal-chip">${escapeHtml(`Job stop: ${destinationStop}`)}</span>
+          </div>
+          <div>${escapeHtml(legText)}</div>
+          <div class="route-modal-stop-links">
+            <a href="${escapeHtml(providerUrl)}" target="_blank" rel="noreferrer">Open provider</a>
+            ${routeUrl ? `<a href="${escapeHtml(routeUrl)}" target="_blank" rel="noreferrer">Open directions</a>` : ""}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function renderRouteMap(plan) {
@@ -631,7 +762,7 @@ function openRoute() {
   }
   activeTab = "active";
   render();
-  planTransitRoute();
+  planTransitRoute().then(() => openRouteModal());
 }
 
 function exportCsv() {
@@ -747,6 +878,7 @@ async function planTransitRoute() {
 
   setRoutePlanStatus(`Planned ${payload.summary?.jobs || 0} jobs`);
   renderRoutePlan(payload);
+  renderRouteModal(payload);
 }
 
 async function autoPlanRoute() {
@@ -873,7 +1005,22 @@ if (importCtsZipButton) {
 }
 
 if (planTransitButton) {
-  planTransitButton.addEventListener("click", planTransitRoute);
+  planTransitButton.addEventListener("click", () => {
+    planTransitRoute().then(() => openRouteModal());
+  });
+}
+
+if (routeModal) {
+  routeModal.addEventListener("click", (event) => {
+    if (event.target && event.target.matches("[data-close-route-modal]")) {
+      closeRouteModal();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeRouteModal();
+    }
+  });
 }
 
 loadStoredOrigin();

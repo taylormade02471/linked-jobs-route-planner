@@ -171,6 +171,25 @@
       </section>
     </main>
 
+    <section id="routeModal" class="route-modal" aria-hidden="true">
+      <div class="route-modal-backdrop" data-close-route-modal></div>
+      <div class="route-modal-sheet" role="dialog" aria-modal="true" aria-label="Planned route">
+        <div class="route-modal-topbar">
+          <div>
+            <p class="eyebrow">Navigation</p>
+            <h2>Planned route</h2>
+          </div>
+          <button type="button" class="secondary" data-close-route-modal>Close</button>
+        </div>
+        <div class="route-modal-map" id="routeModalMap"></div>
+        <div class="route-modal-drawer">
+          <div class="route-modal-drawer-handle"></div>
+          <div id="routeModalSummary" class="route-modal-summary"></div>
+          <div id="routeModalStops" class="route-modal-stops"></div>
+        </div>
+      </div>
+    </section>
+
     <template id="jobRowTemplate">
       <tr class="job-row">
         <td><input type="checkbox" class="job-check" /></td>
