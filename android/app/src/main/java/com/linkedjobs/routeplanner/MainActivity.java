@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
                     getPrefs().edit().putString(KEY_BASE_URL, nextFound).apply();
                     statusText.setText("Found PC server: " + nextFound);
                     if (openLoginAfterDetect) {
-                        webView.loadUrl(nextFound + "/login");
+                        webView.loadUrl(nextFound + "/");
                     }
                 } else {
                     statusText.setText(
@@ -236,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
                         getPrefs().edit().putString(KEY_BASE_URL, preferredUrl).apply();
                         statusText.setText("Detected: " + preferredUrl);
                         if (openLoginAfterDetect) {
-                            webView.loadUrl(preferredUrl + "/login");
+                            webView.loadUrl(preferredUrl + "/");
                         }
                     } else {
                         statusText.setText("Could not detect LAN IP");
