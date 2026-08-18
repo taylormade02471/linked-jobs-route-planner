@@ -1,17 +1,5 @@
-buildscript {
-    ext {
-        compileSdkVersion = 34
-        minSdkVersion = 24
-        targetSdkVersion = 34
-        kotlinVersion = "1.9.24"
-    }
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.android.tools.build:gradle:8.5.2"
-    }
+plugins {
+    id "com.android.application" version "8.5.2" apply false
 }
 
 allprojects {
@@ -20,4 +8,3 @@ allprojects {
         mavenCentral()
     }
 }
-
