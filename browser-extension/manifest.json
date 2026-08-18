@@ -7,7 +7,7 @@
   "host_permissions": ["http://127.0.0.1:3300/*", "http://localhost:3300/*"],
   "content_scripts": [
     {
-      "matches": ["https://www.jobslingerplus.com/MegaLog*"],
+      "matches": ["https://www.jobslingerplus.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

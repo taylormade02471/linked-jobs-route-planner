@@ -64,12 +64,16 @@
         </div>
         <form id="sourceConfigForm" class="settings-form">
           <label>
-            Source name
-            <input name="source_name" placeholder="Jobslinger MegaLog" />
+            Site name
+            <input name="source_name" placeholder="Jobslinger homepage" />
           </label>
           <label>
-            Source URL
-            <input name="source_url" placeholder="https://www.jobslingerplus.com/MegaLog" />
+            Login URL
+            <input name="source_url" placeholder="https://www.jobslingerplus.com/" />
+          </label>
+          <label>
+            Jobs page URL
+            <input name="data_url" placeholder="https://www.jobslingerplus.com/MegaLog" />
           </label>
           <label>
             Username
@@ -82,6 +86,8 @@
           <div class="actions">
             <button type="submit" class="primary">Save live login</button>
             <button type="button" id="reloadSourceButton" class="secondary">Reload saved login</button>
+            <button type="button" id="openSourceButton" class="secondary">Open live browser</button>
+            <button type="button" id="scrapeNowButton" class="secondary">Sync now</button>
           </div>
         </form>
         <p class="helper">
@@ -96,9 +102,11 @@
             <tr>
               <th></th>
               <th>Title</th>
-              <th>Address</th>
+              <th>Client / Address</th>
               <th>Location</th>
+              <th>Due / Pay</th>
               <th>Source</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="jobsTableBody"></tbody>
@@ -107,12 +115,19 @@
     </main>
 
     <template id="jobRowTemplate">
-      <tr>
+      <tr class="job-row">
         <td><input type="checkbox" class="job-check" /></td>
         <td class="job-title"></td>
         <td class="job-address"></td>
         <td class="job-location"></td>
+        <td class="job-duepay"></td>
         <td class="job-source"></td>
+        <td><button type="button" class="details-toggle secondary">Details</button></td>
+      </tr>
+      <tr class="job-details-row" hidden>
+        <td colspan="7">
+          <div class="job-details"></div>
+        </td>
       </tr>
     </template>
 

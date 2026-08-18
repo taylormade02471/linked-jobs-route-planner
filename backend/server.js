@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { URL } = require("url");
+const { chromium } = require("playwright-core");
 
 const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
@@ -21,11 +22,30 @@ const SESSION_SECRET =
   process.env.AUTH_SESSION_SECRET || "change-this-before-sharing";
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "route_planner_session";
+const DEFAULT_LOGIN_URL = "https://www.jobslingerplus.com/";
+const DEFAULT_DATA_URL = "https://www.jobslingerplus.com/MegaLog";
+const LIVE_POLL_INTERVAL_MS = 60 * 1000;
+const CHROME_PATHS = [
+  process.env.CHROME_PATH,
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+].filter(Boolean);
 
 let jobs = loadJobs();
 let sourceConfig = loadSourceConfig();
 let clients = new Set();
 let scrapeRunning = false;
+let liveBrowserContext = null;
+let liveBrowserPage = null;
+let livePollTimer = null;
+let liveSourceBusy = false;
+let sourceStatus = {
+  state: "idle",
+  message: "Not connected",
+  lastScrapeAt: "",
+  browserOpen: false,
+};
 
 function loadJobs() {
   try {
@@ -42,6 +62,37 @@ function saveJobs() {
   fs.writeFileSync(jobsPath, JSON.stringify(jobs, null, 2), "utf8");
 }
 
+function encryptedPayloadFromText(plainText) {
+  if (!plainText) return null;
+  const key = crypto.createHash("sha256").update(SESSION_SECRET).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(String(plainText), "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return {
+    iv: iv.toString("base64"),
+    tag: tag.toString("base64"),
+    ciphertext: encrypted.toString("base64"),
+  };
+}
+
+function textFromEncryptedPayload(payload) {
+  if (!payload || typeof payload !== "object") return "";
+  if (!payload.iv || !payload.tag || !payload.ciphertext) return "";
+  const key = crypto.createHash("sha256").update(SESSION_SECRET).digest();
+  const decipher = crypto.createDecipheriv(
+    "aes-256-gcm",
+    key,
+    Buffer.from(payload.iv, "base64")
+  );
+  decipher.setAuthTag(Buffer.from(payload.tag, "base64"));
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(payload.ciphertext, "base64")),
+    decipher.final(),
+  ]);
+  return decrypted.toString("utf8");
+}
+
 function loadSourceConfig() {
   try {
     const raw = fs.readFileSync(sourceConfigPath, "utf8");
@@ -54,9 +105,15 @@ function loadSourceConfig() {
 
 function saveSourceConfig(nextConfig) {
   fs.mkdirSync(dataDir, { recursive: true });
+  const nextPasswordPayload =
+    Object.prototype.hasOwnProperty.call(nextConfig, "source_password") &&
+    nextConfig.source_password
+      ? encryptedPayloadFromText(nextConfig.source_password)
+      : sourceConfig.source_password || null;
   sourceConfig = {
     ...sourceConfig,
     ...nextConfig,
+    source_password: nextPasswordPayload,
   };
   fs.writeFileSync(sourceConfigPath, JSON.stringify(sourceConfig, null, 2), "utf8");
 }
@@ -232,11 +289,16 @@ function normalizeJob(job, index = 0) {
     city: String(job.city || ""),
     state: String(job.state || ""),
     postcode: String(job.postcode || job.zip || ""),
+    client: String(job.client || ""),
+    distance: String(job.distance || job.dist || ""),
+    due: String(job.due || ""),
+    pay: String(job.pay || ""),
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
     source: String(job.source || "browser-extension"),
     source_url: String(job.source_url || job.sourceUrl || ""),
     notes: String(job.notes || ""),
+    details: String(job.details || job.notes || ""),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
   };
@@ -244,19 +306,303 @@ function normalizeJob(job, index = 0) {
 
 function publicSourceConfig() {
   return {
-    source_name: String(sourceConfig.source_name || sourceConfig.sourceName || ""),
-    source_url: String(sourceConfig.source_url || sourceConfig.sourceUrl || ""),
+    source_name: String(
+      sourceConfig.source_name || sourceConfig.sourceName || "Jobslinger homepage"
+    ),
+    login_url: String(sourceConfig.login_url || sourceConfig.loginUrl || DEFAULT_LOGIN_URL),
+    data_url: String(sourceConfig.data_url || sourceConfig.dataUrl || DEFAULT_DATA_URL),
     source_username: String(sourceConfig.source_username || sourceConfig.sourceUsername || ""),
-    has_password: Boolean(sourceConfig.source_password || sourceConfig.sourcePassword),
+    has_password: Boolean(sourceConfig.source_password),
     last_updated_at: String(sourceConfig.last_updated_at || ""),
   };
 }
 
+function getSourcePassword() {
+  return textFromEncryptedPayload(sourceConfig.source_password);
+}
+
+function getChromeExecutablePath() {
+  for (const candidate of CHROME_PATHS) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function getLiveLoginUrl() {
+  return String(sourceConfig.login_url || sourceConfig.loginUrl || DEFAULT_LOGIN_URL);
+}
+
+function getLiveSourceName() {
+  return String(sourceConfig.source_name || sourceConfig.sourceName || "Jobslinger");
+}
+
+function getLiveDataUrl() {
+  return String(sourceConfig.data_url || sourceConfig.dataUrl || DEFAULT_DATA_URL);
+}
+
+function updateSourceStatus(nextStatus) {
+  sourceStatus = {
+    ...sourceStatus,
+    ...nextStatus,
+  };
+}
+
+function safeJobText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+async function maybeAutofillLogin(page) {
+  const username = String(sourceConfig.source_username || "");
+  const password = getSourcePassword();
+  if (!username || !password) return false;
+
+  const userSelectors = [
+    'input[type="email"]',
+    'input[name*="user" i]',
+    'input[name*="email" i]',
+    'input[id*="user" i]',
+    'input[id*="email" i]',
+    'input[type="text"]',
+  ];
+  const passSelectors = [
+    'input[type="password"]',
+    'input[name*="pass" i]',
+    'input[id*="pass" i]',
+  ];
+
+  let filled = false;
+  for (const selector of userSelectors) {
+    const input = page.locator(selector).first();
+    if ((await input.count()) > 0) {
+      await input.fill(username).catch(() => {});
+      filled = true;
+      break;
+    }
+  }
+  for (const selector of passSelectors) {
+    const input = page.locator(selector).first();
+    if ((await input.count()) > 0) {
+      await input.fill(password).catch(() => {});
+      filled = true;
+      break;
+    }
+  }
+  if (!filled) return false;
+
+  const submitCandidates = [
+    page.getByRole("button", { name: /sign in/i }),
+    page.getByRole("button", { name: /log in/i }),
+    page.getByRole("button", { name: /login/i }),
+    page.getByRole("button", { name: /submit/i }),
+    page.locator('input[type="submit"]'),
+  ];
+
+  for (const candidate of submitCandidates) {
+    try {
+      if (await candidate.count()) {
+        await candidate.first().click({ timeout: 1500 });
+        return true;
+      }
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  await page.keyboard.press("Enter").catch(() => {});
+  return true;
+}
+
+function normalizeJobList(rawJobs) {
+  return rawJobs
+    .map((job, index) => normalizeJob(job, index))
+    .filter((job) => job.title || job.address || job.city || job.state || job.postcode);
+}
+
+async function extractJobsFromPage(page) {
+  return page.evaluate(() => {
+    function textBySelector(root, selector) {
+      const node = root.querySelector(selector);
+      return (node && node.textContent ? node.textContent : "").replace(/\s+/g, " ").trim();
+    }
+
+    function clean(text) {
+      return String(text || "").replace(/\s+/g, " ").trim();
+    }
+
+    const rows = [];
+    const seen = new Set();
+    const summaries = Array.from(document.querySelectorAll("ul.summary"));
+
+    for (const summary of summaries) {
+      const title = textBySelector(summary, "li.client");
+      const company = textBySelector(summary, "li.company");
+      const distance = textBySelector(summary, "li.location");
+      const due = textBySelector(summary, "li.date");
+      const pay = textBySelector(summary, "li.pay");
+
+      if (!title || /^(client|list view|calendar view|total)/i.test(title)) continue;
+      if (!company || !distance) continue;
+
+      const detailsId = String(summary.id || "").replace(/^summary-/, "details-");
+      const details = detailsId ? document.getElementById(detailsId) : null;
+      const detailsText = clean(details ? details.textContent : "");
+      const addressMatch = detailsText.match(/Details\s+Help\/Contact\s+(.+?)\s+Due:/i);
+      const address = addressMatch ? clean(addressMatch[1]) : "";
+      const detailNotes = detailsText || clean(summary.textContent);
+      const rowKey = `${title}::${company}::${distance}::${due}::${pay}`;
+      if (seen.has(rowKey)) continue;
+      seen.add(rowKey);
+
+      rows.push({
+        id: String(summary.id || rowKey),
+        title,
+        client: company,
+        distance,
+        due,
+        pay,
+        address,
+        notes: detailNotes,
+        details: detailNotes,
+      });
+    }
+
+    return rows;
+  });
+}
+
+async function ensureLiveBrowser() {
+  const chromePath = getChromeExecutablePath();
+  if (!chromePath) {
+    updateSourceStatus({ state: "error", message: "Chrome not found on this machine" });
+    throw new Error("Chrome executable not found");
+  }
+
+  if (liveBrowserContext) {
+    return liveBrowserContext;
+  }
+
+  fs.mkdirSync(path.join(dataDir, "browser-profile"), { recursive: true });
+  liveBrowserContext = await chromium.launchPersistentContext(
+    path.join(dataDir, "browser-profile"),
+    {
+      executablePath: chromePath,
+      headless: false,
+      viewport: null,
+      args: ["--start-maximized"],
+    }
+  );
+  liveBrowserContext.on("close", () => {
+    liveBrowserContext = null;
+    liveBrowserPage = null;
+    updateSourceStatus({ browserOpen: false });
+  });
+  liveBrowserPage = liveBrowserContext.pages()[0] || (await liveBrowserContext.newPage());
+  updateSourceStatus({ browserOpen: true, state: "browser-open" });
+  return liveBrowserContext;
+}
+
+async function openLiveBrowserToSource() {
+  const context = await ensureLiveBrowser();
+  const page = context.pages()[0] || liveBrowserPage || (await context.newPage());
+  liveBrowserPage = page;
+  await page.goto(getLiveLoginUrl(), { waitUntil: "domcontentloaded" }).catch(() => {});
+  await maybeAutofillLogin(page);
+  return { ok: true, browserOpen: true, login_url: getLiveLoginUrl() };
+}
+
+async function scrapeLiveJobs() {
+  if (liveSourceBusy) {
+    return { ok: false, busy: true };
+  }
+  liveSourceBusy = true;
+  try {
+    await openLiveBrowserToSource();
+    const page = liveBrowserPage || (liveBrowserContext && liveBrowserContext.pages()[0]);
+    if (!page) {
+      throw new Error("Live browser page is unavailable");
+    }
+
+    await page.goto(getLiveDataUrl(), { waitUntil: "domcontentloaded" }).catch(() => {});
+    await page.waitForLoadState("domcontentloaded").catch(() => {});
+    await page.waitForTimeout(1500).catch(() => {});
+
+    const rawJobs = await extractJobsFromPage(page);
+    const normalized = normalizeJobList(rawJobs).map((job, index) => ({
+      ...job,
+      source: getLiveSourceName(),
+      source_url: getLiveDataUrl(),
+      order: index + 1,
+    }));
+
+    if (normalized.length) {
+      upsertJobs(normalized);
+      updateSourceStatus({
+        state: "live",
+        message: `Synced ${normalized.length} live jobs`,
+        lastScrapeAt: new Date().toISOString(),
+      });
+      return { ok: true, count: normalized.length };
+    }
+
+    updateSourceStatus({
+      state: "idle",
+      message: "No jobs found on the page yet",
+      lastScrapeAt: new Date().toISOString(),
+    });
+    return { ok: true, count: 0 };
+  } catch (error) {
+    updateSourceStatus({
+      state: "error",
+      message: String(error && error.message ? error.message : error),
+      lastScrapeAt: new Date().toISOString(),
+    });
+    return { ok: false, error: String(error && error.message ? error.message : error) };
+  } finally {
+    liveSourceBusy = false;
+  }
+}
+
+function startLivePolling(intervalMs = LIVE_POLL_INTERVAL_MS) {
+  if (livePollTimer) {
+    clearInterval(livePollTimer);
+    livePollTimer = null;
+  }
+  livePollTimer = setInterval(() => {
+    if (sourceConfig.source_username || sourceConfig.source_password || sourceConfig.login_url || sourceConfig.data_url) {
+      scrapeLiveJobs().catch(() => {});
+    }
+  }, intervalMs);
+}
+
+startLivePolling();
+
 function upsertJobs(nextJobs) {
-  const byId = new Map(jobs.map((job) => [job.id, job]));
-  nextJobs.forEach((job, index) => {
-    const normalized = normalizeJob(job, index);
-    byId.set(normalized.id, { ...byId.get(normalized.id), ...normalized });
+  const normalizedNext = nextJobs.map((job, index) => normalizeJob(job, index));
+  const nextSource = String(normalizedNext[0]?.source || "");
+  const nextSourceUrl = String(normalizedNext[0]?.source_url || "");
+  const shouldReplaceJobSlingerRows = /jobslingerplus\.com/i.test(nextSourceUrl);
+  const retainedJobs = jobs.filter((job) => {
+    if (shouldReplaceJobSlingerRows) {
+      const sourceUrl = String(job.source_url || "");
+      const sourceName = String(job.source || "").toLowerCase();
+      if (/jobslingerplus\.com/i.test(sourceUrl) || sourceName.includes("jobslinger")) {
+        return false;
+      }
+    }
+    if (nextSourceUrl && String(job.source_url || "") === nextSourceUrl) {
+      return false;
+    }
+    if (nextSource && String(job.source || "") === nextSource && nextSourceUrl) {
+      return false;
+    }
+    return true;
+  });
+
+  const byId = new Map(retainedJobs.map((job) => [job.id, job]));
+  normalizedNext.forEach((job) => {
+    byId.set(job.id, { ...byId.get(job.id), ...job });
   });
   jobs = Array.from(byId.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
   saveJobs();
@@ -383,14 +729,35 @@ const server = http.createServer(async (req, res) => {
 
     const nextConfig = {
       source_name: String(body.source_name || body.sourceName || ""),
-      source_url: String(body.source_url || body.sourceUrl || ""),
+      login_url: String(body.login_url || body.loginUrl || body.source_url || body.sourceUrl || ""),
+      data_url: String(body.data_url || body.dataUrl || ""),
       source_username: String(body.source_username || body.sourceUsername || ""),
       source_password: String(body.source_password || body.sourcePassword || ""),
       last_updated_at: new Date().toISOString(),
     };
 
     saveSourceConfig(nextConfig);
+    updateSourceStatus({
+      state: "saved",
+      message: "Live source saved",
+    });
     json(res, 200, { ok: true, config: publicSourceConfig() });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/source-status") {
+    if (!requireAuth(req, res)) return;
+    json(res, 200, sourceStatus);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/source/open") {
+    if (!requireAuth(req, res)) return;
+    const result = await openLiveBrowserToSource().catch((error) => ({
+      ok: false,
+      error: String(error && error.message ? error.message : error),
+    }));
+    json(res, result.ok ? 200 : 500, result);
     return;
   }
 
@@ -448,11 +815,11 @@ const server = http.createServer(async (req, res) => {
 
   if (method === "POST" && url.pathname === "/api/scrape") {
     if (!requireAuth(req, res)) return;
-    json(res, 200, {
-      ok: true,
-      message:
-        "Live sync is handled by the signed-in browser tab or extension. No password-based scraping is required.",
+    const result = await scrapeLiveJobs();
+    json(res, result.ok ? 200 : 500, {
+      ...result,
       jobs,
+      source_status: sourceStatus,
     });
     return;
   }

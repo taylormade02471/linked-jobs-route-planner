@@ -46,7 +46,7 @@ You can override them in `backend/.env`.
 
 ## Live data sync
 
-The browser extension posts visible job rows from the main Jobslinger MegaLog page to:
+The browser extension and backend scraper both read jobs from the Jobslinger MegaLog page:
 
 - `POST /api/jobs`
 
@@ -55,13 +55,14 @@ The extension also polls on a timer, so updates keep flowing even when the page 
 
 The Jobslinger login page includes a square-click challenge, so the reliable flow is:
 
-1. Log in on the main Jobslinger page in Chrome
-2. Load the unpacked extension
-3. Keep the route planner running and the extension will stream live rows into it
+1. Log in on the main Jobslinger homepage in Chrome
+2. Open the Jobslinger MegaLog page
+3. Load the unpacked extension or click `Open live browser` in the app
+4. Keep the route planner running and the live jobs will stream into it
 
 ## Save live login
 
-Use the dashboard’s Live Source panel to store the Jobslinger site login locally.
+Use the dashboard's Live Source panel to store the Jobslinger homepage login locally and set the MegaLog data page.
 
 - The data is written only to the ignored backend data folder
 - The password is never shown back in the UI

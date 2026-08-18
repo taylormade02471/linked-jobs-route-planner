@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Local route planner with live Jobslinger MegaLog sync.",
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  },
   "scripts": {
     "start": "start.cmd"
   }

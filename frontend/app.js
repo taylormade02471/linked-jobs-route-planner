@@ -10,11 +10,14 @@ const selectAll = document.querySelector("#selectAll");
 const logoutForm = document.querySelector("#logoutForm");
 const sourceConfigForm = document.querySelector("#sourceConfigForm");
 const reloadSourceButton = document.querySelector("#reloadSourceButton");
+const openSourceButton = document.querySelector("#openSourceButton");
+const scrapeNowButton = document.querySelector("#scrapeNowButton");
 const sourceStatus = document.querySelector("#sourceStatus");
 const template = document.querySelector("#jobRowTemplate");
 
 let allJobs = [];
 let filteredJobs = [];
+let expandedJobs = new Set();
 
 function setConnection(text) {
   connectionState.textContent = text;
@@ -30,6 +33,25 @@ function getSelectedJobs() {
   return filteredJobs.filter((job) => job.selected);
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return character;
+    }
+  });
+}
+
 function render() {
   const query = searchInput.value.trim().toLowerCase();
   filteredJobs = allJobs.filter((job) => {
@@ -39,7 +61,12 @@ function render() {
       job.city,
       job.state,
       job.postcode,
+      job.client,
+      job.distance,
+      job.due,
+      job.pay,
       job.source,
+      job.details,
     ]
       .join(" ")
       .toLowerCase();
@@ -49,19 +76,50 @@ function render() {
   jobsTableBody.innerHTML = "";
 
   filteredJobs.forEach((job) => {
-    const row = template.content.firstElementChild.cloneNode(true);
+    const fragment = template.content.cloneNode(true);
+    const [row, detailsRow] = fragment.querySelectorAll("tr");
+
     row.querySelector(".job-check").checked = Boolean(job.selected);
     row.querySelector(".job-check").addEventListener("change", (event) => {
       job.selected = event.target.checked;
       updateCounts();
     });
-    row.querySelector(".job-title").textContent = job.title;
-    row.querySelector(".job-address").textContent = job.address || "—";
-    row.querySelector(".job-location").textContent = [job.city, job.state, job.postcode]
-      .filter(Boolean)
-      .join(", ") || "—";
+
+    row.querySelector(".details-toggle").addEventListener("click", () => {
+      if (expandedJobs.has(job.id)) {
+        expandedJobs.delete(job.id);
+      } else {
+        expandedJobs.add(job.id);
+      }
+      render();
+    });
+
+    row.querySelector(".job-title").textContent = job.title || "Job";
+    row.querySelector(".job-address").textContent =
+      [job.client, job.address].filter(Boolean).join(" - ") || "—";
+    row.querySelector(".job-location").textContent =
+      [job.distance, job.city, job.state, job.postcode].filter(Boolean).join(", ") || "—";
+    row.querySelector(".job-duepay").textContent =
+      [job.due, job.pay].filter(Boolean).join(" • ") || "—";
     row.querySelector(".job-source").textContent = job.source || "browser-extension";
-    jobsTableBody.appendChild(row);
+    row.querySelector(".details-toggle").textContent = expandedJobs.has(job.id)
+      ? "Hide"
+      : "Details";
+
+    detailsRow.hidden = !expandedJobs.has(job.id);
+    detailsRow.querySelector(".job-details").innerHTML = `
+      <div class="job-details-grid">
+        <div><span>Client</span><strong>${escapeHtml(job.client || "—")}</strong></div>
+        <div><span>Distance</span><strong>${escapeHtml(job.distance || "—")}</strong></div>
+        <div><span>Due</span><strong>${escapeHtml(job.due || "—")}</strong></div>
+        <div><span>Pay</span><strong>${escapeHtml(job.pay || "—")}</strong></div>
+        <div class="job-details-notes"><span>Notes</span><strong>${escapeHtml(
+          job.details || job.notes || "—"
+        )}</strong></div>
+      </div>
+    `;
+
+    jobsTableBody.appendChild(fragment);
   });
 
   updateCounts();
@@ -83,6 +141,7 @@ async function loadJobs() {
   }
   const payload = await response.json();
   allJobs = (payload.jobs || []).map((job) => ({ ...job, selected: Boolean(job.selected) }));
+  expandedJobs = new Set([...expandedJobs].filter((id) => allJobs.some((job) => job.id === id)));
   setConnection("Ready");
   render();
 }
@@ -97,10 +156,22 @@ async function loadSourceConfig() {
   }
   const payload = await response.json();
   sourceConfigForm.source_name.value = payload.source_name || "";
-  sourceConfigForm.source_url.value = payload.source_url || "";
+  sourceConfigForm.source_url.value = payload.login_url || payload.source_url || "";
+  sourceConfigForm.data_url.value = payload.data_url || "";
   sourceConfigForm.source_username.value = payload.source_username || "";
   sourceConfigForm.source_password.value = "";
   setSourceStatus(payload.has_password ? "Saved" : "Needs password");
+}
+
+async function loadSourceStatus() {
+  const response = await fetch("/api/source-status", { credentials: "include" });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+  const payload = await response.json();
+  const label = payload.message || payload.state || "Idle";
+  setSourceStatus(label);
 }
 
 function openRoute() {
@@ -187,7 +258,8 @@ if (sourceConfigForm) {
       credentials: "include",
       body: JSON.stringify({
         source_name: sourceConfigForm.source_name.value.trim(),
-        source_url: sourceConfigForm.source_url.value.trim(),
+        login_url: sourceConfigForm.source_url.value.trim(),
+        data_url: sourceConfigForm.data_url.value.trim(),
         source_username: sourceConfigForm.source_username.value.trim(),
         source_password: sourceConfigForm.source_password.value,
       }),
@@ -208,5 +280,37 @@ if (reloadSourceButton) {
   });
 }
 
+if (openSourceButton) {
+  openSourceButton.addEventListener("click", async () => {
+    setSourceStatus("Opening browser");
+    const response = await fetch("/api/source/open", {
+      method: "POST",
+      credentials: "include",
+    });
+    if (response.status === 401) {
+      window.location.href = "/login";
+      return;
+    }
+    await loadSourceStatus();
+  });
+}
+
+if (scrapeNowButton) {
+  scrapeNowButton.addEventListener("click", async () => {
+    setSourceStatus("Syncing");
+    const response = await fetch("/api/scrape", {
+      method: "POST",
+      credentials: "include",
+    });
+    if (response.status === 401) {
+      window.location.href = "/login";
+      return;
+    }
+    await loadJobs();
+    await loadSourceStatus();
+  });
+}
+
 loadJobs();
 loadSourceConfig();
+loadSourceStatus();

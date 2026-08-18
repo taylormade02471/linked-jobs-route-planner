@@ -178,6 +178,7 @@ h1 {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 18px;
+  align-items: center;
 }
 
 button {
@@ -227,6 +228,52 @@ button.secondary {
 
 .job-title {
   font-weight: 700;
+}
+
+.job-details-row {
+  background: rgba(15, 118, 110, 0.03);
+}
+
+.job-details {
+  padding: 4px 0 10px;
+}
+
+.job-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.job-details-grid div {
+  display: grid;
+  gap: 4px;
+}
+
+.job-details-grid span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.job-details-grid strong {
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.job-details-notes {
+  grid-column: 1 / -1;
+}
+
+.details-toggle {
+  padding: 10px 14px;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 900px) {
+  .job-details-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
