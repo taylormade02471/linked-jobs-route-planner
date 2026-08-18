@@ -485,21 +485,14 @@ function openRoute() {
     alert("Select one or more jobs first.");
     return;
   }
-  const originLocation = currentOrigin();
-  const stops = selected
-    .map((job) => job.address || [job.city, job.state].filter(Boolean).join(", "))
-    .filter(Boolean);
-  const destination = stops.at(-1) || "";
-  const mapsUrl = new URL("https://www.google.com/maps/dir/");
-  if (originLocation) {
-    mapsUrl.searchParams.set("api", "1");
-    mapsUrl.searchParams.set("origin", `${originLocation.lat},${originLocation.lon}`);
-  }
-  if (destination) mapsUrl.searchParams.set("destination", destination);
-  if (stops.length > 2) {
-    mapsUrl.searchParams.set("waypoints", stops.slice(1, -1).join("|"));
-  }
-  window.open(mapsUrl.toString(), "_blank", "noopener");
+  activeTab = "active";
+  render();
+  planTransitRoute().then(() => {
+    const routeSection = document.querySelector(".route-planner");
+    if (routeSection) {
+      routeSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
 }
 
 function exportCsv() {

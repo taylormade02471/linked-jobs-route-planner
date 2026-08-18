@@ -10,9 +10,11 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.webkit.CookieManager;
+import android.webkit.GeolocationPermissions;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebChromeClient;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -390,6 +392,13 @@ public class MainActivity extends AppCompatActivity {
                 if (request != null && request.isForMainFrame()) {
                     statusText.setText("HTTP error: " + errorResponse.getStatusCode());
                 }
+            }
+        });
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
             }
         });
 
