@@ -1136,6 +1136,6 @@ const server = http.createServer(async (req, res) => {
   sendText(res, 404, "Not found");
 });
 
-server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server listening on http://127.0.0.1:${PORT}`);
 });
