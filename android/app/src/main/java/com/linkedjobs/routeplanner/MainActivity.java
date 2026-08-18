@@ -2,6 +2,7 @@ package com.linkedjobs.routeplanner;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.DhcpInfo;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
@@ -23,6 +24,8 @@ import android.widget.TextView;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "linked_jobs_route_planner";
     private static final String KEY_BASE_URL = "base_url";
     private static final String DEFAULT_BASE_URL = "http://127.0.0.1:3300";
+    private static final int LOCATION_PERMISSION_REQUEST = 1101;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private SharedPreferences getPrefs() {
@@ -112,6 +116,23 @@ public class MainActivity extends AppCompatActivity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setSupportMultipleWindows(false);
+    }
+
+    private void ensureLocationPermission() {
+        boolean fineGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        if (!fineGranted || !coarseGranted) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[] {
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    },
+                    LOCATION_PERMISSION_REQUEST
+            );
+        }
     }
 
     private String fetchUrl(String requestUrl) throws Exception {
@@ -360,6 +381,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ensureLocationPermission();
 
         EditText baseUrlInput = new EditText(this);
         TextView statusText = new TextView(this);
