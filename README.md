@@ -37,6 +37,8 @@ You can override them in `backend/.env`.
    npm start
    ```
 
+   This runs `backend/server_live.js` on port `3300` from the repository root.
+
 3. Open:
 
    - `http://localhost:3300/login`
@@ -44,7 +46,7 @@ You can override them in `backend/.env`.
 
 ## Live data sync
 
-The browser extension posts visible job rows from the main Jobslinger page to:
+The browser extension posts visible job rows from the main Jobslinger MegaLog page to:
 
 - `POST /api/jobs`
 
@@ -56,6 +58,14 @@ The Jobslinger login page includes a square-click challenge, so the reliable flo
 1. Log in on the main Jobslinger page in Chrome
 2. Load the unpacked extension
 3. Keep the route planner running and the extension will stream live rows into it
+
+## Save live login
+
+Use the dashboard’s Live Source panel to store the Jobslinger site login locally.
+
+- The data is written only to the ignored backend data folder
+- The password is never shown back in the UI
+- If the site is offline, the dashboard still shows the last successful scrape from disk
 
 ## Install the browser extension
 

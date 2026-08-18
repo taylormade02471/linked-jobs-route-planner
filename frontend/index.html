@@ -54,6 +54,42 @@
         </label>
       </section>
 
+      <section class="panel settings">
+        <div class="settings-head">
+          <div>
+            <p class="eyebrow">Live source</p>
+            <h2>Save your Jobslinger login safely</h2>
+          </div>
+          <span id="sourceStatus" class="pill">Not loaded</span>
+        </div>
+        <form id="sourceConfigForm" class="settings-form">
+          <label>
+            Source name
+            <input name="source_name" placeholder="Jobslinger MegaLog" />
+          </label>
+          <label>
+            Source URL
+            <input name="source_url" placeholder="https://www.jobslingerplus.com/MegaLog" />
+          </label>
+          <label>
+            Username
+            <input name="source_username" autocomplete="username" />
+          </label>
+          <label>
+            Password
+            <input name="source_password" type="password" autocomplete="current-password" />
+          </label>
+          <div class="actions">
+            <button type="submit" class="primary">Save live login</button>
+            <button type="button" id="reloadSourceButton" class="secondary">Reload saved login</button>
+          </div>
+        </form>
+        <p class="helper">
+          Saved settings stay on your machine in the ignored backend data folder. If the site is
+          offline, the route planner keeps showing the last successful scrape.
+        </p>
+      </section>
+
       <section class="panel">
         <table class="jobs-table">
           <thead>
@@ -83,4 +119,3 @@
     <script src="/frontend/app.js" type="module"></script>
   </body>
 </html>
-

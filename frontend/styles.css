@@ -103,6 +103,60 @@ h1 {
   align-items: center;
 }
 
+.settings {
+  padding: 18px;
+}
+
+.settings-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.settings h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-strong);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.settings-form {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.settings-form input {
+  border: 1px solid rgba(16, 33, 51, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.helper {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .controls input[type="search"] {
   flex: 1 1 320px;
   border: 1px solid rgba(16, 33, 51, 0.12);
@@ -213,4 +267,3 @@ button.secondary {
     padding: 8px 18px;
   }
 }
-

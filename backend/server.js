@@ -8,6 +8,7 @@ const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
 const dataDir = path.join(rootDir, "data");
 const jobsPath = path.join(dataDir, "jobs.json");
+const sourceConfigPath = path.join(dataDir, "source-config.json");
 
 const PORT = Number(process.env.PORT || 3300);
 const USERNAME = process.env.APP_USER || process.env.BASIC_AUTH_USER || "kyle";
@@ -22,6 +23,7 @@ const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "route_planner_session";
 
 let jobs = loadJobs();
+let sourceConfig = loadSourceConfig();
 let clients = new Set();
 let scrapeRunning = false;
 
@@ -38,6 +40,25 @@ function loadJobs() {
 function saveJobs() {
   fs.mkdirSync(dataDir, { recursive: true });
   fs.writeFileSync(jobsPath, JSON.stringify(jobs, null, 2), "utf8");
+}
+
+function loadSourceConfig() {
+  try {
+    const raw = fs.readFileSync(sourceConfigPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSourceConfig(nextConfig) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  sourceConfig = {
+    ...sourceConfig,
+    ...nextConfig,
+  };
+  fs.writeFileSync(sourceConfigPath, JSON.stringify(sourceConfig, null, 2), "utf8");
 }
 
 function json(res, statusCode, payload) {
@@ -221,6 +242,16 @@ function normalizeJob(job, index = 0) {
   };
 }
 
+function publicSourceConfig() {
+  return {
+    source_name: String(sourceConfig.source_name || sourceConfig.sourceName || ""),
+    source_url: String(sourceConfig.source_url || sourceConfig.sourceUrl || ""),
+    source_username: String(sourceConfig.source_username || sourceConfig.sourceUsername || ""),
+    has_password: Boolean(sourceConfig.source_password || sourceConfig.sourcePassword),
+    last_updated_at: String(sourceConfig.last_updated_at || ""),
+  };
+}
+
 function upsertJobs(nextJobs) {
   const byId = new Map(jobs.map((job) => [job.id, job]));
   nextJobs.forEach((job, index) => {
@@ -336,6 +367,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "GET" && url.pathname === "/api/source-config") {
+    if (!requireAuth(req, res)) return;
+    json(res, 200, publicSourceConfig());
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/source-config") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const nextConfig = {
+      source_name: String(body.source_name || body.sourceName || ""),
+      source_url: String(body.source_url || body.sourceUrl || ""),
+      source_username: String(body.source_username || body.sourceUsername || ""),
+      source_password: String(body.source_password || body.sourcePassword || ""),
+      last_updated_at: new Date().toISOString(),
+    };
+
+    saveSourceConfig(nextConfig);
+    json(res, 200, { ok: true, config: publicSourceConfig() });
+    return;
+  }
+
   if (method === "POST" && url.pathname === "/api/jobs") {
     const body = await parseBody(req).catch((error) => {
       json(res, 400, { ok: false, error: error.message });
@@ -409,5 +467,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Linked Jobs Route Planner running on http://localhost:${PORT}`);
+  console.log(`Server listening on http://localhost:${PORT}`);
 });

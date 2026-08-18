@@ -8,6 +8,9 @@ const routeButton = document.querySelector("#routeButton");
 const exportButton = document.querySelector("#exportButton");
 const selectAll = document.querySelector("#selectAll");
 const logoutForm = document.querySelector("#logoutForm");
+const sourceConfigForm = document.querySelector("#sourceConfigForm");
+const reloadSourceButton = document.querySelector("#reloadSourceButton");
+const sourceStatus = document.querySelector("#sourceStatus");
 const template = document.querySelector("#jobRowTemplate");
 
 let allJobs = [];
@@ -15,6 +18,12 @@ let filteredJobs = [];
 
 function setConnection(text) {
   connectionState.textContent = text;
+}
+
+function setSourceStatus(text) {
+  if (sourceStatus) {
+    sourceStatus.textContent = text;
+  }
 }
 
 function getSelectedJobs() {
@@ -76,6 +85,22 @@ async function loadJobs() {
   allJobs = (payload.jobs || []).map((job) => ({ ...job, selected: Boolean(job.selected) }));
   setConnection("Ready");
   render();
+}
+
+async function loadSourceConfig() {
+  if (!sourceConfigForm) return;
+  setSourceStatus("Loading");
+  const response = await fetch("/api/source-config", { credentials: "include" });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+  const payload = await response.json();
+  sourceConfigForm.source_name.value = payload.source_name || "";
+  sourceConfigForm.source_url.value = payload.source_url || "";
+  sourceConfigForm.source_username.value = payload.source_username || "";
+  sourceConfigForm.source_password.value = "";
+  setSourceStatus(payload.has_password ? "Saved" : "Needs password");
 }
 
 function openRoute() {
@@ -150,5 +175,38 @@ if (logoutForm) {
   });
 }
 
-loadJobs();
+if (sourceConfigForm) {
+  sourceConfigForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setSourceStatus("Saving");
+    const response = await fetch("/api/source-config", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        source_name: sourceConfigForm.source_name.value.trim(),
+        source_url: sourceConfigForm.source_url.value.trim(),
+        source_username: sourceConfigForm.source_username.value.trim(),
+        source_password: sourceConfigForm.source_password.value,
+      }),
+    });
+    if (response.status === 401) {
+      window.location.href = "/login";
+      return;
+    }
+    const payload = await response.json();
+    setSourceStatus(payload.config?.has_password ? "Saved" : "Needs password");
+    sourceConfigForm.source_password.value = "";
+  });
+}
 
+if (reloadSourceButton) {
+  reloadSourceButton.addEventListener("click", () => {
+    loadSourceConfig();
+  });
+}
+
+loadJobs();
+loadSourceConfig();

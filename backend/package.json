@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Local route planner backend with 7-day login sessions and live job sync.",
-  "main": "server.js",
+  "main": "server_live.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "start.cmd",
+    "dev": "start.cmd"
   }
 }
-
