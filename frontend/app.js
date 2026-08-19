@@ -1062,10 +1062,3 @@ loadSourceStatus();
 importCtsZip().catch(() => {});
 refreshLiveOrigin().catch(() => {});
 ensureRouteMap();
-
-if (planRefreshTimer) {
-  clearInterval(planRefreshTimer);
-}
-planRefreshTimer = setInterval(() => {
-  autoPlanRoute().catch(() => {});
-}, 60000);

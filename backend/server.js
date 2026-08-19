@@ -688,7 +688,12 @@ function startLivePolling(intervalMs = LIVE_POLL_INTERVAL_MS) {
   }, intervalMs);
 }
 
-startLivePolling();
+function stopLivePolling() {
+  if (livePollTimer) {
+    clearInterval(livePollTimer);
+    livePollTimer = null;
+  }
+}
 
 function upsertJobs(nextJobs) {
   const normalizedNext = nextJobs.map((job, index) => normalizeJob(job, index));
