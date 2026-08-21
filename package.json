@@ -10,6 +10,7 @@
     "unzipper": "^0.12.5"
   },
   "scripts": {
-    "start": "start.cmd"
+    "start": "start.cmd",
+    "test": "node --test \"tests/**/*.test.js\""
   }
 }
