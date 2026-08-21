@@ -6,6 +6,7 @@ const { URL } = require("url");
 const os = require("os");
 const { chromium } = require("playwright-core");
 const transitland = require("./transitland");
+const { buildExtensionSyncStatus } = require("./sourceSync");
 
 const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
@@ -1101,7 +1102,18 @@ const server = http.createServer(async (req, res) => {
     }
 
     upsertJobs(incoming);
-    json(res, 200, { ok: true, count: jobs.length });
+    const pageUrl = String(body.page_url || body.pageUrl || incoming[0]?.source_url || "");
+    const sourceName = String(body.source || incoming[0]?.source || "");
+    if (sourceName === "browser-extension" || /jobslingerplus\.com/i.test(pageUrl)) {
+      updateSourceStatus(
+        buildExtensionSyncStatus({
+          syncedJobCount: incoming.length,
+          pageUrl,
+        })
+      );
+    }
+    broadcast("jobs", { jobs });
+    json(res, 200, { ok: true, count: jobs.length, source_status: sourceStatus });
     return;
   }
 

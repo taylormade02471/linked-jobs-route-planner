@@ -66,7 +66,11 @@ async function syncJobs() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ jobs }),
+      body: JSON.stringify({
+        source: "browser-extension",
+        page_url: window.location.href,
+        jobs,
+      }),
     });
   } catch {
     // The dashboard may be offline. Try again on the next page update.
