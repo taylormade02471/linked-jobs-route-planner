@@ -23,6 +23,7 @@ The map draws only GTFS geometry between the boarding and getting-off stops used
 - `/api/wego-live` proxies WeGo's official GTFS-Realtime vehicle, trip-update, and alert feeds server-side.
 - Frontend refresh interval: **30 seconds**.
 - If live data fails, the static Wednesday route remains usable and the UI does not silently substitute an old GPS snapshot.
+- Browser geolocation is enabled in the planner. The page can request phone location permission, continuously update a **YOU ARE HERE** marker, show accuracy, and center the map on the user.
 
 Official WeGo realtime endpoints: https://www.wegotransit.com/contact-us/data-request-submission/
 
@@ -37,3 +38,7 @@ Route 94 Wednesday GTFS used here:
 - Last planned Nashville Central -> Clarksville Exit 11: **5:10 PM -> 6:06 PM**
 
 `3721 Clarksville Hwy` is not treated as a direct Route 22 stop. The planner correctly marks the Bordeaux last-mile as **WeGo Link required** from a designated transfer point rather than inventing a fixed-route stop.
+
+## Deployment trigger
+
+Location-enabled field build confirmed in source on 2026-08-25. This commit intentionally triggers the connected Vercel Git deployment.
