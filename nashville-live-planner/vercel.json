@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/wego-live", "destination": "/api/wego-live" }
+  ]
+}
