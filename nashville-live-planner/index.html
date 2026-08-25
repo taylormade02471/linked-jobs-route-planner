@@ -17,7 +17,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .row{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:13px;margin:4px 0}.row b{color:var(--navy)}
 .badge{display:inline-block;padding:4px 7px;border-radius:999px;color:#fff;font-weight:bold;font-size:12px;margin-right:5px}.time{font-weight:bold;color:#633d00}
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.locationbar button{font-size:13px;min-height:38px;padding:8px 11px}.locationstatus{font-size:12px;color:var(--muted);font-weight:600}.you-marker{background:#0b5fa5;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(11,95,165,.28);width:18px;height:18px}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 @media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
 </style>
 </head>
@@ -47,11 +47,10 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
   <button id="refresh">Refresh live now</button>
  </div>
  <div id="liveStatus" class="status">Waiting for live feed…</div>
- <div class="locationbar"><button id="enableLocation">Enable my live location</button><button id="centerMe" disabled>Center on me</button><span id="locationStatus" class="locationstatus">Location not enabled.</span></div>
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button></div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the planned GTFS pieces. Numbered white circles are your boarding sequence. Smaller outlined circles are get-off points. Orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the planned GTFS pieces. Numbered white circles are your boarding sequence. Smaller outlined circles are get-off points. Orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 </main>
@@ -68,16 +67,8 @@ let currentBounds=null;
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
-const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), userLayer=L.layerGroup().addTo(map);
-let userMarker=null,userAccuracy=null,userPosition=null,locationWatchId=null;
-const locationStatus=document.getElementById('locationStatus'),enableLocationBtn=document.getElementById('enableLocation'),centerMeBtn=document.getElementById('centerMe');
-function centerOnUser(){if(userPosition)map.setView([userPosition.lat,userPosition.lon],Math.max(map.getZoom(),16));}
-centerMeBtn.onclick=centerOnUser;
-function updateUserLocation(pos){const c=pos.coords;userPosition={lat:c.latitude,lon:c.longitude,accuracy:c.accuracy,ts:pos.timestamp};if(userMarker)userLayer.removeLayer(userMarker);if(userAccuracy)userLayer.removeLayer(userAccuracy);userAccuracy=L.circle([c.latitude,c.longitude],{radius:Math.max(5,c.accuracy||0),color:'#0b5fa5',weight:1,fillColor:'#0b5fa5',fillOpacity:.08}).addTo(userLayer);userMarker=L.circleMarker([c.latitude,c.longitude],{radius:10,color:'#fff',weight:3,fillColor:'#0b5fa5',fillOpacity:1}).bindPopup(`<b>YOU ARE HERE</b><br>Accuracy: ±${Math.round(c.accuracy||0)} m<br>Updated: ${new Date(pos.timestamp).toLocaleTimeString()}`).addTo(userLayer);centerMeBtn.disabled=false;locationStatus.textContent=`LIVE GPS — ±${Math.round(c.accuracy||0)} m — ${new Date(pos.timestamp).toLocaleTimeString()}`;}
-function locationError(err){const msg=err.code===1?'Location permission denied. Open browser site settings and allow Location, then tap Enable again.':err.code===2?'Location temporarily unavailable. Make sure phone Location is on.':'Location request timed out. Try again.';locationStatus.textContent=msg;}
-function enableLocation(){if(!('geolocation' in navigator)){locationStatus.textContent='This browser does not support geolocation.';return;}locationStatus.textContent='Requesting phone location permission…';enableLocationBtn.textContent='Location enabled';if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);locationWatchId=navigator.geolocation.watchPosition(updateUserLocation,locationError,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});}
-enableLocationBtn.onclick=enableLocation;
-setTimeout(()=>{if(locationWatchId===null)enableLocation();},900);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
+let myPosition=null,myAccuracy=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
 
 const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
@@ -109,6 +100,26 @@ async function refreshLive(){
 }
 
 function planSections(){return D.plans[planSel.value]||[]}
+function updateLocationStatus(msg){const el=document.getElementById('locationStatus');if(el)el.innerHTML=msg;}
+function drawMyLocation(lat,lon,accuracy){
+ myPosition=[lat,lon];myAccuracy=accuracy;
+ locationLayer.clearLayers();
+ myAccuracyCircle=L.circle(myPosition,{radius:Math.max(accuracy||0,8),color:'#1976d2',weight:1,fillColor:'#64b5f6',fillOpacity:.13}).addTo(locationLayer);
+ myLocationMarker=L.circleMarker(myPosition,{radius:10,color:'#0d47a1',weight:3,fillColor:'#42a5f5',fillOpacity:1,className:'mePulse'}).bindPopup(`<b>YOU ARE HERE</b><br>Accuracy: about ${Math.round(accuracy||0)} m<br>Updated: ${new Date().toLocaleTimeString()}`).addTo(locationLayer);
+ updateLocationStatus(`<b>Location LIVE</b> — accuracy about ${Math.round(accuracy||0)} m — updated ${new Date().toLocaleTimeString()}`);
+}
+function startLocation(){
+ if(!navigator.geolocation){updateLocationStatus('<b>Location unavailable:</b> this browser does not support geolocation.');return;}
+ updateLocationStatus('Requesting your phone location…');
+ if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
+ locationWatchId=navigator.geolocation.watchPosition(pos=>{
+   drawMyLocation(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy);
+ },err=>{
+   const reason=err.code===1?'permission denied':err.code===2?'position unavailable':'location timed out';
+   updateLocationStatus(`<b>Location not available:</b> ${reason}. In Chrome, open Site settings → Location → Allow, then tap “Enable my location” again.`);
+ },{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+}
+function centerOnMe(){if(myPosition){map.setView(myPosition,16);if(myLocationMarker)myLocationMarker.openPopup();}else{startLocation();}}
 function numberedSectionLabel(key,index,total){
  const sec=D.sections[key];
  if(key==='return')return 'RETURN — Nashville → Clarksville';
@@ -184,8 +195,8 @@ function render(){
  if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
  document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
 }
-planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);
-planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);
+planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);document.getElementById('enableLocation').addEventListener('click',startLocation);document.getElementById('centerMe').addEventListener('click',centerOnMe);
+planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);setTimeout(startLocation,700);
 </script>
 </body>
 </html>
