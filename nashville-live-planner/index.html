@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nashville Live Audit Transit Planner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--navy:#17324d;--bg:#f4f7f9;--card:#fff;--line:#d9e1e7;--muted:#5d6c78;--blue:#0b5fa5;--amber:#fff4d8}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#142434}
+header{background:var(--navy);color:#fff;padding:14px}header h1{font-size:20px;margin:0 0 5px}header p{margin:0;font-size:12px}
+main{max-width:1150px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.notice{background:#eef6fb}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:end}label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:210px;flex:1}
+select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}button{cursor:pointer;flex:0 0 auto}
+#map{height:550px;border-radius:10px}.status{font-size:12px;padding:8px;border-radius:8px;background:#f5f7f9;margin-top:8px}
+.sectionTitle{font-weight:bold;font-size:16px;margin:12px 0 6px}.leg{border-top:1px solid #e2e7eb;padding:10px 0}.leg:first-child{border-top:0}.change{background:var(--amber);border-radius:9px;padding:10px;margin-top:8px}
+.row{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:13px;margin:4px 0}.row b{color:var(--navy)}
+.badge{display:inline-block;padding:4px 7px;border-radius:999px;color:#fff;font-weight:bold;font-size:12px;margin-right:5px}.time{font-weight:bold;color:#633d00}
+.bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
+@media(max-width:720px){#map{height:450px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
+</style>
+</head>
+<body>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>Only the current 18 quick audits + the first 1-hour Walgreens anchor. Static Wednesday GTFS plan with 30-second live WeGo backbone.</p></header>
+<main>
+<div class="notice"><b>Field-use rule:</b> static times are Wednesday, Aug. 26 schedule estimates from the uploaded WeGo GTFS. Live vehicle/trip/alert data refreshes from your own same-origin backend every 30 seconds. The map draws only the planned stop-to-stop GTFS pieces, not entire bus routes.</div>
+
+<div class="card metrics">
+ <div class="metric">Requested quick rate<strong>$8.50</strong><span>18 jobs = $153.00</span></div>
+ <div class="metric">First 1-hour job<strong>$38.50</strong><span>7601 Hwy 70 S</span></div>
+ <div class="metric">All-18 target<strong>$191.50</strong><span>2 hr 30 min work time</span></div>
+ <div class="metric">Route 94 home<strong>5:10 PM</strong><span>scheduled 6:06 PM arrival</span></div>
+</div>
+
+<div class="card">
+ <div class="controls">
+  <label>1. Planned route
+   <select id="plan"></select>
+  </label>
+  <label>2. Itinerary section
+   <select id="section"></select>
+  </label>
+  <label>3. Stop / route view
+   <select id="view"></select>
+  </label>
+  <button id="refresh">Refresh live now</button>
+ </div>
+ <div id="liveStatus" class="status">Waiting for live feed…</div>
+</div>
+
+<div class="card"><div id="details"></div></div>
+<div class="card"><div id="map"></div><p style="font-size:12px;color:var(--muted)">Yellow/orange circles are actual live WeGo buses only when the realtime feed assigns the vehicle to a route used by the selected planned leg(s). Pins are only boarding/get-off points used by your plan.</p></div>
+<div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
+<div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./planner-data.js"></script>
+<script>
+const D=window.PLANNER_DATA;
+const map=L.map('map').setView([36.16,-86.78],11);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map);
+
+const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
+Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
+
+let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
+
+function readVarint(u8,s){let val=0,shift=0;while(s.i<u8.length){const b=u8[s.i++];val+=(b&127)*Math.pow(2,shift);if(!(b&128))return val;shift+=7}return val}
+function fields(u8){let s={i:0},o=[];while(s.i<u8.length){let key=readVarint(u8,s),n=Math.floor(key/8),w=key&7,v;if(w===0)v=readVarint(u8,s);else if(w===1){v=u8.slice(s.i,s.i+8);s.i+=8}else if(w===2){let l=readVarint(u8,s);v=u8.slice(s.i,s.i+l);s.i+=l}else if(w===5){v=u8.slice(s.i,s.i+4);s.i+=4}else break;o.push([n,w,v])}return o}
+const td=new TextDecoder();const str=v=>{try{return td.decode(v)}catch{return''}};const f32=v=>new DataView(v.buffer,v.byteOffset,4).getFloat32(0,true);
+function tripDesc(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.trip_id=str(v);if(n===5&&w===2)d.route_id=str(v)}return d}
+function vehDesc(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.id=str(v);if(n===2&&w===2)d.label=str(v)}return d}
+function pos(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===5)d.lat=f32(v);if(n===2&&w===5)d.lon=f32(v);if(n===3&&w===5)d.bearing=f32(v)}return d}
+function parseVehicle(u){let d={};for(const[n,w,v]of fields(u)){if(n===1&&w===2)d.trip=tripDesc(v);if(n===2&&w===2)d.position=pos(v);if(n===5&&w===0)d.timestamp=v;if(n===7&&w===2)d.stop_id=str(v);if(n===8&&w===2)d.vehicle=vehDesc(v)}return d}
+function translation(u){for(const[n,w,v]of fields(u))if(n===1&&w===2)return str(v);return''}
+function translated(u){for(const[n,w,v]of fields(u))if(n===1&&w===2)return translation(v);return''}
+function selector(u){let d={};for(const[n,w,v]of fields(u)){if(n===2&&w===2)d.route_id=str(v);if(n===5&&w===2)d.stop_id=str(v)}return d}
+function alertRec(u){let d={routes:[],stops:[]};for(const[n,w,v]of fields(u)){if(n===5&&w===2){const s=selector(v);if(s.route_id)d.routes.push(s.route_id);if(s.stop_id)d.stops.push(s.stop_id)}if(n===10&&w===2)d.header=translated(v);if(n===11&&w===2)d.description=translated(v)}return d}
+function parseFeed(b64,kind){if(!b64)return[];const raw=atob(b64),u8=Uint8Array.from(raw,c=>c.charCodeAt(0)),out=[];for(const[n,w,v]of fields(u8)){if(n!==2||w!==2)continue;let payload=null;for(const[en,ew,ev]of fields(v)){if(kind==='vehicle'&&en===4&&ew===2)payload=parseVehicle(ev);if(kind==='alert'&&en===5&&ew===2)payload=alertRec(ev)}if(payload)out.push(payload)}return out}
+const shortFor=id=>D.routeIdToShort[id]||id||'';
+
+async function refreshLive(){
+ const el=document.getElementById('liveStatus');el.textContent='Refreshing official WeGo realtime feeds…';
+ try{
+  const r=await fetch('/api/wego-live?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.updatedAt=j.fetchedAt;live.ok=true;
+  el.textContent=`LIVE — ${live.vehicles.length} vehicles / ${live.alerts.length} alerts — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto refresh 30 sec`;
+ }catch(e){live.ok=false;el.innerHTML=`Live backend unavailable (${e.message}). Static GTFS plan remains usable. <a target="_blank" href="https://www.wegotransit.com/routes/">Open WeGo live arrivals</a>`}
+ render();
+}
+
+function planSections(){return D.plans[planSel.value]||[]}
+function fillSections(){
+ sectionSel.innerHTML='';
+ const ps=planSections();let number=0;
+ ps.forEach(key=>{
+  const o=document.createElement('option');o.value=key;
+  if(key==='return')o.textContent='RETURN — Nashville → Clarksville';
+  else{o.textContent=`${++number}. ${D.sections[key].title}`}
+  sectionSel.appendChild(o);
+ });
+ fillViews();
+}
+function fillViews(){
+ viewSel.innerHTML='';
+ let o=document.createElement('option');o.value='plan-all';o.textContent='All Stops in Planned Route';viewSel.appendChild(o);
+ let s=document.createElement('option');s.value='section-all';s.textContent='All Stops in This Section';viewSel.appendChild(s);
+ const legs=D.sections[sectionSel.value]?.legs||[];
+ legs.forEach((l,i)=>{let x=document.createElement('option');x.value='leg:'+i;x.textContent=`Stop ${i+1}: ${l.label}`;viewSel.appendChild(x)});
+ render();
+}
+
+function selectedLegs(){
+ if(viewSel.value==='plan-all'){
+  let result=[];let n=0;
+  planSections().forEach(key=>{if(key!=='return')n++;(D.sections[key]?.legs||[]).forEach((l,i)=>result.push({...l,_section:key,_sectionNo:key==='return'?'RETURN':n,_legNo:i+1}))});
+  return result;
+ }
+ if(viewSel.value==='section-all'){
+  let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
+  return (D.sections[sectionSel.value]?.legs||[]).map((l,i)=>({...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}));
+ }
+ const i=Number(viewSel.value.split(':')[1]||0),l=D.sections[sectionSel.value]?.legs?.[i];
+ let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
+ return l?[{...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}]:[];
+}
+
+function render(){
+ lines.clearLayers();pins.clearLayers();busLayer.clearLayers();
+ const legs=selectedLegs(),bounds=[],routesUsed=new Set(),details=[];
+ let lastSection=null;
+ for(const l of legs){
+  if(l._section!==lastSection){details.push(`<div class="sectionTitle">${l._sectionNo}. ${D.sections[l._section].title}</div>`);lastSection=l._section}
+  const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
+  if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:c,weight:7,opacity:.9}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
+  const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
+  L.marker(b).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
+  L.marker(a).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
+  const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
+  details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK':l.route==='link'?'WEGO LINK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
+ }
+ document.getElementById('details').innerHTML=details.join('')||'No route selected.';
+ if(bounds.length)map.fitBounds(bounds,{padding:[35,35]});
+
+ let busRows=[];
+ if(live.ok){
+  for(const v of live.vehicles){
+   const sr=shortFor(v.trip?.route_id);
+   if(routesUsed.has(sr)&&v.position?.lat!=null){
+    L.circleMarker([v.position.lat,v.position.lon],{radius:9,color:'#000',weight:2,fillColor:'#ffb000',fillOpacity:.95})
+     .bindPopup(`<b>ACTUAL LIVE WEGO BUS</b><br>${v.vehicle?.label||v.vehicle?.id||'Vehicle'}<br>Route ${sr}<br>${v.stop_id?'Current/next stop '+v.stop_id+'<br>':''}${v.timestamp?'Feed time '+new Date(v.timestamp*1000).toLocaleTimeString():''}`)
+     .addTo(busLayer);
+    busRows.push(`<div class="bus"><b>${v.vehicle?.label||v.vehicle?.id||'Bus'}</b> — actual live Route ${sr}${v.stop_id?' • stop '+v.stop_id:''}</div>`);
+   }
+  }
+ }
+ document.getElementById('buses').innerHTML=busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>');
+
+ let al=[];
+ if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
+ document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+}
+planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);
+planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);
+</script>
+</body>
+</html>
