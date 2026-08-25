@@ -12,13 +12,13 @@ header{background:var(--navy);color:#fff;padding:14px}header h1{font-size:20px;m
 main{max-width:1150px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
 .notice{background:#eef6fb}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:end}label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:210px;flex:1}
 select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}button{cursor:pointer;flex:0 0 auto}
-#map{height:550px;border-radius:10px}.status{font-size:12px;padding:8px;border-radius:8px;background:#f5f7f9;margin-top:8px}
+#map{height:620px;border-radius:12px;border:1px solid #cbd5df;box-shadow:0 3px 12px rgba(23,50,77,.10)}.status{font-size:12px;padding:8px;border-radius:8px;background:#f5f7f9;margin-top:8px}
 .sectionTitle{font-weight:bold;font-size:16px;margin:12px 0 6px}.leg{border-top:1px solid #e2e7eb;padding:10px 0}.leg:first-child{border-top:0}.change{background:var(--amber);border-radius:9px;padding:10px;margin-top:8px}
 .row{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:13px;margin:4px 0}.row b{color:var(--navy)}
 .badge{display:inline-block;padding:4px 7px;border-radius:999px;color:#fff;font-weight:bold;font-size:12px;margin-right:5px}.time{font-weight:bold;color:#633d00}
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
-@media(max-width:720px){#map{height:450px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.locationbar button{font-size:13px;min-height:38px;padding:8px 11px}.locationstatus{font-size:12px;color:var(--muted);font-weight:600}.you-marker{background:#0b5fa5;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(11,95,165,.28);width:18px;height:18px}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
+@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
 </style>
 </head>
 <body>
@@ -47,21 +47,37 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
   <button id="refresh">Refresh live now</button>
  </div>
  <div id="liveStatus" class="status">Waiting for live feed…</div>
+ <div class="locationbar"><button id="enableLocation">Enable my live location</button><button id="centerMe" disabled>Center on me</button><span id="locationStatus" class="locationstatus">Location not enabled.</span></div>
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card"><div id="map"></div><p style="font-size:12px;color:var(--muted)">Yellow/orange circles are actual live WeGo buses only when the realtime feed assigns the vehicle to a route used by the selected planned leg(s). Pins are only boarding/get-off points used by your plan.</p></div>
+<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button></div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the planned GTFS pieces. Numbered white circles are your boarding sequence. Smaller outlined circles are get-off points. Orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="./planner-data.js"></script>
+<script src="https://raw.githubusercontent.com/taylormade02471/linked-jobs-route-planner/main/nashville-live-planner/planner-data.js"></script>
 <script>
 const D=window.PLANNER_DATA;
 const map=L.map('map').setView([36.16,-86.78],11);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map);
+const cleanTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:20,attribution:'© OpenStreetMap © CARTO'});
+const streetTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+cleanTiles.addTo(map);
+let currentBounds=null;
+document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
+document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
+document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), userLayer=L.layerGroup().addTo(map);
+let userMarker=null,userAccuracy=null,userPosition=null,locationWatchId=null;
+const locationStatus=document.getElementById('locationStatus'),enableLocationBtn=document.getElementById('enableLocation'),centerMeBtn=document.getElementById('centerMe');
+function centerOnUser(){if(userPosition)map.setView([userPosition.lat,userPosition.lon],Math.max(map.getZoom(),16));}
+centerMeBtn.onclick=centerOnUser;
+function updateUserLocation(pos){const c=pos.coords;userPosition={lat:c.latitude,lon:c.longitude,accuracy:c.accuracy,ts:pos.timestamp};if(userMarker)userLayer.removeLayer(userMarker);if(userAccuracy)userLayer.removeLayer(userAccuracy);userAccuracy=L.circle([c.latitude,c.longitude],{radius:Math.max(5,c.accuracy||0),color:'#0b5fa5',weight:1,fillColor:'#0b5fa5',fillOpacity:.08}).addTo(userLayer);userMarker=L.circleMarker([c.latitude,c.longitude],{radius:10,color:'#fff',weight:3,fillColor:'#0b5fa5',fillOpacity:1}).bindPopup(`<b>YOU ARE HERE</b><br>Accuracy: ±${Math.round(c.accuracy||0)} m<br>Updated: ${new Date(pos.timestamp).toLocaleTimeString()}`).addTo(userLayer);centerMeBtn.disabled=false;locationStatus.textContent=`LIVE GPS — ±${Math.round(c.accuracy||0)} m — ${new Date(pos.timestamp).toLocaleTimeString()}`;}
+function locationError(err){const msg=err.code===1?'Location permission denied. Open browser site settings and allow Location, then tap Enable again.':err.code===2?'Location temporarily unavailable. Make sure phone Location is on.':'Location request timed out. Try again.';locationStatus.textContent=msg;}
+function enableLocation(){if(!('geolocation' in navigator)){locationStatus.textContent='This browser does not support geolocation.';return;}locationStatus.textContent='Requesting phone location permission…';enableLocationBtn.textContent='Location enabled';if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);locationWatchId=navigator.geolocation.watchPosition(updateUserLocation,locationError,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});}
+enableLocationBtn.onclick=enableLocation;
+setTimeout(()=>{if(locationWatchId===null)enableLocation();},900);
 
 const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
@@ -93,6 +109,11 @@ async function refreshLive(){
 }
 
 function planSections(){return D.plans[planSel.value]||[]}
+function numberedSectionLabel(key,index,total){
+ const sec=D.sections[key];
+ if(key==='return')return 'RETURN — Nashville → Clarksville';
+ return `${index+1}. ${sec.title}`;
+}
 function fillSections(){
  sectionSel.innerHTML='';
  const ps=planSections();let number=0;
@@ -131,19 +152,19 @@ function selectedLegs(){
 function render(){
  lines.clearLayers();pins.clearLayers();busLayer.clearLayers();
  const legs=selectedLegs(),bounds=[],routesUsed=new Set(),details=[];
- let lastSection=null;
+ let lastSection=null,stepNo=0;
  for(const l of legs){
   if(l._section!==lastSection){details.push(`<div class="sectionTitle">${l._sectionNo}. ${D.sections[l._section].title}</div>`);lastSection=l._section}
   const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
-  if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:c,weight:7,opacity:.9}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
+  if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:'#fff',weight:12,opacity:.96}).addTo(lines);L.polyline(l.segment,{color:c,weight:7,opacity:.96}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
   const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
-  L.marker(b).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
-  L.marker(a).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
+  stepNo++;L.circleMarker(b,{radius:11,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindTooltip(String(stepNo),{permanent:true,direction:'center',className:'stepnum'}).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
+  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
   const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
   details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK':l.route==='link'?'WEGO LINK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
  }
  document.getElementById('details').innerHTML=details.join('')||'No route selected.';
- if(bounds.length)map.fitBounds(bounds,{padding:[35,35]});
+ if(bounds.length){currentBounds=bounds;map.fitBounds(bounds,{padding:[40,40]});}
 
  let busRows=[];
  if(live.ok){
