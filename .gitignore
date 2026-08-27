@@ -1,5 +1,7 @@
 backend/.env
 backend/.env.local
+backend/data/
+.env
 data/
 node_modules/
 frontend/.next/
@@ -8,7 +10,12 @@ outputs/
 work/
 android/local.properties
 android/.gradle/
+android/.idea/
 android/build/
 android/app/build/
+*.sqlite
+*.db
+token-cache/*
+exports/
 .DS_Store
 Thumbs.db

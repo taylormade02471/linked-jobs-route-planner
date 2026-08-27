@@ -1,0 +1,7 @@
+{
+  "name": "nashville-live-audit-transit-planner",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

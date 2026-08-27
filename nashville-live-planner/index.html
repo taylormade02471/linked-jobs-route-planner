@@ -10,15 +10,17 @@
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#142434}
 header{background:var(--navy);color:#fff;padding:14px}header h1{font-size:20px;margin:0 0 5px}header p{margin:0;font-size:12px}
 main{max-width:1150px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
-.notice{background:#eef6fb}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:end}label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:210px;flex:1}
-select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}button{cursor:pointer;flex:0 0 auto}
+.notice{background:#eef6fb}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:end}label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:240px;flex:1}
+select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}select[multiple]{min-height:126px}button{cursor:pointer;flex:0 0 auto}.pickerChip{background:#e6f2f8;color:#17324d;border-color:#b8d5e2;font-weight:bold;white-space:nowrap}
 #map{height:620px;border-radius:12px;border:1px solid #cbd5df;box-shadow:0 3px 12px rgba(23,50,77,.10)}.status{font-size:12px;padding:8px;border-radius:8px;background:#f5f7f9;margin-top:8px}
 .sectionTitle{font-weight:bold;font-size:16px;margin:12px 0 6px}.leg{border-top:1px solid #e2e7eb;padding:10px 0}.leg:first-child{border-top:0}.change{background:var(--amber);border-radius:9px;padding:10px;margin-top:8px}
 .row{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:13px;margin:4px 0}.row b{color:var(--navy)}
 .badge{display:inline-block;padding:4px 7px;border-radius:999px;color:#fff;font-weight:bold;font-size:12px;margin-right:5px}.time{font-weight:bold;color:#633d00}
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
+.providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin{display:inline-block;width:12px;height:12px;border-radius:50%;background:#39ff14;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}
 @media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
+@media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -33,32 +35,110 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
  <div class="metric">Route 94 home<strong>5:10 PM</strong><span>scheduled 6:06 PM arrival</span></div>
 </div>
 
+<div class="card" id="workApps">
+ <div class="sectionTitle"><span class="greenpin"></span>Phone work app jobs</div>
+ <div id="providerStats" class="providergrid"></div>
+ <div class="connectionPanel">
+  <h3>Provider connection saved on this device</h3>
+  <div id="providerConnectionStatus" class="jobStatus">Choose a provider below to manage its local connection status.</div>
+  <div class="workform">
+   <label>Account label, not password
+    <input id="providerAccountLabel" placeholder="Example: my main Field Nation account">
+   </label>
+   <label class="wide">Local notes, no secrets
+    <textarea id="providerConnectionNotes" placeholder="Example: signed in through the phone app; use provider app for accepting work. Do not paste passwords, tokens, cookies, or MFA codes."></textarea>
+   </label>
+  </div>
+  <div class="actions">
+   <a id="openProviderBoard" target="_blank" rel="noopener">Open provider board/login</a>
+   <button id="saveProviderConnected" type="button">Mark connected here</button>
+   <button id="saveProviderNeedsLogin" type="button">Mark needs login</button>
+   <button id="clearProviderConnection" type="button">Clear this connection</button>
+  </div>
+ </div>
+ <div class="workform">
+  <label>Provider
+   <select id="appProvider"></select>
+  </label>
+  <label>Job title
+   <input id="appTitle" placeholder="Audit, field task, work order">
+  </label>
+  <label>Pay
+   <input id="appPay" inputmode="decimal" placeholder="$38.50">
+  </label>
+  <label class="wide">Address
+   <input id="appAddress" placeholder="7601 Hwy 70 S, Nashville, TN 37221">
+  </label>
+  <label>Due / window
+   <input id="appDue" placeholder="Due today, 2 PM, tomorrow">
+  </label>
+  <label>Work time
+   <input id="appMinutes" inputmode="numeric" placeholder="30 min">
+  </label>
+  <label>Status
+   <select id="appStatus"><option value="available">Available / not applied</option><option value="applied">Applied or requested</option><option value="planned">Accepted / planned</option><option value="completed">Completed / paid</option></select>
+  </label>
+  <div class="wide">
+   <button id="addWorkJob" type="button">Add phone app job</button>
+   <button id="clearWorkJobs" type="button">Clear saved phone jobs</button>
+  </div>
+  <label class="wide">Paste/share text from a work app
+   <textarea id="appImportText" placeholder="Paste a job card, screenshot OCR text, or shared details from Survey Merchandiser, Clickworker, or Field Nation."></textarea>
+  </label>
+  <div class="wide">
+   <div class="cameraPanel">
+    <div>
+     <video id="cameraPreview" playsinline muted hidden></video>
+     <img id="cameraPhotoPreview" alt="Captured job board photo preview" hidden>
+     <div id="cameraStatus" class="jobStatus">Camera ready. Use it to capture a job card or app screen, then enter or paste the job text above.</div>
+    </div>
+    <div class="cameraActions">
+     <button id="startCamera" type="button">Start camera</button>
+     <button id="captureCamera" type="button">Capture photo</button>
+     <button id="clearCamera" type="button">Clear photo</button>
+    </div>
+   </div>
+  </div>
+  <div class="wide">
+   <button id="importWorkJobs" type="button">Import pasted jobs</button>
+  </div>
+ </div>
+ <div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
+ <div class="sectionTitle">Best open work near your location</div>
+ <div id="appRecommendations" class="recommendations"></div>
+</div>
+
 <div class="card">
  <div class="controls">
-  <label>1. Planned route
+  <label>1. Plan Option
    <select id="plan"></select>
   </label>
-  <label>2. Itinerary section
-   <select id="section"></select>
+  <label>2. Corridor / Accessible Routes
+   <select id="corridor" multiple size="4" aria-label="Corridor or accessible route group"></select>
   </label>
-  <label>3. Stop / route view
+  <label>3. Section / Path / Stop
    <select id="view"></select>
   </label>
+  <button id="allStops" class="pickerChip" type="button">All stops selected</button>
   <button id="refresh">Refresh live now</button>
  </div>
  <div id="liveStatus" class="status">Waiting for live feed…</div>
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the planned GTFS pieces. Numbered white circles are your boarding sequence. Smaller outlined circles are get-off points. Orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://raw.githubusercontent.com/taylormade02471/linked-jobs-route-planner/main/nashville-live-planner/planner-data.js"></script>
+<script src="./planner-data.js"></script>
+<script src="./transit-picker.js"></script>
+<script src="./work-app-backbone.js"></script>
 <script>
 const D=window.PLANNER_DATA;
+const P=window.TransitPicker;
+const W=window.WorkAppBackbone;
 const map=L.map('map').setView([36.16,-86.78],11);
 const cleanTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:20,attribution:'© OpenStreetMap © CARTO'});
 const streetTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
@@ -67,11 +147,22 @@ let currentBounds=null;
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
-const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
+const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), jobLayer=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
 let myPosition=null,myAccuracy=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
+const WORK_JOBS_KEY='nashville_phone_work_jobs_v1';
+const PROVIDER_CONNECTIONS_KEY='nashville_provider_connections_v1';
+let workJobs=[];
+let providerConnections={};
+let cameraStream=null,capturedPhotoDataUrl='';
 
-const planSel=document.getElementById('plan'),sectionSel=document.getElementById('section'),viewSel=document.getElementById('view');
-Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
+const planSel=document.getElementById('plan'),corridorSel=document.getElementById('corridor'),viewSel=document.getElementById('view');
+const planLabels={
+ 'Plan A — Attempt all 18':"Today's jobs",
+ 'Plan B — Conservative 7 + 3':'Conservative job route',
+ 'Plan C — West + North/East':'West, North & East jobs',
+ 'Plan D — West + South + Downtown':'West, South & Downtown jobs'
+};
+Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=planLabels[n]||n;planSel.appendChild(o)});
 
 let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
 
@@ -99,7 +190,12 @@ async function refreshLive(){
  render();
 }
 
-function planSections(){return D.plans[planSel.value]||[]}
+function planSections(){return P.planSectionKeys(D,planSel.value)}
+function selectedCorridors(){
+ const selected=Array.from(corridorSel.selectedOptions).map(o=>o.value);
+ return selected.length?selected:['all-accessible-routes'];
+}
+function selectedSectionIds(){return P.selectedSectionKeys(D,planSel.value,selectedCorridors())}
 function updateLocationStatus(msg){const el=document.getElementById('locationStatus');if(el)el.innerHTML=msg;}
 function drawMyLocation(lat,lon,accuracy){
  myPosition=[lat,lon];myAccuracy=accuracy;
@@ -120,61 +216,241 @@ function startLocation(){
  },{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
 }
 function centerOnMe(){if(myPosition){map.setView(myPosition,16);if(myLocationMarker)myLocationMarker.openPopup();}else{startLocation();}}
-function numberedSectionLabel(key,index,total){
- const sec=D.sections[key];
- if(key==='return')return 'RETURN — Nashville → Clarksville';
- return `${index+1}. ${sec.title}`;
-}
-function fillSections(){
- sectionSel.innerHTML='';
- const ps=planSections();let number=0;
- ps.forEach(key=>{
-  const o=document.createElement('option');o.value=key;
-  if(key==='return')o.textContent='RETURN — Nashville → Clarksville';
-  else{o.textContent=`${++number}. ${D.sections[key].title}`}
-  sectionSel.appendChild(o);
+function fillCorridors(){
+ corridorSel.innerHTML='';
+ let all=document.createElement('option');all.value='all-accessible-routes';all.textContent='All accessible routes in this plan';all.selected=true;corridorSel.appendChild(all);
+ P.corridorOptions(D,planSel.value).forEach(corridor=>{
+  let o=document.createElement('option');o.value=corridor.id;o.textContent=corridor.label;corridorSel.appendChild(o);
  });
  fillViews();
 }
 function fillViews(){
  viewSel.innerHTML='';
- let o=document.createElement('option');o.value='plan-all';o.textContent='All Stops in Planned Route';viewSel.appendChild(o);
- let s=document.createElement('option');s.value='section-all';s.textContent='All Stops in This Section';viewSel.appendChild(s);
- const legs=D.sections[sectionSel.value]?.legs||[];
- legs.forEach((l,i)=>{let x=document.createElement('option');x.value='leg:'+i;x.textContent=`Stop ${i+1}: ${l.label}`;viewSel.appendChild(x)});
+ let all=document.createElement('option');all.value='all-selected-route-sections';all.textContent='All selected route sections';viewSel.appendChild(all);
+ const sectionIds=selectedSectionIds();
+ const sectionGroup=document.createElement('optgroup');sectionGroup.label='Verified route sections';
+ sectionIds.forEach(sectionId=>{let o=document.createElement('option');o.value='section:'+sectionId;o.textContent=P.sectionLabel(D,sectionId);sectionGroup.appendChild(o)});
+ viewSel.appendChild(sectionGroup);
+ const stops=P.stopOptions(D,sectionIds);
+ if(stops.length){
+  const stopGroup=document.createElement('optgroup');stopGroup.label='Exact verified stops';
+  stops.forEach(stop=>{let o=document.createElement('option');o.value='stop:'+stop.id;o.textContent=stop.name+' ['+stop.id+']';stopGroup.appendChild(o)});
+  viewSel.appendChild(stopGroup);
+ }
  render();
 }
 
 function selectedLegs(){
- if(viewSel.value==='plan-all'){
-  let result=[];let n=0;
-  planSections().forEach(key=>{if(key!=='return')n++;(D.sections[key]?.legs||[]).forEach((l,i)=>result.push({...l,_section:key,_sectionNo:key==='return'?'RETURN':n,_legNo:i+1}))});
-  return result;
- }
- if(viewSel.value==='section-all'){
-  let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
-  return (D.sections[sectionSel.value]?.legs||[]).map((l,i)=>({...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}));
- }
- const i=Number(viewSel.value.split(':')[1]||0),l=D.sections[sectionSel.value]?.legs?.[i];
- let idx=planSections().filter(k=>k!=='return').indexOf(sectionSel.value)+1;
- return l?[{...l,_section:sectionSel.value,_sectionNo:sectionSel.value==='return'?'RETURN':idx,_legNo:i+1}]:[];
+ return P.legsForSelection(D,planSel.value,selectedCorridors(),viewSel.value);
 }
 
+function originForRecommendations(){
+ if(myPosition)return {lat:myPosition[0],lon:myPosition[1]};
+ const center=map.getCenter();
+ return center?{lat:center.lat,lon:center.lng}:null;
+}
+function loadWorkJobs(){
+ try{workJobs=JSON.parse(localStorage.getItem(WORK_JOBS_KEY)||'[]');if(!Array.isArray(workJobs))workJobs=[];}catch{workJobs=[];}
+}
+function saveWorkJobs(){
+ localStorage.setItem(WORK_JOBS_KEY,JSON.stringify(workJobs));
+}
+function loadProviderConnections(){
+ try{providerConnections=JSON.parse(localStorage.getItem(PROVIDER_CONNECTIONS_KEY)||'{}');if(!providerConnections||Array.isArray(providerConnections))providerConnections={};}catch{providerConnections={};}
+}
+function saveProviderConnections(){
+ localStorage.setItem(PROVIDER_CONNECTIONS_KEY,JSON.stringify(providerConnections));
+}
+function providerLabel(id){
+ return (W.providerById(id)||{}).label||id||'Phone app';
+}
+function currentProvider(){
+ return W.providerById(document.getElementById('appProvider')?.value);
+}
+function currentConnection(providerId){
+ return W.sanitizeConnectionSettings(providerConnections[providerId]||{provider_id:providerId,status:'not_connected'});
+}
+function renderProviderConnection(){
+ const provider=currentProvider();
+ const connection=currentConnection(provider.id);
+ const status=document.getElementById('providerConnectionStatus');
+ const account=document.getElementById('providerAccountLabel');
+ const notes=document.getElementById('providerConnectionNotes');
+ const open=document.getElementById('openProviderBoard');
+ if(status)status.textContent=`${provider.label}: ${W.connectionLabel(connection)}. ${provider.connectionHelp}`;
+ if(account&&document.activeElement!==account)account.value=connection.account_label||'';
+ if(notes&&document.activeElement!==notes)notes.value=connection.notes||'';
+ if(open){open.href=provider.loginUrl||provider.boardUrl;open.textContent=`Open ${provider.label}`;}
+}
+function setProviderConnection(status){
+ const provider=currentProvider();
+ const safe=W.sanitizeConnectionSettings({
+  provider_id:provider.id,
+  status,
+  account_label:document.getElementById('providerAccountLabel')?.value,
+  notes:document.getElementById('providerConnectionNotes')?.value,
+  updated_at:Date.now(),
+ });
+ providerConnections[provider.id]=safe;
+ saveProviderConnections();
+ renderProviderStats();
+ renderProviderConnection();
+}
+function renderProviderStats(){
+ const target=document.getElementById('providerStats');
+ if(!target)return;
+ const open=workJobs.filter(W.isOpenAvailableJob);
+ target.innerHTML=W.PROVIDERS.map(provider=>{
+  const providerJobs=open.filter(job=>job.provider_id===provider.id);
+  const mapped=providerJobs.filter(job=>W.coordinateForJob(job,D)).length;
+  const connection=currentConnection(provider.id);
+  return `<div class="provider"><b>${provider.label}</b><span>${W.connectionLabel(connection)}</span><span>${provider.connection}</span><span>${providerJobs.length} open / ${mapped} mapped on this Nashville plan</span><span><a target="_blank" rel="noopener" href="${provider.boardUrl}">Open provider</a></span></div>`;
+ }).join('');
+}
+function drawWorkJobs(bounds){
+ jobLayer.clearLayers();
+ const recommended=W.recommendJobs(workJobs,D,originForRecommendations());
+ recommended.forEach((job,index)=>{
+  if(!job.coordinate)return;
+  const marker=L.circleMarker([job.coordinate.lat,job.coordinate.lon],{radius:index===0?12:9,color:'#052e16',weight:3,fillColor:'#39ff14',fillOpacity:.95}).addTo(jobLayer);
+  marker.bindPopup(`<b>${job.title}</b><br>${providerLabel(job.provider_id)}<br>${job.address||'Address not listed'}<br>${W.centsLabel(job.pay_cents)}<br>${job.recommendation_reason}<br>${job.coordinate.source}`);
+  bounds.push([job.coordinate.lat,job.coordinate.lon]);
+ });
+}
+function renderWorkJobs(){
+ renderProviderStats();
+ const target=document.getElementById('appRecommendations');
+ const status=document.getElementById('appJobStatus');
+ if(!target)return;
+ const recommended=W.recommendJobs(workJobs,D,originForRecommendations());
+ const openCount=workJobs.filter(W.isOpenAvailableJob).length;
+ const mappedCount=recommended.filter(job=>job.coordinate).length;
+ if(status)status.textContent=`${openCount} open phone app jobs saved here. ${mappedCount} can be mapped against the Nashville planner without paid geocoding.`;
+ target.innerHTML=recommended.length?recommended.slice(0,8).map((job,index)=>`<div class="workjob"><b>${index+1}. ${job.title}</b><span>${providerLabel(job.provider_id)} · ${W.centsLabel(job.pay_cents)} · ${job.minutes||30} min</span><span>${job.address||'Address not listed'}</span><span>${job.recommendation_reason}</span>${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`).join(''):'<div class="workjob"><b>No open phone app jobs saved yet</b><span>Add or paste available work from Survey Merchandiser, Clickworker, or Field Nation.</span></div>';
+}
+function setCameraStatus(message,isError=false){
+ const el=document.getElementById('cameraStatus');
+ if(!el)return;
+ el.textContent=message;
+ el.classList.toggle('danger',Boolean(isError));
+}
+async function startCamera(){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setCameraStatus('Camera is not available in this browser. Try opening the HTTPS planner URL in Chrome.',true);return;}
+ try{
+  cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+  const video=document.getElementById('cameraPreview');
+  const img=document.getElementById('cameraPhotoPreview');
+  video.srcObject=cameraStream;video.hidden=false;img.hidden=true;await video.play();
+  setCameraStatus('Camera is live. Capture the job card, then add or import the job details.');
+ }catch(error){setCameraStatus('Camera permission was not granted or the camera is unavailable.',true);}
+}
+function captureCamera(){
+ const video=document.getElementById('cameraPreview');
+ const img=document.getElementById('cameraPhotoPreview');
+ if(!video||video.hidden||!video.videoWidth){setCameraStatus('Start the camera before capturing a photo.',true);return;}
+ const canvas=document.createElement('canvas');
+ canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+ canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+ capturedPhotoDataUrl=canvas.toDataURL('image/jpeg',0.72);
+ img.src=capturedPhotoDataUrl;img.hidden=false;
+ setCameraStatus('Photo captured locally. It will attach to the next phone app job you add or import.');
+}
+function clearCamera(){
+ capturedPhotoDataUrl='';
+ const img=document.getElementById('cameraPhotoPreview');
+ if(img){img.removeAttribute('src');img.hidden=true;}
+ setCameraStatus('Camera photo cleared.');
+}
+function stopCamera(){
+ if(cameraStream){cameraStream.getTracks().forEach(track=>track.stop());cameraStream=null;}
+}
+function initWorkApps(){
+ const provider=document.getElementById('appProvider');
+ if(provider){
+  provider.innerHTML=W.PROVIDERS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+ }
+ loadWorkJobs();
+ loadProviderConnections();
+ renderWorkJobs();
+ renderProviderConnection();
+ provider?.addEventListener('change',()=>{renderProviderConnection();renderProviderStats();});
+ document.getElementById('saveProviderConnected')?.addEventListener('click',()=>setProviderConnection('signed_in_external'));
+ document.getElementById('saveProviderNeedsLogin')?.addEventListener('click',()=>setProviderConnection('needs_login'));
+ document.getElementById('clearProviderConnection')?.addEventListener('click',()=>{
+  const provider=currentProvider();
+  delete providerConnections[provider.id];
+  saveProviderConnections();
+  renderProviderStats();
+  renderProviderConnection();
+ });
+ document.getElementById('addWorkJob')?.addEventListener('click',()=>{
+  const job={
+   id:'',
+   provider_id:document.getElementById('appProvider').value,
+   provider_label:providerLabel(document.getElementById('appProvider').value),
+   title:document.getElementById('appTitle').value.trim()||'Phone app job',
+   address:document.getElementById('appAddress').value.trim(),
+   pay_cents:W.moneyToCents(document.getElementById('appPay').value),
+   due:document.getElementById('appDue').value.trim(),
+   minutes:Number.parseInt(document.getElementById('appMinutes').value,10)||30,
+   status:document.getElementById('appStatus').value,
+   source:'manual-phone-app',
+   photo_data_url:capturedPhotoDataUrl,
+  };
+  job.id=[job.provider_id,W.normalizeAddress(job.address),job.title.toLowerCase(),job.pay_cents].filter(Boolean).join(':');
+  workJobs=[job,...workJobs.filter(existing=>existing.id!==job.id)];
+  saveWorkJobs();clearCamera();renderWorkJobs();render();
+ });
+ document.getElementById('importWorkJobs')?.addEventListener('click',()=>{
+  const text=document.getElementById('appImportText').value;
+  const imported=W.parseSharedJobs(text,document.getElementById('appProvider').value).map((job,index)=>index===0?{...job,photo_data_url:capturedPhotoDataUrl}:job);
+  workJobs=[...imported,...workJobs].filter((job,index,all)=>all.findIndex(item=>item.id===job.id)===index);
+  saveWorkJobs();clearCamera();renderWorkJobs();render();
+ });
+ document.getElementById('clearWorkJobs')?.addEventListener('click',()=>{
+  if(!confirm('Clear phone app jobs saved in this browser?'))return;
+  workJobs=[];saveWorkJobs();renderWorkJobs();render();
+ });
+ document.getElementById('startCamera')?.addEventListener('click',startCamera);
+ document.getElementById('captureCamera')?.addEventListener('click',captureCamera);
+ document.getElementById('clearCamera')?.addEventListener('click',clearCamera);
+ window.addEventListener('pagehide',stopCamera);
+}
+
+function selectedStop(){
+ if(!viewSel.value.startsWith('stop:'))return null;
+ const stopId=viewSel.value.slice('stop:'.length);
+ return P.stopOptions(D,selectedSectionIds()).find(stop=>stop.id===stopId)||null;
+}
+function routeLabel(leg){
+ if(leg.route==='walk')return 'Walk';
+ if(leg.route==='link')return 'WeGo Link';
+ return 'Route '+leg.route;
+}
 function render(){
- lines.clearLayers();pins.clearLayers();busLayer.clearLayers();
+ lines.clearLayers();pins.clearLayers();jobLayer.clearLayers();busLayer.clearLayers();
  const legs=selectedLegs(),bounds=[],routesUsed=new Set(),details=[];
- let lastSection=null,stepNo=0;
+ const stop=selectedStop();
+ if(stop){
+  const linkedJob=legs.find(leg=>leg.job&&leg.destination);
+  details.push('<div class="notice"><b>Selected stop:</b> '+stop.name+' ['+stop.id+']<br><b>Stop location:</b> '+stop.location+'<br><b>Nearest planned job/address:</b> '+(linkedJob?linkedJob.destination:'No job/address is linked to this stop in the verified schedule.')+'</div>');
+ }
+ let lastSection=null;
  for(const l of legs){
-  if(l._section!==lastSection){details.push(`<div class="sectionTitle">${l._sectionNo}. ${D.sections[l._section].title}</div>`);lastSection=l._section}
+  if(l._section!==lastSection){details.push('<div class="sectionTitle">'+P.sectionLabel(D,l._section)+'</div>');lastSection=l._section}
   const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
+  const direction=P.directionForLeg(l)||'Direction not provided by the verified schedule';
+  const schedule=P.scheduledWindow(l.static);
+  const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
   if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:'#fff',weight:12,opacity:.96}).addTo(lines);L.polyline(l.segment,{color:c,weight:7,opacity:.96}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
   const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
-  stepNo++;L.circleMarker(b,{radius:11,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindTooltip(String(stepNo),{permanent:true,direction:'center',className:'stepnum'}).bindPopup(`<b>BOARD / START</b><br>${l.board_stop.name}<br>Stop ${l.board}<br>${l.label}`).addTo(pins);
-  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup(`<b>GET OFF / END</b><br>${l.alight_stop.name}<br>Stop ${l.alight}<br><b>Destination:</b> ${l.destination}`).addTo(pins);
-  const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
-  details.push(`<div class="${klass}"><div><span class="badge" style="background:${c}">${l.route==='walk'?'WALK':l.route==='link'?'WEGO LINK':'Route '+l.route}</span><b>${l.label}</b></div><div class="row"><b>STATIC PLAN</b><span class="time">${l.static}</span></div><div class="row"><b>BOARD / START</b><span>${l.board_stop.name} [${l.board}]</span></div><div class="row"><b>GET OFF / END</b><span>${l.alight_stop.name} [${l.alight}]</span></div><div class="row"><b>DESTINATION</b><span>${l.destination}</span></div></div>`);
+  L.circleMarker(b,{radius:9,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>BOARD</b><br>'+l.board_stop.name+'<br>Stop '+l.board+'<br>'+routeLabel(l)).addTo(pins);
+  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>EXIT</b><br>'+l.alight_stop.name+'<br>Stop '+l.alight+'<br><b>Destination:</b> '+l.destination).addTo(pins);
+  details.push('<div class="'+klass+'"><div><span class="badge" style="background:'+c+'">'+routeLabel(l)+'</span><b>'+l.label+'</b></div><div class="row"><b>Route number</b><span>'+routeLabel(l)+'</span></div><div class="row"><b>Direction</b><span>'+direction+'</span></div><div class="row"><b>Boarding stop</b><span>'+l.board_stop.name+' ['+l.board+']</span></div><div class="row"><b>Board location</b><span>'+l.board_stop.name+'</span></div><div class="row"><b>Scheduled pickup</b><span class="time">'+schedule.pickup+'</span></div><div class="row"><b>Exit stop</b><span>'+l.alight_stop.name+' ['+l.alight+']</span></div><div class="row"><b>Exit location</b><span>'+l.alight_stop.name+'</span></div><div class="row"><b>Scheduled exit</b><span>'+schedule.exit+'</span></div><div class="row"><b>Walk time to job</b><span>'+P.walkTime(l.static)+'</span></div><div class="row"><b>Job work time</b><span>'+P.jobWorkTime(D,l)+'</span></div><div class="row"><b>Buffer / risk</b><span>Scheduled estimate - allow timing buffer</span></div><div class="row"><b>Source</b><span>Scheduled estimate</span></div><div class="row"><b>Job / address</b><span>'+l.destination+'</span></div></div>');
  }
- document.getElementById('details').innerHTML=details.join('')||'No route selected.';
+ document.getElementById('details').innerHTML=details.join('')||'No verified route section matches this selection.';
+ drawWorkJobs(bounds);
+ renderWorkJobs();
  if(bounds.length){currentBounds=bounds;map.fitBounds(bounds,{padding:[40,40]});}
 
  let busRows=[];
@@ -195,8 +471,16 @@ function render(){
  if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
  document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
 }
-planSel.addEventListener('change',fillSections);sectionSel.addEventListener('change',fillViews);viewSel.addEventListener('change',render);document.getElementById('refresh').addEventListener('click',refreshLive);document.getElementById('enableLocation').addEventListener('click',startLocation);document.getElementById('centerMe').addEventListener('click',centerOnMe);
-planSel.value='Plan C — West + North/East';fillSections();refreshLive();setInterval(refreshLive,30000);setTimeout(startLocation,700);
+function updateCorridorSelection(){
+ const all=corridorSel.querySelector('option[value="all-accessible-routes"]');
+ const selected=Array.from(corridorSel.selectedOptions).map(o=>o.value);
+ if(corridorSel.value==='all-accessible-routes'){Array.from(corridorSel.options).forEach(o=>{o.selected=o.value==='all-accessible-routes'})}
+ else if(selected.length){all.selected=false}
+ else{all.selected=true}
+ fillViews();
+}
+planSel.addEventListener('change',fillCorridors);corridorSel.addEventListener('change',updateCorridorSelection);viewSel.addEventListener('change',render);document.getElementById('allStops').addEventListener('click',()=>{viewSel.value='all-selected-route-sections';render()});document.getElementById('refresh').addEventListener('click',refreshLive);document.getElementById('enableLocation').addEventListener('click',startLocation);document.getElementById('centerMe').addEventListener('click',centerOnMe);
+initWorkApps();planSel.value='Plan C — West + North/East';fillCorridors();refreshLive();setInterval(refreshLive,30000);setTimeout(startLocation,700);
 </script>
 </body>
 </html>
