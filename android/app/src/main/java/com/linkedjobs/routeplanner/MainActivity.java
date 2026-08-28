@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "LinkedJobsRoutePlanner";
-    private static final String PLANNER_URL = "https://www.routeplanner.space";
+    private static final String PLANNER_URL = "https://nashville-live-audit-transit-planner-e2wrxpfsr.vercel.app";
     private static final String SHARED_INBOX_FILE = "shared_inbox/latest.txt";
 
     private WebView webView;
