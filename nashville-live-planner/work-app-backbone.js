@@ -56,6 +56,7 @@
 
   const SAFE_CONNECTION_STATUSES = new Set(["not_connected", "signed_in_external", "needs_login"]);
   const SECRET_FIELD_PATTERN = /(password|passcode|token|secret|cookie|session|authorization|bearer|api[_-]?key|csrf)/i;
+  const KEY_VAULT_RAW_SECRET_FIELD_PATTERN = /(password|passcode|token|cookie|session|authorization|bearer|api[_-]?key|csrf|client_secret|secret_value|private[_-]?key|private[_-]?certificate)/i;
   const SYNC_INTERVALS = [0, 5, 10, 15, 30, 60];
   const EMAIL_PERMISSION_OPTIONS = [
     {
@@ -399,10 +400,11 @@
   }
 
   function sanitizeKeyVaultBinding(settings = {}) {
-    const definition = keyVaultBindingById(settings.connection_id) || KEY_VAULT_BINDINGS[0];
+    const definition = keyVaultBindingById(settings.connection_id || settings.provider_id) || KEY_VAULT_BINDINGS[0];
     const safe = {
       connection_id: definition.id,
       vault_name: asText(settings.vault_name).slice(0, 90),
+      tenant_id: asText(settings.tenant_id).slice(0, 90),
       secret_name: asText(settings.secret_name === undefined ? definition.defaultSecretName : settings.secret_name).slice(0, 90),
       certificate_name: asText(settings.certificate_name === undefined ? definition.defaultCertificateName : settings.certificate_name).slice(0, 90),
       key_name: asText(settings.key_name === undefined ? definition.defaultKeyName : settings.key_name).slice(0, 90),
@@ -416,7 +418,7 @@
     };
 
     Object.keys(settings || {}).forEach((key) => {
-      if (SECRET_FIELD_PATTERN.test(key)) safe.rejected_secret_fields = true;
+      if (KEY_VAULT_RAW_SECRET_FIELD_PATTERN.test(key)) safe.rejected_secret_fields = true;
     });
 
     return safe;
@@ -443,6 +445,7 @@
         ...supplied,
         connection_id: definition.id,
         vault_name: vaultName || supplied.vault_name || "",
+        tenant_id: plan.tenant_id,
       });
       if (plan.bindings[definition.id].rejected_secret_fields) plan.rejected_secret_fields = true;
     });

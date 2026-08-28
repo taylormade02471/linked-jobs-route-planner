@@ -103,24 +103,31 @@ test("Key Vault binding plan covers every planned connection with reference-only
 
 test("Key Vault binding settings retain references but never raw secret material", () => {
   const safe = backbone.sanitizeKeyVaultBinding({
-    connection_id: "field_agent",
+    provider_id: "field_agent",
     vault_name: "linkedjobs-vault",
+    tenant_id: "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5",
     secret_name: "field-agent-api-key",
     certificate_name: "field-agent-cert",
     key_name: "field-agent-key",
     status: "reference_ready",
-    secret_value: "do-not-store",
-    client_secret: "do-not-store",
   });
 
   assert.equal(safe.connection_id, "field_agent");
   assert.equal(safe.vault_name, "linkedjobs-vault");
+  assert.equal(safe.tenant_id, "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5");
   assert.equal(safe.secret_name, "field-agent-api-key");
   assert.equal(safe.certificate_name, "field-agent-cert");
   assert.equal(safe.key_name, "field-agent-key");
   assert.equal(safe.status, "reference_ready");
-  assert.equal(safe.rejected_secret_fields, true);
-  assert.doesNotMatch(JSON.stringify(safe), /do-not-store/);
+  assert.equal(safe.rejected_secret_fields, undefined);
+
+  const rejected = backbone.sanitizeKeyVaultBinding({
+    provider_id: "field_agent",
+    secret_value: "do-not-store",
+    client_secret: "do-not-store",
+  });
+  assert.equal(rejected.rejected_secret_fields, true);
+  assert.doesNotMatch(JSON.stringify(rejected), /do-not-store/);
 });
 
 test("Key Vault plan carries the supplied tenant metadata for all bindings", () => {
@@ -144,6 +151,7 @@ test("Key Vault plan carries the supplied tenant metadata for all bindings", () 
   assert.equal(Object.keys(plan.bindings).length, backbone.KEY_VAULT_BINDINGS.length);
   assert.equal(plan.bindings.survey_merchandiser.secret_name, "survey-merchandiser-api-key");
   assert.equal(plan.bindings.clickworker.secret_name, "clickworker-api-key");
+  assert.equal(plan.bindings.clickworker.tenant_id, "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5");
   assert.equal(plan.bindings.gmail_readonly.secret_name, "");
 });
 
