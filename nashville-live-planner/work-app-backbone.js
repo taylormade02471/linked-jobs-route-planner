@@ -58,15 +58,6 @@
   const SECRET_FIELD_PATTERN = /(password|passcode|token|secret|cookie|session|authorization|bearer|api[_-]?key|csrf)/i;
   const KEY_VAULT_RAW_SECRET_FIELD_PATTERN = /(password|passcode|token|cookie|session|authorization|bearer|api[_-]?key|csrf|client_secret|secret_value|private[_-]?key|private[_-]?certificate)/i;
   const SYNC_INTERVALS = [0, 5, 10, 15, 30, 60];
-  const JOB_BOARD_ACTIONS = [
-    { value: "keep_saved", label: "Keep saved on this board" },
-    { value: "move_available", label: "Move to available/open" },
-    { value: "move_applied", label: "Move to applied/requested" },
-    { value: "move_assigned", label: "Move to claimed/assigned" },
-    { value: "mark_completed", label: "Mark completed/passed" },
-    { value: "restore_active", label: "Restore to active" },
-    { value: "delete_saved", label: "Delete saved job" },
-  ];
   const EMAIL_PERMISSION_OPTIONS = [
     {
       id: "outlook_mail_read",
@@ -559,10 +550,27 @@
 
   function normalizeStatus(value) {
     const text = asText(value).toLowerCase();
+    if (
+      text.includes("needs completion") ||
+      text.includes("need to complete") ||
+      text.includes("needs to complete") ||
+      text.includes("overdue") ||
+      text.includes("due soon") ||
+      text.includes("late") ||
+      text.includes("in progress")
+    ) return "needs_completion";
+    if (
+      text.includes("submitted") ||
+      text.includes("applied") ||
+      text.includes("requested") ||
+      text.includes("apply required") ||
+      text.includes("application required") ||
+      text.includes("requires application") ||
+      text.includes("must apply")
+    ) return "applied";
     if (/\b(paid|complete|completed|done|passed)\b/.test(text)) return "completed";
-    if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
     if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
-    if (text.includes("available") || text.includes("open")) return "available";
+    if (text.includes("available") || text.includes("open") || text.includes("claim now") || text.includes("open to claim")) return "available";
     return text || "available";
   }
 
@@ -576,34 +584,16 @@
     return status === "assigned" || status === "planned";
   }
 
+  function isNeedsCompletionJob(job) {
+    return normalizeStatus(job?.status) === "needs_completion";
+  }
+
   function isCompletedJob(job) {
     return normalizeStatus(job?.status) === "completed";
   }
 
-  function withoutCompletion(job, status) {
-    const next = { ...(job || {}), status };
-    delete next.completion_status;
-    delete next.completed_at;
-    return next;
-  }
-
-  function applyJobBoardAction(job, action, now = Date.now()) {
-    const current = { ...(job || {}) };
-    if (action === "delete_saved") return null;
-    if (action === "move_available" || action === "restore_active") {
-      return withoutCompletion(current, "available");
-    }
-    if (action === "move_applied") return withoutCompletion(current, "applied");
-    if (action === "move_assigned") return withoutCompletion(current, "assigned");
-    if (action === "mark_completed") {
-      return {
-        ...current,
-        status: "completed",
-        completion_status: "passed",
-        completed_at: now,
-      };
-    }
-    return current;
+  function isRouteVisibleJob(job) {
+    return isOpenAvailableJob(job) || isAssignedJob(job) || isNeedsCompletionJob(job);
   }
 
   function moneyToCents(value) {
@@ -614,6 +604,21 @@
   function centsLabel(cents) {
     const value = Number(cents);
     return Number.isFinite(value) && value > 0 ? "$" + (value / 100).toFixed(2) : "Pay not listed";
+  }
+
+  function positiveNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? number : null;
+  }
+
+  function positiveMinutes(value) {
+    const number = positiveNumber(value);
+    return number ? Math.max(5, Math.round(number)) : null;
+  }
+
+  function workTimeLabel(job) {
+    const minutes = positiveMinutes(job?.minutes);
+    return minutes ? minutes + " min" : asText(job?.duration_text) || "Work time not listed";
   }
 
   function minutesFrom(value) {
@@ -641,6 +646,7 @@
   function jobId(job) {
     return [
       job.provider_id,
+      asText(job.external_id).toLowerCase(),
       normalizeAddress(job.address),
       asText(job.title).toLowerCase(),
       Number(job.pay_cents) || 0,
@@ -648,6 +654,69 @@
       .filter(Boolean)
       .join(":")
       .slice(0, 180);
+  }
+
+  function lineValue(lines, labels) {
+    for (const line of lines) {
+      for (const label of labels) {
+        const pattern = label instanceof RegExp ? label : new RegExp("^" + label + "\\s*[:\\-]\\s*(.+)$", "i");
+        const match = line.match(pattern);
+        if (match) return asText(match[1] || match[0]);
+      }
+    }
+    return "";
+  }
+
+  function isProviderHeading(line, provider) {
+    const lower = asText(line).toLowerCase();
+    return lower === provider.id.replace(/_/g, " ") || lower === provider.label.toLowerCase();
+  }
+
+  function isMetadataLine(line) {
+    return /^(store|location|address|site|pay|fee|reward|due|deadline|start by|complete by|finish by|time to complete|estimated duration|duration|work time|timer after accept|photos required|purchase required|requirements|status|accepted|payment)\b/i.test(line);
+  }
+
+  function firstTitleLine(lines, provider) {
+    return (
+      lines.find((line) => !isProviderHeading(line, provider) && !isMetadataLine(line) && !STREET_PATTERN.test(line) && !/\$\s*\d/.test(line)) ||
+      provider.label + " job"
+    );
+  }
+
+  function firstAddress(lines, block) {
+    const explicitAddress = lineValue(lines, [
+      /^(?:address|site address|job address)\s*[:\-]\s*(.+)$/i,
+    ]);
+    if (explicitAddress) return explicitAddress;
+
+    const locationLine = lineValue(lines, [/^location\s*[:\-]\s*(.+)$/i]);
+    if (locationLine && STREET_PATTERN.test(locationLine)) return locationLine;
+
+    return asText((block.match(STREET_PATTERN) || [])[0] || "");
+  }
+
+  function firstLocationName(lines, address) {
+    const store = lineValue(lines, [/^store\s*[:\-]\s*(.+)$/i]);
+    if (store) return store;
+
+    const location = lineValue(lines, [/^location\s*[:\-]\s*(.+)$/i]);
+    if (location && !STREET_PATTERN.test(location) && normalizeAddress(location) !== normalizeAddress(address)) return location;
+
+    return "";
+  }
+
+  function parseIntegerField(lines, labels) {
+    const value = lineValue(lines, labels);
+    const match = value.match(/\d+/);
+    return match ? Number(match[0]) : null;
+  }
+
+  function parsePurchaseRequired(lines) {
+    const value = lineValue(lines, [/^purchase required\s*[:\-]\s*(.+)$/i]);
+    if (!value) return null;
+    if (/^(no|none|false|not required|n\/a)\b/i.test(value)) return false;
+    if (/^(yes|true|required)\b/i.test(value)) return true;
+    return null;
   }
 
   function parseSharedJobs(text, providerId = "survey_merchandiser") {
@@ -659,23 +728,44 @@
 
     return blocks.map((block, index) => {
       const lines = block.split(/\r?\n/).map(asText).filter(Boolean);
-      const address = (block.match(STREET_PATTERN) || [])[0] || "";
-      const pay = (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
-      const dueLine = lines.find((line) => /\b(due|deadline|date|starts?|arrival|window)\b/i.test(line)) || "";
+      const address = firstAddress(lines, block);
+      const locationName = firstLocationName(lines, address);
+      const pay = lineValue(lines, [/^(?:pay|fee|reward|payout)\s*[:\-]?\s*(.+)$/i]) || (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
+      const dueLine =
+        lineValue(lines, [
+          /^(?:due|deadline|complete by|finish by|end by|must complete by|expires|expiration)\s*[:\-]\s*(.+)$/i,
+        ]) ||
+        lines.find((line) => /\b(due|deadline|date|arrival|window)\b/i.test(line)) ||
+        "";
       const paymentLine = lines.find((line) => /\b(payment|payout|paid|payable|pending|approved|bonus|expense)\b/i.test(line)) || "";
-      const title =
-        lines.find((line) => line !== address && line !== pay && !/\b(due|deadline|date|status)\b/i.test(line)) ||
-        provider.label + " job";
-      const statusLine = lines.find((line) => /\b(status|available|open|applied|requested|accepted|assigned|claimed|reserved)\b/i.test(line)) || "available";
+      const title = firstTitleLine(lines, provider);
+      const statusLine =
+        lineValue(lines, [/^status\s*[:\-]\s*(.+)$/i]) ||
+        lines.find((line) => /^(available|open to claim|open|claim now|claimed|assigned|accepted|reserved|planned|needs completion|need to complete|due soon|overdue|late|in progress|apply required|application required|requires application|must apply|applied|requested)\b/i.test(line)) ||
+        "available";
+      const workMinutes =
+        lineValue(lines, [/^(?:time to complete|estimated duration|duration|work time|estimated time)\s*[:\-]\s*(.+)$/i]) ||
+        block;
+      const timerText = lineValue(lines, [/^timer after accept\s*[:\-]\s*(.+)$/i]);
+      const acceptedAt = lineValue(lines, [/^accepted\s*[:\-]\s*(.+)$/i]);
+      const requirements = lineValue(lines, [/^requirements?\s*[:\-]\s*(.+)$/i]);
+      const photosRequired = parseIntegerField(lines, [/^photos required\s*[:\-]\s*(.+)$/i]);
+      const purchaseRequired = parsePurchaseRequired(lines);
       const job = {
         id: "",
         provider_id: provider.id,
         provider_label: provider.label,
         title,
+        location_name: locationName,
         address: asText(address),
         pay_cents: moneyToCents(pay),
         due: dueLine,
-        minutes: minutesFrom(block),
+        accepted_at: acceptedAt,
+        minutes: minutesFrom(workMinutes),
+        timer_minutes: timerText ? minutesFrom(timerText) : null,
+        photos_required: photosRequired,
+        purchase_required: purchaseRequired,
+        requirements,
         status: normalizeStatus(statusLine),
         payment_status: asText(paymentLine),
         source: "phone-app-import",
@@ -782,11 +872,22 @@
 
   function scoreJob(job, data, origin) {
     const coord = coordinateForJob(job, data);
-    const distanceMiles = coord && origin ? haversineMiles(origin, coord) : Number.POSITIVE_INFINITY;
+    const mappedDistanceMiles = coord && origin ? haversineMiles(origin, coord) : Number.POSITIVE_INFINITY;
+    const sourceDistanceMiles = positiveNumber(job?.distance_miles);
+    const distanceMiles = Number.isFinite(mappedDistanceMiles)
+      ? mappedDistanceMiles
+      : sourceDistanceMiles ?? Number.POSITIVE_INFINITY;
     const payCents = Number(job?.pay_cents) || 0;
-    const minutes = Math.max(5, Number(job?.minutes) || 30);
-    const hourlyCents = Math.round(payCents / (minutes / 60));
-    const mappedBoost = coord ? 25 : -45;
+    const minutes = positiveMinutes(job?.minutes);
+    const scoringMinutes = minutes || 30;
+    const hourlyCents = Math.round(payCents / (scoringMinutes / 60));
+    const timeText = minutes ? minutes + " min" : "work time not listed";
+    const distanceText = Number.isFinite(mappedDistanceMiles)
+      ? distanceMiles.toFixed(1) + " mi from you"
+      : sourceDistanceMiles
+        ? sourceDistanceMiles.toFixed(1) + " mi from provider app"
+        : "needs verified location";
+    const mappedBoost = coord ? 25 : sourceDistanceMiles ? -5 : -45;
     const distancePenalty = Number.isFinite(distanceMiles) ? distanceMiles * 4 : 20;
     const score = payCents / 100 + hourlyCents / 300 + mappedBoost - distancePenalty;
 
@@ -796,10 +897,120 @@
       distance_miles: Number.isFinite(distanceMiles) ? distanceMiles : null,
       hourly_cents: hourlyCents,
       recommendation_score: Math.round(score * 10) / 10,
-      recommendation_reason: coord
-        ? centsLabel(payCents) + ", " + minutes + " min, " + distanceMiles.toFixed(1) + " mi from you"
-        : centsLabel(payCents) + ", " + minutes + " min, needs verified location",
+      recommendation_reason: centsLabel(payCents) + ", " + timeText + ", " + distanceText,
     };
+  }
+
+  function routeStatusPriority(job) {
+    if (isNeedsCompletionJob(job)) return 65;
+    if (isAssignedJob(job)) return 35;
+    if (isOpenAvailableJob(job)) return 10;
+    return 0;
+  }
+
+  function jobMapColor(job) {
+    if (isNeedsCompletionJob(job)) return "red";
+    if (isAssignedJob(job)) return "yellow";
+    if (isOpenAvailableJob(job)) return "green";
+    if (isCompletedJob(job)) return "gray";
+    return "gray";
+  }
+
+  function providerMatches(job, provider) {
+    return provider === "all" || provider === "" || job?.provider_id === provider;
+  }
+
+  function statusMatches(job, requestedStatus) {
+    return requestedStatus === "all" || normalizeStatus(job?.status) === requestedStatus;
+  }
+
+  function jobsForMap(jobs, filters = {}) {
+    const provider = asText(filters.provider_id || filters.provider || "all").toLowerCase();
+    const requestedStatus = normalizeStatus(filters.status || "all");
+
+    return (Array.isArray(jobs) ? jobs : [])
+      .filter(isRouteVisibleJob)
+      .filter((job) => providerMatches(job, provider))
+      .filter((job) => statusMatches(job, requestedStatus))
+      .map((job) => ({
+        ...job,
+        status: normalizeStatus(job.status),
+        map_color: jobMapColor(job),
+      }));
+  }
+
+  function jobsForTab(jobs, filters = {}) {
+    const provider = asText(filters.provider_id || filters.provider || "all").toLowerCase();
+    const requestedStatus = normalizeStatus(filters.status || "all");
+    const tab = asText(filters.tab || "open").toLowerCase();
+
+    return (Array.isArray(jobs) ? jobs : [])
+      .filter((job) => providerMatches(job, provider))
+      .filter((job) => statusMatches(job, requestedStatus))
+      .filter((job) => {
+        if (tab === "completed") return isCompletedJob(job);
+        if (tab === "accepted" || tab === "claimed") return isAssignedJob(job) || isNeedsCompletionJob(job);
+        return isOpenAvailableJob(job);
+      })
+      .map((job) => ({
+        ...job,
+        status: normalizeStatus(job.status),
+        map_color: jobMapColor(job),
+      }));
+  }
+
+  function markJobsCompleted(jobs, options = {}) {
+    const completedAt = Number(options.completed_at) || Date.now();
+    const completionReason = asText(options.completion_reason || "Moved to completed");
+    return (Array.isArray(jobs) ? jobs : []).map((job) => ({
+      ...job,
+      status: "completed",
+      completed_at: Number(job?.completed_at) || completedAt,
+      completion_reason: asText(job?.completion_reason) || completionReason,
+      updated_at: Number(job?.updated_at) || completedAt,
+      map_color: "gray",
+    }));
+  }
+
+  function moveJobsToFolder(jobs, selectedIds = [], folder = "completed", options = {}) {
+    const ids = new Set((Array.isArray(selectedIds) ? selectedIds : []).map(asText).filter(Boolean));
+    const targetFolder = asText(folder).toLowerCase();
+    const updatedAt = Number(options.updated_at) || Date.now();
+    if (!ids.size) return Array.isArray(jobs) ? jobs.slice() : [];
+
+    return (Array.isArray(jobs) ? jobs : []).map((job) => {
+      if (!ids.has(asText(job?.id))) return job;
+
+      if (targetFolder === "claimed" || targetFolder === "assigned") {
+        return {
+          ...job,
+          status: "assigned",
+          claimed_at: asText(job?.claimed_at) || new Date(updatedAt).toISOString(),
+          updated_at: updatedAt,
+          map_color: "yellow",
+        };
+      }
+
+      if (targetFolder === "pending_payment") {
+        return {
+          ...job,
+          status: "completed",
+          completed_at: Number(job?.completed_at) || updatedAt,
+          payment_status: "Pending payment",
+          updated_at: updatedAt,
+          map_color: "gray",
+        };
+      }
+
+      return {
+        ...job,
+        status: "completed",
+        completed_at: Number(job?.completed_at) || updatedAt,
+        completion_reason: asText(job?.completion_reason) || "Moved to completed",
+        updated_at: updatedAt,
+        map_color: "gray",
+      };
+    });
   }
 
   function recommendJobs(jobs, data, origin) {
@@ -809,22 +1020,46 @@
       .sort((a, b) => b.recommendation_score - a.recommendation_score);
   }
 
+  function recommendRouteJobs(jobs, data, origin, filters = {}) {
+    const routeJobs = filters.tab
+      ? jobsForTab(jobs, filters).filter(isRouteVisibleJob)
+      : jobsForMap(jobs, filters);
+
+    return routeJobs
+      .map((job) => {
+        const scored = scoreJob(job, data, origin);
+        const priority = routeStatusPriority(job);
+        return {
+          ...scored,
+          map_color: jobMapColor(job),
+          route_status_priority: priority,
+          recommendation_score: Math.round((scored.recommendation_score + priority) * 10) / 10,
+        };
+      })
+      .sort((a, b) => b.recommendation_score - a.recommendation_score);
+  }
+
   return {
     API_REGISTRY,
     KEY_VAULT_BINDINGS,
     KEY_VAULT_STATUSES,
-    JOB_BOARD_ACTIONS,
     PROVIDERS,
     CONNECTION_SETUP,
     EMAIL_PERMISSION_OPTIONS,
     SYNC_INTERVALS,
     centsLabel,
     connectionLabel,
-    applyJobBoardAction,
     coordinateForJob,
     isAssignedJob,
     isCompletedJob,
+    isNeedsCompletionJob,
     isOpenAvailableJob,
+    isRouteVisibleJob,
+    jobMapColor,
+    jobsForTab,
+    jobsForMap,
+    markJobsCompleted,
+    moveJobsToFolder,
     moneyToCents,
     normalizeAddress,
     normalizeStatus,
@@ -840,8 +1075,10 @@
     sanitizeEmailSyncSettings,
     senderAllowed,
     recommendJobs,
+    recommendRouteJobs,
     nextSyncAt,
     sanitizeConnectionSettings,
     scoreJob,
+    workTimeLabel,
   };
 });

@@ -18,6 +18,24 @@ test("Nashville planner exposes only the requested phone work providers", () => 
   assert.doesNotMatch(backbone, /Jobslinger|MegaLog|SASSIE/i);
 });
 
+test("public planner pages show submitted safe jobs without old posted job sources", () => {
+  const nashvilleIndex = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+  const nashvilleData = fs.readFileSync(path.join(plannerRoot, "planner-data.js"), "utf8");
+  const desktopIndex = fs.readFileSync(path.join(projectRoot, "frontend", "index.html"), "utf8");
+
+  assert.match(nashvilleIndex, /Submitted job list loaded/);
+  assert.match(nashvilleIndex, /clearLegacyPlannerStorage/);
+  assert.match(nashvilleIndex, /nashville_phone_work_jobs_v1/);
+  assert.doesNotMatch(nashvilleIndex, /current 18 quick|18 jobs = \$153|1-hour Walgreens|7601 Hwy 70 S/i);
+  assert.doesNotMatch(nashvilleData, /Quick photo audit|Walgreens|7601 Hwy 70 S|3019 Dickerson Pike/i);
+  assert.match(nashvilleData, /submittedJobs/);
+  assert.match(nashvilleData, /Dollar General #2360/);
+  assert.match(nashvilleData, /Family Dollar #1033/);
+  assert.match(nashvilleData, /Food Lion #874/);
+  assert.doesNotMatch(nashvilleData, /password|access_token|refresh_token|cookie|session/i);
+  assert.doesNotMatch(desktopIndex, /Jobslinger|MegaLog|Save live login|source_password/i);
+});
+
 test("Nashville planner has camera capture controls for phone job intake", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
 
@@ -45,15 +63,56 @@ test("Nashville planner stores provider connection state without credential fiel
   assert.doesNotMatch(index, /id="providerPassword"|id="providerToken"|access_token|refresh_token/i);
 });
 
-test("Nashville planner shows open jobs green assigned jobs yellow and payment snapshots", () => {
+test("Nashville planner exposes Android provider settings and import review controls without public login fields", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
 
+  assert.match(index, /android-app-backbone\.js/);
+  assert.match(index, /id="openProviderSettings"/);
+  assert.match(index, /Open Android provider settings/);
+  assert.doesNotMatch(index, /id="providerLoginUsername"/);
+  assert.doesNotMatch(index, /id="providerLoginPassword"/);
+  assert.doesNotMatch(index, /Save encrypted Android login/);
+  assert.match(index, /id="importReviewQueue"/);
+  assert.match(index, /id="approveImportReview"/);
+  assert.match(index, /id="clearImportReview"/);
+});
+
+test("Nashville planner can show all apps or one app with green yellow red job statuses", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(index, /id="jobProviderFilter"/);
+  assert.match(index, /All apps together/);
+  assert.match(index, /id="jobStatusFilter"/);
   assert.match(index, /Available \/ open to claim/);
   assert.match(index, /Claimed \/ assigned/);
+  assert.match(index, /Needs completion/);
   assert.match(index, /green = open to claim/i);
   assert.match(index, /yellow = claimed\/assigned/i);
+  assert.match(index, /red = needs completion/i);
   assert.match(index, /PAYMENT_SNAPSHOTS_KEY/);
   assert.match(index, /Payment center snapshot/);
+});
+
+test("Nashville planner separates job tabs and hides transit until View route", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(index, /id="jobTabOpen"/);
+  assert.match(index, /Open jobs/);
+  assert.match(index, /id="jobTabAccepted"/);
+  assert.match(index, /Accepted \/ claimed/);
+  assert.match(index, /id="jobTabCompleted"/);
+  assert.match(index, /Completed jobs/);
+  assert.match(index, /id="viewSelectedRoute"/);
+  assert.match(index, /View route/);
+  assert.match(index, /id="bulkJobFolder"/);
+  assert.match(index, /id="moveSelectedJobs"/);
+  assert.match(index, /Move selected/);
+  assert.match(index, /Pending payment/);
+  assert.match(index, /showTransitRoute=false/);
+  assert.match(index, /drawTransitRoute/);
+  assert.match(index, /Select jobs, then View route/);
+  assert.match(index, /EXISTING_JOBS_COMPLETED_KEY/);
+  assert.match(index, /moveExistingSavedJobsToCompletedOnce/);
 });
 
 test("Nashville planner links saved jobs to a separate active and passed history page", () => {
@@ -70,26 +129,6 @@ test("Nashville planner links saved jobs to a separate active and passed history
   assert.match(history, /Download visible jobs JSON/);
   assert.match(history, /nashville_phone_work_jobs_v1/);
   assert.match(backbone, /isCompletedJob/);
-});
-
-test("every saved job board exposes the same local job options dropdown", () => {
-  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
-  const history = fs.readFileSync(path.join(plannerRoot, "jobs.html"), "utf8");
-
-  for (const page of [index, history]) {
-    assert.match(page, /data-job-action/);
-    assert.match(page, /Keep saved on this board/);
-    assert.match(page, /Move to available\/open/);
-    assert.match(page, /Move to applied\/requested/);
-    assert.match(page, /Move to claimed\/assigned/);
-    assert.match(page, /Mark completed\/passed/);
-    assert.match(page, /Restore to active/);
-    assert.match(page, /Delete saved job/);
-    assert.match(page, /Apply/);
-  }
-
-  assert.match(history, /confirm\(`Delete the saved copy/);
-  assert.match(index, /confirm\(`Delete the saved copy/);
 });
 
 test("Nashville planner exposes safe read-only email sync settings", () => {
@@ -157,6 +196,14 @@ test("Android shell loads the Nashville planner and requests network location an
     path.join(projectRoot, "android", "app", "src", "main", "java", "com", "linkedjobs", "routeplanner", "MainActivity.java"),
     "utf8",
   );
+  const settingsActivity = fs.readFileSync(
+    path.join(projectRoot, "android", "app", "src", "main", "java", "com", "linkedjobs", "routeplanner", "ProviderConnectionActivity.java"),
+    "utf8",
+  );
+  const credentialStore = fs.readFileSync(
+    path.join(projectRoot, "android", "app", "src", "main", "java", "com", "linkedjobs", "routeplanner", "ProviderCredentialStore.java"),
+    "utf8",
+  );
 
   assert.match(manifest, /android\.permission\.INTERNET/);
   assert.match(manifest, /android\.permission\.ACCESS_FINE_LOCATION/);
@@ -167,11 +214,23 @@ test("Android shell loads the Nashville planner and requests network location an
   assert.match(manifest, /iSurvey\.Android/);
   assert.match(manifest, /net\.fieldagent/);
   assert.match(manifest, /android\.intent\.action\.SEND/);
+  assert.match(manifest, /android\.intent\.action\.SEND_MULTIPLE/);
+  assert.match(manifest, /image\/png/);
+  assert.match(manifest, /image\/jpeg/);
+  assert.match(manifest, /application\/pdf/);
+  assert.match(manifest, /ProviderConnectionActivity/);
   assert.match(activity, /https:\/\/www\.routeplanner\.space/);
+  assert.match(activity, /openProviderSettings/);
+  assert.match(activity, /getProviderLoginStatus/);
   assert.match(activity, /onGeolocationPermissionsShowPrompt/);
   assert.match(activity, /onPermissionRequest/);
   assert.match(activity, /addJavascriptInterface/);
   assert.match(activity, /openProviderApp/);
   assert.match(activity, /LinkedJobsAndroid/);
-  assert.match(activity, /sharedTextFromIntent/);
+  assert.match(activity, /LinkedJobsReceiveAndroidShare/);
+  assert.match(settingsActivity, /Provider Connections/);
+  assert.match(settingsActivity, /Save encrypted login/);
+  assert.match(settingsActivity, /Clear saved login/);
+  assert.match(credentialStore, /EncryptedSharedPreferences/);
+  assert.match(credentialStore, /PrefKeyEncryptionScheme\.AES256_SIV/);
 });
