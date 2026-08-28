@@ -1,7 +1,3 @@
 {
-  "version": 2,
-  "rewrites": [
-    { "source": "/api/wego-live", "destination": "/api/wego-live" },
-    { "source": "/api/gtfs-reload", "destination": "/api/gtfs-reload" }
-  ]
+  "version": 2
 }
