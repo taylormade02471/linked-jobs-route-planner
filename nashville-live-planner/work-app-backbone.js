@@ -14,6 +14,7 @@
       connection: "External app session",
       boardUrl: "https://survey.com/",
       loginUrl: "https://survey.com/",
+      androidPackage: "iSurvey.Android",
       connectionHelp: "Use the Survey Merchandiser app for sign-in, then save only this planner's local connection status.",
     },
     {
@@ -22,6 +23,7 @@
       connection: "Workplace or phone app session",
       boardUrl: "https://workplace.clickworker.com/",
       loginUrl: "https://workplace.clickworker.com/",
+      androidPackage: "com.clickworker.clickworkerapp",
       connectionHelp: "Open the official Workplace login or phone app; the planner stores status, not the Clickworker password.",
     },
     {
@@ -30,7 +32,17 @@
       connection: "External app session",
       boardUrl: "https://fieldnation.com/",
       loginUrl: "https://fieldnation.com/",
+      androidPackage: "com.fieldnation.android",
       connectionHelp: "Use Field Nation's platform or app for sign-in; this planner only stores non-secret connection metadata.",
+    },
+    {
+      id: "field_agent",
+      label: "Field Agent",
+      connection: "External app session",
+      boardUrl: "https://app.fieldagent.net/get-the-app",
+      loginUrl: "https://app.fieldagent.net/",
+      androidPackage: "net.fieldagent",
+      connectionHelp: "Use Field Agent's app for map/open jobs; share or capture visible job details into this planner.",
     },
   ];
 
@@ -81,7 +93,7 @@
     const text = asText(value).toLowerCase();
     if (text.includes("paid") || text.includes("complete") || text.includes("done")) return "completed";
     if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
-    if (text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "planned";
+    if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
     if (text.includes("available") || text.includes("open")) return "available";
     return text || "available";
   }
@@ -89,6 +101,11 @@
   function isOpenAvailableJob(job) {
     const status = normalizeStatus(job?.status);
     return status === "available" || status === "open";
+  }
+
+  function isAssignedJob(job) {
+    const status = normalizeStatus(job?.status);
+    return status === "assigned" || status === "planned";
   }
 
   function moneyToCents(value) {
@@ -147,10 +164,11 @@
       const address = (block.match(STREET_PATTERN) || [])[0] || "";
       const pay = (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
       const dueLine = lines.find((line) => /\b(due|deadline|date|starts?|arrival|window)\b/i.test(line)) || "";
+      const paymentLine = lines.find((line) => /\b(payment|payout|paid|payable|pending|approved|bonus|expense)\b/i.test(line)) || "";
       const title =
         lines.find((line) => line !== address && line !== pay && !/\b(due|deadline|date|status)\b/i.test(line)) ||
         provider.label + " job";
-      const statusLine = lines.find((line) => /\b(status|available|open|applied|requested|accepted|assigned)\b/i.test(line)) || "available";
+      const statusLine = lines.find((line) => /\b(status|available|open|applied|requested|accepted|assigned|claimed|reserved)\b/i.test(line)) || "available";
       const job = {
         id: "",
         provider_id: provider.id,
@@ -161,12 +179,41 @@
         due: dueLine,
         minutes: minutesFrom(block),
         status: normalizeStatus(statusLine),
+        payment_status: asText(paymentLine),
         source: "phone-app-import",
         source_text: block,
         order: index + 1,
       };
       job.id = jobId(job) || provider.id + ":" + Date.now() + ":" + index;
       return job;
+    });
+  }
+
+  function parsePaymentCenterText(text, providerId = "survey_merchandiser") {
+    const provider = providerById(providerId);
+    const blocks = String(text || "")
+      .split(/\n\s*\n+/)
+      .map((block) => block.trim())
+      .filter(Boolean);
+
+    return blocks.map((block, index) => {
+      const lines = block.split(/\r?\n/).map(asText).filter(Boolean);
+      const amount = (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
+      const statusLine = lines.find((line) => /\b(pending|approved|paid|payable|rejected|processing|submitted)\b/i.test(line)) || "pending";
+      const dateLine = lines.find((line) => /\b(today|tomorrow|due|paid|approved|\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2})\b/i.test(line)) || "";
+      const title = lines.find((line) => line !== amount && line !== statusLine && line !== dateLine) || provider.label + " payment";
+      return {
+        id: [provider.id, asText(title).toLowerCase(), moneyToCents(amount), index].join(":"),
+        provider_id: provider.id,
+        provider_label: provider.label,
+        title,
+        amount_cents: moneyToCents(amount),
+        status: normalizeStatus(statusLine),
+        payment_status: asText(statusLine),
+        date: asText(dateLine),
+        source: "payment-center-import",
+        source_text: block,
+      };
     });
   }
 
@@ -269,11 +316,13 @@
     centsLabel,
     connectionLabel,
     coordinateForJob,
+    isAssignedJob,
     isOpenAvailableJob,
     moneyToCents,
     normalizeAddress,
     normalizeStatus,
     parseSharedJobs,
+    parsePaymentCenterText,
     providerById,
     recommendJobs,
     sanitizeConnectionSettings,

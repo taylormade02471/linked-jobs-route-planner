@@ -13,9 +13,10 @@ const data = context.window.PLANNER_DATA;
 test("Nashville backbone targets the requested phone work apps", () => {
   assert.deepEqual(
     backbone.PROVIDERS.map((provider) => provider.id),
-    ["survey_merchandiser", "clickworker", "field_nation"],
+    ["survey_merchandiser", "clickworker", "field_nation", "field_agent"],
   );
   assert.ok(backbone.PROVIDERS.every((provider) => provider.loginUrl));
+  assert.ok(backbone.PROVIDERS.every((provider) => provider.androidPackage));
 });
 
 test("provider connection settings keep status but reject secrets", () => {
@@ -54,6 +55,7 @@ test("open available filtering excludes applied planned and completed jobs", () 
   ];
 
   assert.equal(jobs.filter(backbone.isOpenAvailableJob).length, 2);
+  assert.equal(jobs.filter(backbone.isAssignedJob).length, 1);
 });
 
 test("shared phone app text preserves provider pay address and status", () => {
@@ -66,6 +68,29 @@ test("shared phone app text preserves provider pay address and status", () => {
   assert.equal(job.pay_cents, 3850);
   assert.match(job.address, /7601 Hwy 70 S/i);
   assert.equal(job.status, "available");
+});
+
+test("shared phone app text can preserve assigned status and payment hints", () => {
+  const [job] = backbone.parseSharedJobs(
+    "Survey store reset\n3019 Dickerson Pike, Nashville, TN\nPay $18.00\nClaimed\nPayment pending",
+    "survey_merchandiser",
+  );
+
+  assert.equal(job.provider_id, "survey_merchandiser");
+  assert.equal(job.status, "assigned");
+  assert.match(job.payment_status, /Payment pending/i);
+});
+
+test("payment center text preserves provider amount and payment status", () => {
+  const [payment] = backbone.parsePaymentCenterText(
+    "Survey Merchandiser Payment\n$42.50\nApproved pending payout\n08/28",
+    "survey_merchandiser",
+  );
+
+  assert.equal(payment.provider_id, "survey_merchandiser");
+  assert.equal(payment.amount_cents, 4250);
+  assert.match(payment.payment_status, /Approved pending payout/i);
+  assert.equal(payment.source, "payment-center-import");
 });
 
 test("known Nashville planner addresses can be placed without inventing coordinates", () => {

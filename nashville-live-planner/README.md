@@ -16,8 +16,13 @@ The Nashville URL now includes a browser-local phone work app layer for:
 - Survey Merchandiser
 - Clickworker
 - Field Nation
+- Field Agent
 
-Jobs added or pasted from those apps are saved in the browser on that device. The planner ranks open available work against the user's current/map location, pay, work time, and verified Nashville planner address matches. Matched open jobs are shown as bright green pins.
+Jobs added, shared, or pasted from those apps are saved in the browser on that device. The planner ranks open available work against the user's current/map location, pay, work time, and verified Nashville planner address matches. Matched open jobs are shown as bright green pins; claimed/assigned jobs are shown as yellow pins.
+
+The Android wrapper can attempt to open installed provider apps by package name. It also accepts `text/plain` Android shares so visible provider job details can be sent into the planner import box for review. This does not scrape private app storage, bypass app security, or copy provider sessions.
+
+Payment-center snapshots can be pasted from visible provider screens and stored locally for field reference. Payment rows are app data only; they are not provider credentials and are not committed.
 
 Provider connection status is also browser-local app data. The planner can remember that a provider is signed in on this device and can reopen that provider's official app/login surface, but it does not store provider passwords, tokens, cookies, MFA codes, or API keys in source code, GitHub, Vercel, or browser storage.
 

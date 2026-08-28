@@ -6,6 +6,13 @@
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <queries>
+        <package android:name="iSurvey.Android" />
+        <package android:name="com.clickworker.clickworkerapp" />
+        <package android:name="com.fieldnation.android" />
+        <package android:name="net.fieldagent" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:label="Linked Jobs Route Planner"
@@ -17,6 +24,11 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
     </application>
