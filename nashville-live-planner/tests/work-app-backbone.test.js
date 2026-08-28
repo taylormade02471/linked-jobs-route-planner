@@ -66,6 +66,10 @@ test("API registry exposes only public IDs and safe background sync rules", () =
   assert.ok(azure);
   assert.match(azure.storage, /Key Vault/);
   assert.match(azure.status, /ready_for_vault_binding/);
+  assert.equal(azure.public_values.tenant_id, "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5");
+  assert.equal(azure.public_values.tenant_name, "Default Directory");
+  assert.equal(azure.public_values.primary_domain, "kyletaylor133hotmail.onmicrosoft.com");
+  assert.equal(azure.public_values.license, "Microsoft Entra ID Free");
   assert.ok(outlook);
   assert.equal(outlook.public_values.client_id, null);
   assert.match(outlook.status, /ready_for_app_registration/);
