@@ -1,4 +1,4 @@
-(function registerTransitPicker(root, factory) {
+﻿(function registerTransitPicker(root, factory) {
   const api = factory();
 
   if (typeof module !== "undefined" && module.exports) {
@@ -201,3 +201,4 @@
     walkTime,
   };
 });
+

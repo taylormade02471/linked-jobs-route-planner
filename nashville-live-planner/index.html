@@ -1,5 +1,5 @@
-<!doctype html>
-<html lang="en">
+﻿<!doctype html>
+<html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -18,31 +18,53 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .badge{display:inline-block;padding:4px 7px;border-radius:999px;color:#fff;font-weight:bold;font-size:12px;margin-right:5px}.time{font-weight:bold;color:#633d00}
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
-.providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
+.providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.jobtabs,.routeActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.jobtabs button{font-size:13px;min-height:38px;padding:8px 10px}.jobtabs button.active{background:#17324d;color:#fff}.routeActions span{font-size:12px;color:var(--muted)}.jobSelect{display:flex;align-items:center;gap:6px;min-width:auto;color:#17324d;font-weight:bold;margin-top:8px}.jobSelect input{width:auto;min-height:auto}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin,.redpin,.graypin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.redpin{background:#d71920;border-color:#7a1114}.graypin{background:#a7b0b8;border-color:#4d5964}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.reviewQueue{display:grid;gap:8px;margin-top:8px}.reviewItem{border:1px solid #c9e5cc;border-radius:9px;background:#f7fff7;padding:8px;font-size:13px}.reviewItem.blocked{border-color:#f0b7b2;background:#fff7f6}.reviewItem b{display:block;color:#17324d}.reviewItem span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
-.jobActions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:end;margin-top:10px}.jobActions label{min-width:0;font-size:12px}.jobActions select,.jobActions button{width:100%;min-height:40px;padding:8px;font-size:13px}.jobActions button{width:auto;font-weight:bold}
 @media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
-@media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}.jobActions{grid-template-columns:1fr}.jobActions button{width:100%}}
+@media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>Nashville Live Audit Transit Planner</h1><p>Only the current 18 quick audits + the first 1-hour Walgreens anchor. Static Wednesday GTFS plan with 30-second live WeGo backbone.</p></header>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>No public jobs loaded. The planner starts empty until you import, approve, or sync safe job records.</p></header>
 <main>
-<div class="notice"><b>Field-use rule:</b> static times are Wednesday, Aug. 26 schedule estimates from the uploaded WeGo GTFS. Live vehicle/trip/alert data refreshes from your own same-origin backend every 30 seconds. The map draws only the planned stop-to-stop GTFS pieces, not entire bus routes.</div>
+<div class="notice"><b>Empty public planner:</b> no job cards, provider-board rows, or old route jobs are published on this website right now. Add work later through Android share/import review or safe backend sync.</div>
 
 <div class="card metrics">
- <div class="metric">Requested quick rate<strong>$8.50</strong><span>18 jobs = $153.00</span></div>
- <div class="metric">First 1-hour job<strong>$38.50</strong><span>7601 Hwy 70 S</span></div>
- <div class="metric">All-18 target<strong>$191.50</strong><span>2 hr 30 min work time</span></div>
- <div class="metric">Route 94 home<strong>5:10 PM</strong><span>scheduled 6:06 PM arrival</span></div>
+ <div class="metric">Public posted jobs<strong>0</strong><span>No seeded audit list</span></div>
+ <div class="metric">Imported jobs<strong>0</strong><span>Approve in Import Review first</span></div>
+ <div class="metric">Provider map pins<strong>0</strong><span>Green, yellow, red after import</span></div>
+ <div class="metric">Transit plan<strong>Empty</strong><span>Select or import work later</span></div>
 </div>
 
 <div class="card" id="workApps">
  <div class="sectionTitle"><span class="greenpin"></span>Phone work app jobs</div>
  <div class="jobStatus"><a href="./jobs.html" target="_blank" rel="noopener">Open saved jobs and completed / passed history</a> · The homepage stays focused on current route work.</div>
+ <div class="jobStatus">Four provider apps are available below: Survey Merchandiser, Clickworker, Field Nation, and Field Agent. Imported planner jobs are shown as active work until you move or complete them.</div>
  <div id="providerStats" class="providergrid"></div>
+ <div class="controls">
+  <label>Show provider
+   <select id="jobProviderFilter"><option value="all">All apps together</option></select>
+  </label>
+  <label>Show status
+   <select id="jobStatusFilter"><option value="all">All statuses in selected tab</option><option value="available">Available / open to claim</option><option value="assigned">Claimed / assigned</option><option value="needs_completion">Needs completion</option><option value="completed">Completed / paid</option></select>
+  </label>
+ </div>
+ <div class="jobtabs" role="tablist" aria-label="Phone job folders">
+  <button id="jobTabOpen" class="active" type="button">Open jobs</button>
+  <button id="jobTabAccepted" type="button">Accepted / claimed</button>
+  <button id="jobTabCompleted" type="button">Completed jobs</button>
+ </div>
+ <div id="jobSelectionActions" class="routeActions">
+  <button id="viewSelectedRoute" type="button">View route</button>
+  <button id="hideSelectedRoute" type="button">Hide route</button>
+  <label>Move selected
+   <select id="bulkJobFolder"><option value="claimed">Claimed / accepted</option><option value="completed">Completed</option><option value="pending_payment">Pending payment</option></select>
+  </label>
+  <button id="moveSelectedJobs" type="button">Move selected</button>
+  <span id="jobSelectionStatus">Select jobs, then View route to show transit mapping.</span>
+ </div>
  <div class="connectionPanel">
   <h3>Provider connection saved on this device</h3>
   <div id="providerConnectionStatus" class="jobStatus">Choose a provider below to manage its local connection status.</div>
@@ -63,11 +85,14 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
   <div class="actions">
    <a id="openProviderBoard" target="_blank" rel="noopener">Open provider board/login</a>
    <button id="openProviderApp" type="button">Open installed phone app</button>
+   <button id="openProviderSettings" type="button">Open Android provider settings</button>
    <button id="saveProviderConnected" type="button">Mark connected here</button>
    <button id="saveProviderNeedsLogin" type="button">Mark needs login</button>
   <button id="saveProviderBackground" type="button">Save background update settings</button>
    <button id="checkProviderNow" type="button">Check provider now</button>
    <button id="clearProviderConnection" type="button">Clear this connection</button>
+   <button id="syncSafeProviderJobs" type="button">Sync safe job data</button>
+   <button id="loadSyncedProviderJobs" type="button">Load synced jobs</button>
   </div>
  </div>
  <div class="workform">
@@ -81,7 +106,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <input id="appPay" inputmode="decimal" placeholder="$38.50">
   </label>
   <label class="wide">Address
-   <input id="appAddress" placeholder="7601 Hwy 70 S, Nashville, TN 37221">
+   <input id="appAddress" placeholder="Enter the job address shown by the provider app">
   </label>
   <label>Due / window
    <input id="appDue" placeholder="Due today, 2 PM, tomorrow">
@@ -90,7 +115,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <input id="appMinutes" inputmode="numeric" placeholder="30 min">
   </label>
   <label>Status
-   <select id="appStatus"><option value="available">Available / open to claim</option><option value="assigned">Claimed / assigned</option><option value="applied">Applied or requested</option><option value="completed">Completed / passed / paid</option></select>
+   <select id="appStatus"><option value="available">Available / open to claim</option><option value="assigned">Claimed / assigned</option><option value="needs_completion">Needs completion</option><option value="applied">Applied or requested</option><option value="completed">Completed / passed / paid</option></select>
   </label>
   <label>Payment status
    <input id="appPaymentStatus" placeholder="Pending, approved, payable, paid">
@@ -100,13 +125,13 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <button id="clearWorkJobs" type="button">Clear saved phone jobs</button>
   </div>
   <label class="wide">Paste/share text from a work app
-   <textarea id="appImportText" placeholder="Paste a job card, screenshot OCR text, or shared details from Survey Merchandiser, Clickworker, or Field Nation."></textarea>
+   <textarea id="appImportText" placeholder="Paste a job card, screenshot OCR text, or shared details from Survey Merchandiser, Clickworker, Field Nation, or Field Agent."></textarea>
   </label>
   <div class="wide">
    <div class="cameraPanel">
     <div>
      <video id="cameraPreview" playsinline muted hidden></video>
-     <img id="cameraPhotoPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Captured job board photo preview" hidden>
+     <img id="cameraPhotoPreview" alt="Captured job board photo preview" hidden>
      <div id="cameraStatus" class="jobStatus">Camera ready. Use it to capture a job card or app screen, then enter or paste the job text above.</div>
     </div>
     <div class="cameraActions">
@@ -117,21 +142,15 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    </div>
   </div>
   <div class="wide">
-   <button id="importWorkJobs" type="button">Import pasted jobs</button>
+   <button id="importWorkJobs" type="button">Build import review</button>
+   <button id="approveImportReview" type="button">Approve route-visible jobs</button>
+   <button id="clearImportReview" type="button">Clear import review</button>
   </div>
+  <div id="importReviewQueue" class="reviewQueue wide"></div>
  </div>
  <div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
  <div class="sectionTitle">Best open work near your location</div>
  <div id="appRecommendations" class="recommendations"></div>
- <template id="jobActionOptions">
-  <option value="keep_saved">Keep saved on this board</option>
-  <option value="move_available">Move to available/open</option>
-  <option value="move_applied">Move to applied/requested</option>
-  <option value="move_assigned">Move to claimed/assigned</option>
-  <option value="mark_completed">Mark completed/passed</option>
-  <option value="restore_active">Restore to active</option>
-  <option value="delete_saved">Delete saved job</option>
- </template>
  <div class="connectionPanel emailPanel">
   <h3>Email job sync permissions</h3>
   <div id="emailSyncStatus" class="jobStatus">Outlook/Hotmail is the first planned read-only email connection. It will use Microsoft Graph delegated Mail.Read after OAuth is configured.</div>
@@ -196,6 +215,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
   <button id="refresh">Refresh live now</button>
  </div>
  <div id="liveStatus" class="status">Waiting for live feed…</div>
+<div id="gtfsStatus" class="status" style="margin-top:6px;background:#f0f7ff;border:1px solid #c5d9ef">GTFS static data: loading… <button onclick="reloadGtfs(true)" style="font-size:12px;min-height:28px;padding:3px 10px;margin-left:8px">Force reload now</button></div>
 </div>
 
 <div class="card">
@@ -227,7 +247,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 <footer class="siteFooter"><b>Privacy-first field planner:</b> <a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a></footer>
@@ -237,10 +257,14 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 <script src="./planner-data.js"></script>
 <script src="./transit-picker.js"></script>
 <script src="./work-app-backbone.js"></script>
+<script src="./provider-connectors.js"></script>
+<script src="./android-app-backbone.js"></script>
 <script>
 const D=window.PLANNER_DATA;
 const P=window.TransitPicker;
 const W=window.WorkAppBackbone;
+const C=window.ProviderConnectors;
+const A=window.AndroidAppBackbone;
 const map=L.map('map').setView([36.16,-86.78],11);
 const cleanTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:20,attribution:'© OpenStreetMap © CARTO'});
 const streetTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
@@ -249,25 +273,101 @@ let currentBounds=null;
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
+document.getElementById('toggleAllBuses').onclick=()=>{
+ showAllLiveBuses=!showAllLiveBuses;
+ const button=document.getElementById('toggleAllBuses');
+ button.classList.toggle('active',showAllLiveBuses);
+ button.textContent=showAllLiveBuses?'All WeGo buses':'Selected route buses';
+ render();
+};
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), jobLayer=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
 let myPosition=null,myAccuracy=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
 const WORK_JOBS_KEY='nashville_phone_work_jobs_v1';
 const PROVIDER_CONNECTIONS_KEY='nashville_provider_connections_v1';
 const PAYMENT_SNAPSHOTS_KEY='nashville_payment_snapshots_v1';
+const IMPORT_REVIEW_KEY='nashville_android_import_review_v1';
+const ANDROID_LOGIN_STATES_KEY='nashville_android_login_states_v1';
 const EMAIL_SYNC_SETTINGS_KEY='nashville_email_sync_settings_v1';
 const KEY_VAULT_PLAN_KEY='nashville_key_vault_plan_v1';
+const EXISTING_JOBS_COMPLETED_KEY='nashville_existing_jobs_moved_to_completed_v1';
+const LEGACY_STORAGE_KEYS=[
+ 'nashville_phone_work_jobs_v2_empty_launch',
+ 'nashville_provider_connections_v2_empty_launch',
+ 'nashville_payment_snapshots_v2_empty_launch',
+ 'nashville_android_import_review_v2_empty_launch',
+ 'nashville_android_login_states_v2_empty_launch',
+];
 let workJobs=[];
 let providerConnections={};
 let paymentSnapshots=[];
+let importReviewItems=[];
+let androidLoginStates={};
 let emailSyncSettings={};
 let keyVaultPlan={};
 let cameraStream=null,capturedPhotoDataUrl='';
 let providerSyncTimer=null;
 let emailSyncTimer=null;
 let googleTokenClient=null,gmailBearer='',gmailTokenExpiresAt=0;
+let activeJobTab='open';
+let selectedRouteJobIds=new Set();
+let showTransitRoute=false;
+let showAllLiveBuses=true;
+
+function clearLegacyPlannerStorage(){
+ LEGACY_STORAGE_KEYS.filter(key=>key!==WORK_JOBS_KEY).forEach(key=>localStorage.removeItem(key));
+}
+function readStoredJobArray(key){
+ try{
+  const parsed=JSON.parse(localStorage.getItem(key)||'[]');
+  return Array.isArray(parsed)?parsed:[];
+ }catch{return[];}
+}
+function jobsFromPlannerData(){
+ return Object.entries(D.jobs||{}).map(([id,job],index)=>({
+  id,
+  provider_id:job.provider_id||'old_planner',
+  provider_label:job.provider_label||'Old planner job',
+  title:job.title||job.name||job.address||'Old planner job',
+  location_name:job.location_name||job.locationName||'',
+  address:job.address||job.location||'',
+  pay_cents:Number(job.pay_cents)||W.moneyToCents(job.pay||job.fee||job.reward),
+  due:job.due||job.deadline||job.window||'',
+  minutes:Number(job.minutes)||30,
+  status:job.status||'completed',
+  source:'completed-from-old-planner-data',
+  order:Number(job.order)||index+1,
+ }));
+}
+function moveExistingSavedJobsToCompletedOnce(){
+ if(localStorage.getItem(EXISTING_JOBS_COMPLETED_KEY)){
+  clearLegacyPlannerStorage();
+  return;
+ }
+ const existing=[
+  ...readStoredJobArray(WORK_JOBS_KEY),
+  ...LEGACY_STORAGE_KEYS.flatMap(readStoredJobArray),
+  ...jobsFromPlannerData(),
+ ];
+ const seen=new Set();
+ const deduped=existing.filter((job,index)=>{
+  if(!job)return false;
+  const key=job.id||[job.provider_id,job.address,job.title,job.pay_cents,index].map(value=>String(value||'')).join(':');
+  if(seen.has(key))return false;
+  seen.add(key);
+  return true;
+ });
+ if(deduped.length){
+  localStorage.setItem(WORK_JOBS_KEY,JSON.stringify(W.markJobsCompleted(deduped,{
+   completion_reason:'Moved from old live-site data',
+  })));
+ }
+ clearLegacyPlannerStorage();
+ localStorage.setItem(EXISTING_JOBS_COMPLETED_KEY,String(Date.now()));
+}
 
 const planSel=document.getElementById('plan'),corridorSel=document.getElementById('corridor'),viewSel=document.getElementById('view');
 const planLabels={
+ 'No posted jobs':'No posted jobs',
  'Plan A — Attempt all 18':"Today's jobs",
  'Plan B — Conservative 7 + 3':'Conservative job route',
  'Plan C — West + North/East':'West, North & East jobs',
@@ -275,7 +375,58 @@ const planLabels={
 };
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=planLabels[n]||n;planSel.appendChild(o)});
 
-let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
+let live={vehicles:[],trips:[],alerts:[],stopArrivals:{},tripUpdateCount:0,updatedAt:null,ok:false};
+// GTFS static data state
+let gtfsData={wegoRoutes:{},routeColors:{},routeIdToShort:{},fetchedAt:null,loading:false};
+const GTFS_CACHE_KEY='nashville_gtfs_cache_v1';
+const GTFS_MAX_AGE_MS=12*60*60*1000; // 12 hours
+
+function loadCachedGtfs(){
+ try{
+  const raw=localStorage.getItem(GTFS_CACHE_KEY);
+  if(!raw) return false;
+  const d=JSON.parse(raw);
+  if(!d.fetchedAt||Date.now()-new Date(d.fetchedAt).getTime()>GTFS_MAX_AGE_MS) return false;
+  gtfsData=d;
+  applyGtfsToPlanner();
+  return true;
+ }catch{return false;}
+}
+
+function applyGtfsToPlanner(){
+ // Merge fresh routeColors + routeIdToShort into PLANNER_DATA so map colours update
+ if(!window.PLANNER_DATA) return;
+ if(Object.keys(gtfsData.routeColors).length){
+  window.PLANNER_DATA.routeColors=Object.assign({},window.PLANNER_DATA.routeColors,gtfsData.routeColors);
+ }
+ if(Object.keys(gtfsData.routeIdToShort).length){
+  window.PLANNER_DATA.routeIdToShort=Object.assign({},window.PLANNER_DATA.routeIdToShort,gtfsData.routeIdToShort);
+ }
+ if(Object.keys(gtfsData.wegoRoutes).length){
+  window.PLANNER_DATA.wegoRoutes=gtfsData.wegoRoutes;
+ }
+}
+
+async function reloadGtfs(force){
+ if(gtfsData.loading) return;
+ if(!force && loadCachedGtfs()) return;
+ const el=document.getElementById('gtfsStatus');
+ if(el) el.textContent='Reloading live WeGo GTFS schedule data…';
+ gtfsData.loading=true;
+ try{
+  const r=await fetch('/api/gtfs-reload?ts='+Date.now(),{cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  gtfsData={wegoRoutes:j.wegoRoutes||{},routeColors:j.routeColors||{},routeIdToShort:j.routeIdToShort||{},fetchedAt:j.fetchedAt,loading:false};
+  localStorage.setItem(GTFS_CACHE_KEY,JSON.stringify(gtfsData));
+  applyGtfsToPlanner();
+  render();
+  if(el) el.textContent=`GTFS LIVE — ${j.routeCount} routes / ${j.stopCount} stops — reloaded ${new Date(j.fetchedAt).toLocaleTimeString()} — next reload in 12 h`;
+ }catch(e){
+  gtfsData.loading=false;
+  if(el) el.innerHTML=`GTFS reload failed (${e.message}). <a href="#" onclick="reloadGtfs(true);return false">Retry</a>`;
+ }
+}
 
 function readVarint(u8,s){let val=0,shift=0;while(s.i<u8.length){const b=u8[s.i++];val+=(b&127)*Math.pow(2,shift);if(!(b&128))return val;shift+=7}return val}
 function fields(u8){let s={i:0},o=[];while(s.i<u8.length){let key=readVarint(u8,s),n=Math.floor(key/8),w=key&7,v;if(w===0)v=readVarint(u8,s);else if(w===1){v=u8.slice(s.i,s.i+8);s.i+=8}else if(w===2){let l=readVarint(u8,s);v=u8.slice(s.i,s.i+l);s.i+=l}else if(w===5){v=u8.slice(s.i,s.i+4);s.i+=4}else break;o.push([n,w,v])}return o}
@@ -295,8 +446,8 @@ async function refreshLive(){
  const el=document.getElementById('liveStatus');el.textContent='Refreshing official WeGo realtime feeds…';
  try{
   const r=await fetch('/api/wego-live?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
-  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.updatedAt=j.fetchedAt;live.ok=true;
-  el.textContent=`LIVE — ${live.vehicles.length} vehicles / ${live.alerts.length} alerts — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto refresh 30 sec`;
+  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.stopArrivals=j.stopArrivals||{};live.tripUpdateCount=j.tripUpdateCount||0;live.updatedAt=j.fetchedAt;live.ok=true;
+  el.textContent=`LIVE — ${live.vehicles.length} buses / ${live.alerts.length} alerts / ${live.tripUpdateCount} trip updates — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto 30s`;
  }catch(e){live.ok=false;el.innerHTML=`Live backend unavailable (${e.message}). Static GTFS plan remains usable. <a target="_blank" href="https://www.wegotransit.com/routes/">Open WeGo live arrivals</a>`}
  render();
 }
@@ -378,6 +529,32 @@ function loadPaymentSnapshots(){
 function savePaymentSnapshots(){
  localStorage.setItem(PAYMENT_SNAPSHOTS_KEY,JSON.stringify(paymentSnapshots));
 }
+function loadImportReviewItems(){
+ try{importReviewItems=JSON.parse(localStorage.getItem(IMPORT_REVIEW_KEY)||'[]');if(!Array.isArray(importReviewItems))importReviewItems=[];}catch{importReviewItems=[];}
+}
+function saveImportReviewItems(){
+ localStorage.setItem(IMPORT_REVIEW_KEY,JSON.stringify(importReviewItems));
+}
+function loadAndroidLoginStates(){
+ try{androidLoginStates=JSON.parse(localStorage.getItem(ANDROID_LOGIN_STATES_KEY)||'{}');if(!androidLoginStates||Array.isArray(androidLoginStates))androidLoginStates={};}catch{androidLoginStates={};}
+}
+function saveAndroidLoginStates(){
+ localStorage.setItem(ANDROID_LOGIN_STATES_KEY,JSON.stringify(androidLoginStates));
+}
+function parseBridgeJson(value){
+ try{return JSON.parse(String(value||'{}'));}catch{return{};}
+}
+function bridgeHas(method){
+ return Boolean(window.LinkedJobsAndroid&&typeof window.LinkedJobsAndroid[method]==='function');
+}
+function refreshAndroidLoginState(providerId){
+ const provider=W.providerById(providerId);
+ if(!bridgeHas('getProviderLoginStatus'))return androidLoginStates[provider.id]||{};
+ const state=A.publicCredentialState(parseBridgeJson(window.LinkedJobsAndroid.getProviderLoginStatus(provider.id)));
+ androidLoginStates[provider.id]=state;
+ saveAndroidLoginStates();
+ return state;
+}
 function loadEmailSyncSettings(){
  try{emailSyncSettings=W.sanitizeEmailSyncSettings(JSON.parse(localStorage.getItem(EMAIL_SYNC_SETTINGS_KEY)||'{}'));}catch{emailSyncSettings=W.sanitizeEmailSyncSettings({});}
 }
@@ -448,8 +625,89 @@ function clearKeyVaultPlan(){
 function providerLabel(id){
  return (W.providerById(id)||{}).label||id||'Phone app';
 }
-function jobActionOptions(){return document.getElementById('jobActionOptions').innerHTML;}
-function jobActionMessage(action){return ({keep_saved:'Job remains saved on this board.',move_available:'Job moved to available / open locally.',move_applied:'Job moved to applied / requested locally.',move_assigned:'Job moved to claimed / assigned locally.',mark_completed:'Job moved to completed / passed history locally.',restore_active:'Job restored to the active board locally.'})[action]||'Local job updated.';}
+function activeWorkFilters(){
+ return {
+  provider_id:document.getElementById('jobProviderFilter')?.value||'all',
+  status:document.getElementById('jobStatusFilter')?.value||'all',
+ };
+}
+function activeTabFilters(){
+ return {...activeWorkFilters(),tab:activeJobTab};
+}
+function selectedJobIds(){
+ return Array.from(selectedRouteJobIds).filter(Boolean);
+}
+function isSelectedJob(job){
+ return selectedRouteJobIds.has(String(job?.id||''));
+}
+function pinClassForJob(job){
+ const color=W.jobMapColor(job);
+ if(color==='red')return 'redpin';
+ if(color==='yellow')return 'yellowpin';
+ if(color==='gray')return 'graypin';
+ return 'greenpin';
+}
+function providerNameForJob(job){
+ return job?.provider_label||providerLabel(job?.provider_id);
+}
+function setJobSelectionStatus(message){
+ const el=document.getElementById('jobSelectionStatus');
+ if(el)el.textContent=message;
+}
+function setActiveJobTab(tab){
+ activeJobTab=tab;
+ showTransitRoute=false;
+ const statusFilter=document.getElementById('jobStatusFilter');
+ if(statusFilter)statusFilter.value='all';
+ ['Open','Accepted','Completed'].forEach(name=>{
+  const button=document.getElementById('jobTab'+name);
+  if(button)button.classList.toggle('active',activeJobTab===name.toLowerCase());
+ });
+ renderWorkJobs();
+ render();
+}
+function toggleRouteJobSelection(jobId,checked){
+ const id=String(jobId||'');
+ if(!id)return;
+ if(checked)selectedRouteJobIds.add(id);
+ else selectedRouteJobIds.delete(id);
+ setJobSelectionStatus(`${selectedRouteJobIds.size} selected job(s).`);
+ syncRenderedJobSelections();
+}
+function syncRenderedJobSelections(){
+ document.querySelectorAll('[data-route-job-id]').forEach(input=>{
+  input.checked=selectedRouteJobIds.has(input.getAttribute('data-route-job-id'));
+ });
+}
+function viewSelectedRoute(){
+ if(!selectedRouteJobIds.size){
+  setJobSelectionStatus('Select one or more open or accepted jobs first, then View route.');
+  return;
+ }
+ showTransitRoute=true;
+ setJobSelectionStatus(`Showing route layer for ${selectedRouteJobIds.size} selected job(s).`);
+ render();
+}
+function hideSelectedRoute(){
+ showTransitRoute=false;
+ setJobSelectionStatus('Transit route hidden. Job pins stay visible.');
+ render();
+}
+function moveSelectedJobs(){
+ const ids=selectedJobIds();
+ if(!ids.length){
+  setJobSelectionStatus('Select one or more jobs before moving them.');
+  return;
+ }
+ const folder=document.getElementById('bulkJobFolder')?.value||'completed';
+ workJobs=W.moveJobsToFolder(workJobs,ids,folder);
+ selectedRouteJobIds.clear();
+ showTransitRoute=false;
+ saveWorkJobs();
+ renderWorkJobs();
+ render();
+ setJobSelectionStatus(`Moved ${ids.length} job(s) to ${folder.replace(/_/g,' ')}.`);
+}
 function currentProvider(){
  return W.providerById(document.getElementById('appProvider')?.value);
 }
@@ -459,6 +717,7 @@ function currentConnection(providerId){
 function renderProviderConnection(){
  const provider=currentProvider();
  const connection=currentConnection(provider.id);
+ const loginState=refreshAndroidLoginState(provider.id);
  const status=document.getElementById('providerConnectionStatus');
  const account=document.getElementById('providerAccountLabel');
  const notes=document.getElementById('providerConnectionNotes');
@@ -467,7 +726,8 @@ function renderProviderConnection(){
  const open=document.getElementById('openProviderBoard');
  const next=W.nextSyncAt(connection);
  const syncText=connection.background_sync_enabled?` Auto-check every ${connection.sync_interval_minutes} min while this planner is open; next check ${new Date(next).toLocaleTimeString()}.`:' Auto-check is off.';
- if(status)status.textContent=`${provider.label}: ${W.connectionLabel(connection)}. ${provider.connectionHelp}${connection.stay_signed_in_external?' Uses provider app/browser saved login.':''}${syncText} ${connection.sync_status||''}`;
+ const loginText=loginState.has_saved_login?` Android encrypted login saved for ${loginState.username||'this provider'}.`:' No Android encrypted login is saved yet.';
+ if(status)status.textContent=`${provider.label}: ${W.connectionLabel(connection)}.${loginText} ${provider.connectionHelp}${connection.stay_signed_in_external?' Uses provider app/browser saved login.':''}${syncText} ${connection.sync_status||''}`;
  if(account&&document.activeElement!==account)account.value=connection.account_label||'';
  if(notes&&document.activeElement!==notes)notes.value=connection.notes||'';
  if(stay)stay.checked=Boolean(connection.stay_signed_in_external);
@@ -720,16 +980,71 @@ function openProviderApp(){
  }
  window.open(provider.loginUrl||provider.boardUrl,'_blank','noopener');
 }
+function openProviderSettings(){
+ const provider=currentProvider();
+ const status=document.getElementById('providerConnectionStatus');
+ if(bridgeHas('openProviderSettings')){
+  window.LinkedJobsAndroid.openProviderSettings(provider.id);
+  if(status)status.textContent=`Opening Android provider settings for ${provider.label}.`;
+  return;
+ }
+ if(status)status.textContent='Provider settings are available in the Android app. This public planner page keeps login fields off the frontend.';
+}
+function mergeWorkJobs(incoming){
+ const next=Array.isArray(incoming)?incoming:[];
+ workJobs=[...next,...workJobs].filter((job,index,all)=>all.findIndex(item=>item.id===job.id)===index);
+ saveWorkJobs();
+}
+async function syncSafeProviderJobsToBackend(){
+ const status=document.getElementById('appJobStatus');
+ const payload=A.createSafeJobSyncPayload(workJobs,W);
+ try{
+  const response=await fetch('/api/provider-jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const result=await response.json();
+  if(status)status.textContent=`Synced ${payload.jobs.length} safe job record(s). Backend now has ${result.jobs?.length||0} synced provider job(s). No credentials were sent.`;
+ }catch(error){
+  if(status)status.textContent=`Safe job sync is available on the planner backend after sign-in or local access. Nothing credential-related was sent. ${error.message}`;
+ }
+}
+async function loadSyncedProviderJobsFromBackend(){
+ const status=document.getElementById('appJobStatus');
+ try{
+  const params=new URLSearchParams(activeWorkFilters());
+  const response=await fetch('/api/provider-jobs?'+params.toString(),{cache:'no-store'});
+  if(!response.ok)throw new Error('HTTP '+response.status);
+  const result=await response.json();
+  mergeWorkJobs(result.jobs||[]);
+  renderWorkJobs();render();
+  if(status)status.textContent=`Loaded ${result.jobs?.length||0} synced safe provider job(s) from the planner backend.`;
+ }catch(error){
+  if(status)status.textContent=`Synced provider jobs are not available from this page yet. ${error.message}`;
+ }
+}
+function escapeHtml(value){
+ return String(value||'').replace(/[&<>"']/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
 function renderProviderStats(){
  const target=document.getElementById('providerStats');
  if(!target)return;
- const open=workJobs.filter(W.isOpenAvailableJob);
+ const routeVisible=W.jobsForMap(workJobs,{provider_id:'all',status:'all'});
+ const completed=W.jobsForTab(workJobs,{provider_id:'all',status:'all',tab:'completed'});
  target.innerHTML=W.PROVIDERS.map(provider=>{
-  const providerJobs=open.filter(job=>job.provider_id===provider.id);
+  const providerJobs=routeVisible.filter(job=>job.provider_id===provider.id);
+  const completedJobs=completed.filter(job=>job.provider_id===provider.id);
   const mapped=providerJobs.filter(job=>W.coordinateForJob(job,D)).length;
   const connection=currentConnection(provider.id);
-  return `<div class="provider"><b>${provider.label}</b><span>${W.connectionLabel(connection)}</span><span>${provider.connection}</span><span>${providerJobs.length} open / ${mapped} mapped on this Nashville plan</span><span><a target="_blank" rel="noopener" href="${provider.boardUrl}">Open provider</a></span></div>`;
+  const openCount=providerJobs.filter(W.isOpenAvailableJob).length;
+  const assignedCount=providerJobs.filter(W.isAssignedJob).length;
+  const redCount=providerJobs.filter(W.isNeedsCompletionJob).length;
+  return `<div class="provider"><b>${provider.label}</b><span>${W.connectionLabel(connection)}</span><span>${provider.connection}</span><span>${openCount} open · ${assignedCount} claimed · ${redCount} needs completion · ${completedJobs.length} completed · ${mapped} mapped</span><span><a target="_blank" rel="noopener" href="${provider.boardUrl}">Open provider</a></span></div>`;
  }).join('');
+}
+function visibleJobsForActiveTab(){
+ if(activeJobTab==='completed'){
+  return W.jobsForTab(workJobs,activeTabFilters()).map(job=>W.scoreJob(job,D,originForRecommendations())).sort((a,b)=>(b.completed_at||b.updated_at||0)-(a.completed_at||a.updated_at||0));
+ }
+ return W.recommendRouteJobs(workJobs,D,originForRecommendations(),activeTabFilters());
 }
 function renderApiRegistry(){
  const target=document.getElementById('apiRegistry');
@@ -742,12 +1057,18 @@ function renderApiRegistry(){
 }
 function drawWorkJobs(bounds){
  jobLayer.clearLayers();
- const visible=workJobs.filter(job=>W.isOpenAvailableJob(job)||W.isAssignedJob(job)).map(job=>W.scoreJob(job,D,originForRecommendations())).sort((a,b)=>b.recommendation_score-a.recommendation_score);
+ const visible=visibleJobsForActiveTab();
  visible.forEach((job,index)=>{
   if(!job.coordinate)return;
-  const assigned=W.isAssignedJob(job);
-  const marker=L.circleMarker([job.coordinate.lat,job.coordinate.lon],{radius:index===0?12:9,color:assigned?'#5d4700':'#052e16',weight:3,fillColor:assigned?'#ffd400':'#39ff14',fillOpacity:.95}).addTo(jobLayer);
-  marker.bindPopup(`<b>${job.title}</b><br>${providerLabel(job.provider_id)}<br><b>${assigned?'CLAIMED / ASSIGNED':'OPEN / AVAILABLE'}</b><br>${job.address||'Address not listed'}<br>${W.centsLabel(job.pay_cents)}<br>${job.payment_status||''}<br>${job.recommendation_reason}<br>${job.coordinate.source}`);
+  const color=W.jobMapColor(job);
+  const palette={
+   green:{stroke:'#052e16',fill:'#39ff14',label:'OPEN / AVAILABLE'},
+   yellow:{stroke:'#5d4700',fill:'#ffd400',label:'CLAIMED / ASSIGNED'},
+   red:{stroke:'#7a1114',fill:'#d71920',label:'NEEDS COMPLETION'},
+   gray:{stroke:'#4d5964',fill:'#a7b0b8',label:'COMPLETED / ARCHIVED'},
+  }[color]||{stroke:'#333',fill:'#ccc',label:String(job.status||'JOB').toUpperCase()};
+  const marker=L.circleMarker([job.coordinate.lat,job.coordinate.lon],{radius:index===0?12:9,color:palette.stroke,weight:3,fillColor:palette.fill,fillOpacity:.95}).addTo(jobLayer);
+  marker.bindPopup(`<b>${job.title}</b><br>${providerNameForJob(job)}<br><b>${palette.label}</b><br>${job.location_name||''}<br>${job.address||'Address not listed'}<br>${W.centsLabel(job.pay_cents)}<br>${job.due||''}<br>${job.payment_status||''}<br>${job.recommendation_reason||''}<br>${job.coordinate.source}`);
   bounds.push([job.coordinate.lat,job.coordinate.lon]);
  });
 }
@@ -759,18 +1080,51 @@ function renderPayments(){
  summary.textContent=paymentSnapshots.length?`${paymentSnapshots.length} payment center rows saved locally, total ${W.centsLabel(total)}.`:'No payment snapshots saved yet.';
  rows.innerHTML=paymentSnapshots.slice(0,12).map(item=>`<div class="paymentRow"><b>${item.title}</b><br>${providerLabel(item.provider_id)} · ${W.centsLabel(item.amount_cents)} · ${item.payment_status||item.status||'status not listed'}<br>${item.date||''}</div>`).join('');
 }
+function renderImportReview(){
+ const target=document.getElementById('importReviewQueue');
+ if(!target)return;
+ if(!importReviewItems.length){
+  target.innerHTML='<div class="reviewItem"><b>No import review items yet</b><span>Share or paste visible provider job text, then build the review before saving jobs.</span></div>';
+  return;
+ }
+ target.innerHTML=importReviewItems.map((item,index)=>{
+  const blocked=!item.approvable;
+  const status=blocked?`Blocked: ${item.blocked_reason}`:'Ready: route-visible for map and routing';
+  return `<div class="reviewItem ${blocked?'blocked':''}"><b>${index+1}. ${escapeHtml(item.title)}</b><span>${escapeHtml(providerLabel(item.provider_id))} · ${escapeHtml(item.status)} · ${escapeHtml(W.centsLabel(item.pay_cents))} · ${escapeHtml(item.minutes||30)} min</span><span>${escapeHtml(item.address||'Address not listed')}</span><span>${escapeHtml(status)}</span></div>`;
+ }).join('');
+}
 function renderWorkJobs(){
  renderProviderStats();
  renderPayments();
+ renderImportReview();
  const target=document.getElementById('appRecommendations');
  const status=document.getElementById('appJobStatus');
  if(!target)return;
- const recommended=W.recommendJobs(workJobs,D,originForRecommendations());
-  const openCount=workJobs.filter(W.isOpenAvailableJob).length;
- const assignedCount=workJobs.filter(W.isAssignedJob).length;
- const mappedCount=workJobs.filter(job=>(W.isOpenAvailableJob(job)||W.isAssignedJob(job))&&W.coordinateForJob(job,D)).length;
- if(status)status.textContent=`${openCount} open jobs and ${assignedCount} assigned jobs saved here. ${mappedCount} can be mapped against the Nashville planner without paid geocoding. Green = open to claim, yellow = claimed/assigned.`;
- target.innerHTML=recommended.length?recommended.slice(0,8).map((job,index)=>`<div class="workjob" data-job-id="${escapeHtml(job.id)}"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="greenpin"></span>${escapeHtml(providerLabel(job.provider_id))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(job.minutes||30)} min</span><span>${escapeHtml(job.address||'Address not listed')}</span><span>${escapeHtml(job.payment_status||'')}</span><span>${escapeHtml(job.recommendation_reason)}</span>${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}<div class="jobActions"><label>Job options<select data-job-action aria-label="Job options for ${escapeHtml(job.title||'saved job')}">${jobActionOptions()}</select></label><button type="button" data-apply-job-action>Apply</button></div></div>`).join(''):'<div class="workjob"><b>No open phone app jobs saved yet</b><span>Add or paste available work from Survey Merchandiser, Clickworker, Field Nation, or Field Agent.</span></div>';
+ const routeVisible=W.jobsForMap(workJobs,{provider_id:'all',status:'all'});
+ const openJobs=W.jobsForTab(workJobs,{provider_id:'all',status:'all',tab:'open'});
+ const acceptedJobs=W.jobsForTab(workJobs,{provider_id:'all',status:'all',tab:'accepted'});
+ const completedJobs=W.jobsForTab(workJobs,{provider_id:'all',status:'all',tab:'completed'});
+ const visible=visibleJobsForActiveTab();
+ const openCount=routeVisible.filter(W.isOpenAvailableJob).length;
+ const assignedCount=routeVisible.filter(W.isAssignedJob).length;
+ const redCount=routeVisible.filter(W.isNeedsCompletionJob).length;
+ const mappedCount=routeVisible.concat(completedJobs).filter(job=>W.coordinateForJob(job,D)).length;
+ const counts={open:openJobs.length,accepted:acceptedJobs.length,completed:completedJobs.length};
+ document.getElementById('jobTabOpen').textContent=`Open jobs (${counts.open})`;
+ document.getElementById('jobTabAccepted').textContent=`Accepted / claimed (${counts.accepted})`;
+ document.getElementById('jobTabCompleted').textContent=`Completed jobs (${counts.completed})`;
+ if(status)status.textContent=`${openCount} open jobs, ${assignedCount} claimed/assigned jobs, ${redCount} needs-completion jobs, and ${completedJobs.length} completed jobs saved here. ${mappedCount} can be mapped against known/imported coordinates. Green = open to claim, yellow = claimed/assigned, red = needs completion, gray = completed.`;
+ const emptyCopy={
+  open:'No open jobs saved yet. Add, paste, share, or sync available claim-and-go work from your provider apps.',
+  accepted:'No accepted or claimed jobs saved yet. Accepted work will show here in yellow, and urgent needs-completion work will show in red.',
+  completed:'No completed jobs saved yet. Old live-site jobs and pending-payment rows belong here, out of route scoring.',
+ }[activeJobTab];
+ target.innerHTML=visible.length?visible.slice(0,24).map((job,index)=>{
+  const canRoute=W.isRouteVisibleJob(job);
+  const checkbox=canRoute?`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select for route or move</label>`:`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select to move</label>`;
+  return `<div class="workjob"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(job.minutes||30)} min · ${escapeHtml(job.status)}</span><span><b>Location:</b> ${escapeHtml(job.location_name||'Location name not listed')}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Timer after accept:</b> ${escapeHtml(job.timer_minutes?job.timer_minutes+' min':'Not listed')}</span><span><b>Photos:</b> ${escapeHtml(job.photos_required==null?'Not listed':job.photos_required)}</span><span><b>Purchase:</b> ${escapeHtml(job.purchase_required==null?'Not listed':job.purchase_required?'Required':'Not required')}</span><span><b>Requirements:</b> ${escapeHtml(job.requirements||'Not listed')}</span><span><b>Payment:</b> ${escapeHtml(job.payment_status||'Not listed')}</span><span><b>Map/source:</b> ${escapeHtml(job.recommendation_reason||'No route score needed')} ${job.coordinate?escapeHtml(' · '+job.coordinate.source):''}</span>${checkbox}${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
+ }).join(''):`<div class="workjob"><b>${activeJobTab==='open'?'No open jobs':'No '+activeJobTab+' jobs'} in this view</b><span>${emptyCopy}</span></div>`;
+ syncRenderedJobSelections();
 }
 function setCameraStatus(message,isError=false){
  const el=document.getElementById('cameraStatus');
@@ -808,31 +1162,84 @@ function clearCamera(){
 function stopCamera(){
  if(cameraStream){cameraStream.getTracks().forEach(track=>track.stop());cameraStream=null;}
 }
-window.LinkedJobsReceiveSharedText=function(text){
+function receiveSharedText(text,message='Shared text received from Android. Review it, choose the provider, then build the import review.'){
  const input=document.getElementById('appImportText');
  if(!input)return;
  input.value=String(text||'').trim();
- document.getElementById('appJobStatus').textContent='Shared text received from Android. Review it, choose the provider, then tap Import pasted jobs.';
+ document.getElementById('appJobStatus').textContent=message;
+ document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
+}
+window.LinkedJobsReceiveSharedText=function(text){
+ receiveSharedText(text);
+};
+window.LinkedJobsReceiveAndroidShare=function(payload){
+ const normalized=A.normalizeSharePayload(payload||{});
+ if(!normalized.accepted){
+  document.getElementById('appJobStatus').textContent=normalized.reason;
+  document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
+  return;
+ }
+ if(normalized.kind==='text'){
+  receiveSharedText(normalized.text,'Android shared text received. Build the review, then approve route-visible jobs.');
+  return;
+ }
+ document.getElementById('appJobStatus').textContent=`Android ${normalized.kind} received. OCR/PDF extraction is the next build step; for now paste the visible job text or capture a readable photo.`;
  document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
 };
+function seedPlannerJobs(){
+ const seeded=W.jobsForMap(jobsFromPlannerData(),{provider_id:'all',status:'all'});
+ const existingIds=new Set(workJobs.map(job=>String(job.id)));
+ const additions=seeded.filter(job=>!existingIds.has(String(job.id))).map(job=>({
+  ...job,
+  source:'planner-data',
+  status:job.status||'available',
+  map_color:job.map_color||W.jobMapColor(job),
+ }));
+ if(additions.length){
+  workJobs=[...additions,...workJobs];
+  saveWorkJobs();
+ }
+}
 function initWorkApps(){
+ seedPlannerJobs();
  const provider=document.getElementById('appProvider');
+ const providerFilter=document.getElementById('jobProviderFilter');
  if(provider){
   provider.innerHTML=W.PROVIDERS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+ }
+ if(providerFilter){
+  providerFilter.innerHTML='<option value="all">All apps together</option>'+W.PROVIDERS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
  }
  loadWorkJobs();
  loadProviderConnections();
  loadPaymentSnapshots();
+ loadImportReviewItems();
+ loadAndroidLoginStates();
  loadEmailSyncSettings();
  loadKeyVaultPlan();
-  renderWorkJobs();
+ renderWorkJobs();
  renderApiRegistry();
  renderKeyVaultPlan();
-  renderProviderConnection();
+ renderProviderConnection();
  renderEmailSync();
  scheduleEmailSync();
  provider?.addEventListener('change',()=>{renderProviderConnection();renderProviderStats();});
+ providerFilter?.addEventListener('change',()=>{renderWorkJobs();render();});
+ document.getElementById('jobStatusFilter')?.addEventListener('change',()=>{renderWorkJobs();render();});
+ document.getElementById('jobTabOpen')?.addEventListener('click',()=>setActiveJobTab('open'));
+ document.getElementById('jobTabAccepted')?.addEventListener('click',()=>setActiveJobTab('accepted'));
+ document.getElementById('jobTabCompleted')?.addEventListener('click',()=>setActiveJobTab('completed'));
+ document.getElementById('viewSelectedRoute')?.addEventListener('click',viewSelectedRoute);
+ document.getElementById('hideSelectedRoute')?.addEventListener('click',hideSelectedRoute);
+ document.getElementById('moveSelectedJobs')?.addEventListener('click',moveSelectedJobs);
+ document.addEventListener('change',(event)=>{
+  const target=event.target;
+  if(target&&target.matches&&target.matches('[data-route-job-id]')){
+   toggleRouteJobSelection(target.getAttribute('data-route-job-id'),target.checked);
+  }
+ });
  document.getElementById('openProviderApp')?.addEventListener('click',openProviderApp);
+ document.getElementById('openProviderSettings')?.addEventListener('click',openProviderSettings);
  document.getElementById('saveProviderConnected')?.addEventListener('click',()=>setProviderConnection('signed_in_external'));
  document.getElementById('saveProviderNeedsLogin')?.addEventListener('click',()=>setProviderConnection('needs_login'));
  document.getElementById('clearProviderConnection')?.addEventListener('click',()=>{
@@ -844,6 +1251,8 @@ function initWorkApps(){
  });
  document.getElementById('saveProviderBackground')?.addEventListener('click',saveProviderBackgroundSettings);
  document.getElementById('checkProviderNow')?.addEventListener('click',checkProviderNow);
+ document.getElementById('syncSafeProviderJobs')?.addEventListener('click',syncSafeProviderJobsToBackend);
+ document.getElementById('loadSyncedProviderJobs')?.addEventListener('click',loadSyncedProviderJobsFromBackend);
  document.getElementById('saveEmailSync')?.addEventListener('click',()=>setEmailSyncSettings({sync_status:'Email permission settings saved locally.'}));
  document.getElementById('saveKeyVaultPlan')?.addEventListener('click',saveKeyVaultPlanFromForm);
  document.getElementById('clearKeyVaultPlan')?.addEventListener('click',clearKeyVaultPlan);
@@ -878,28 +1287,21 @@ function initWorkApps(){
  });
  document.getElementById('importWorkJobs')?.addEventListener('click',()=>{
   const text=document.getElementById('appImportText').value;
-  const imported=W.parseSharedJobs(text,document.getElementById('appProvider').value).map((job,index)=>index===0?{...job,photo_data_url:capturedPhotoDataUrl}:job);
-  workJobs=[...imported,...workJobs].filter((job,index,all)=>all.findIndex(item=>item.id===job.id)===index);
-  saveWorkJobs();clearCamera();renderWorkJobs();render();
+  const imported=A.createImportReviewItems(text,document.getElementById('appProvider').value,W).map((job,index)=>index===0?{...job,photo_data_url:capturedPhotoDataUrl}:job);
+  importReviewItems=[...imported,...importReviewItems].filter((job,index,all)=>all.findIndex(item=>item.review_id===job.review_id)===index);
+  saveImportReviewItems();renderImportReview();
+  document.getElementById('appJobStatus').textContent=`${imported.length} shared item(s) added to Import Review. Open, assigned, and needs-completion jobs can be approved. Apply-required jobs stay out.`;
  });
- document.getElementById('appRecommendations')?.addEventListener('click',event=>{
-  const button=event.target.closest('button[data-apply-job-action]');
-  const card=event.target.closest('[data-job-id]');
-  if(!button||!card)return;
-  const index=workJobs.findIndex(job=>String(job.id)===String(card.dataset.jobId));
-  if(index<0)return;
-  const job=workJobs[index];
-  const action=card.querySelector('[data-job-action]')?.value||'keep_saved';
-  if(action==='delete_saved'){
-   if(!confirm(`Delete the saved copy of ${job.title||'this job'}?`))return;
-   workJobs.splice(index,1);
-   saveWorkJobs();render();
-   document.getElementById('appJobStatus').textContent='Saved copy deleted locally.';
-   return;
-  }
-  workJobs[index]=W.applyJobBoardAction(job,action);
-  saveWorkJobs();render();
-  document.getElementById('appJobStatus').textContent=jobActionMessage(action);
+ document.getElementById('approveImportReview')?.addEventListener('click',()=>{
+  const approved=A.approveRouteVisibleReviewItems(importReviewItems);
+  workJobs=[...approved,...workJobs].filter((job,index,all)=>all.findIndex(item=>item.id===job.id)===index);
+  importReviewItems=importReviewItems.filter(item=>!item.approvable);
+  saveWorkJobs();saveImportReviewItems();clearCamera();renderWorkJobs();render();
+  document.getElementById('appJobStatus').textContent=`${approved.length} route-visible job(s) approved into the planner. Apply-required and completed jobs stayed out.`;
+ });
+ document.getElementById('clearImportReview')?.addEventListener('click',()=>{
+  importReviewItems=[];saveImportReviewItems();renderImportReview();
+  document.getElementById('appJobStatus').textContent='Import Review cleared.';
  });
  document.getElementById('importPayments')?.addEventListener('click',()=>{
   const imported=W.parsePaymentCenterText(document.getElementById('paymentImportText').value,document.getElementById('appProvider').value);
@@ -930,37 +1332,64 @@ function routeLabel(leg){
  if(leg.route==='link')return 'WeGo Link';
  return 'Route '+leg.route;
 }
-function render(){
- lines.clearLayers();pins.clearLayers();jobLayer.clearLayers();busLayer.clearLayers();
- const legs=selectedLegs(),bounds=[],routesUsed=new Set(),details=[];
+function stopArrivalsHtml(stopId){
+ if(!stopId||!live.ok||!live.stopArrivals) return '';
+ const arr=live.stopArrivals[stopId];
+ if(!arr||!arr.length) return '<i style="font-size:11px;color:#888">No arrivals in next 90 min</i>';
+ const routeColors=window.PLANNER_DATA?.routeColors||{};
+ const idToShort=window.PLANNER_DATA?.routeIdToShort||{};
+ const lines=arr.map(a=>{
+  const rShort=idToShort[a.route_id]||a.route_id||'?';
+  const col=routeColors[rShort]||'#555';
+  const minsText=a.mins_away<=0?'<b style="color:#d71920">NOW</b>':`${a.mins_away} min`;
+  return `<span style="display:inline-block;background:${col};color:#fff;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:bold;margin-right:3px">Rt ${rShort}</span>${minsText}`;
+ });
+ return '<div style="margin-top:4px;font-size:12px"><b>Next arrivals:</b><br>'+lines.join('<br>')+'</div>';
+}
+function routeLegJobControls(leg){
+ const ids=[leg.job,leg.extra_job].filter(Boolean);
+ if(!ids.length)return '';
+ return ids.map(id=>`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(id)}" ${selectedRouteJobIds.has(String(id))?'checked':''}> Select linked job ${escapeHtml(id)}</label>`).join('');
+}
+function drawTransitRoute(legs,bounds,routesUsed,details){
  const stop=selectedStop();
  if(stop){
   const linkedJob=legs.find(leg=>leg.job&&leg.destination);
-  details.push('<div class="notice"><b>Selected stop:</b> '+stop.name+' ['+stop.id+']<br><b>Stop location:</b> '+stop.location+'<br><b>Nearest planned job/address:</b> '+(linkedJob?linkedJob.destination:'No job/address is linked to this stop in the verified schedule.')+'</div>');
+  details.push('<div class="notice"><b>Selected stop:</b> '+escapeHtml(stop.name)+' ['+escapeHtml(stop.id)+']<br><b>Stop location:</b> '+escapeHtml(stop.location)+'<br><b>Nearest planned job/address:</b> '+escapeHtml(linkedJob?linkedJob.destination:'No job/address is linked to this stop in the verified schedule.')+'</div>');
  }
  let lastSection=null;
  for(const l of legs){
-  if(l._section!==lastSection){details.push('<div class="sectionTitle">'+P.sectionLabel(D,l._section)+'</div>');lastSection=l._section}
+  if(l._section!==lastSection){details.push('<div class="sectionTitle">'+escapeHtml(P.sectionLabel(D,l._section))+'</div>');lastSection=l._section}
   const c=l.route==='walk'||l.route==='link'?'#666':(D.routeColors[l.route]||'#333');
   const direction=P.directionForLeg(l)||'Direction not provided by the verified schedule';
   const schedule=P.scheduledWindow(l.static);
   const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
   if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:'#fff',weight:12,opacity:.96}).addTo(lines);L.polyline(l.segment,{color:c,weight:7,opacity:.96}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
   const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
-  L.circleMarker(b,{radius:9,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>BOARD</b><br>'+l.board_stop.name+'<br>Stop '+l.board+'<br>'+routeLabel(l)).addTo(pins);
-  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>EXIT</b><br>'+l.alight_stop.name+'<br>Stop '+l.alight+'<br><b>Destination:</b> '+l.destination).addTo(pins);
-  details.push('<div class="'+klass+'"><div><span class="badge" style="background:'+c+'">'+routeLabel(l)+'</span><b>'+l.label+'</b></div><div class="row"><b>Route number</b><span>'+routeLabel(l)+'</span></div><div class="row"><b>Direction</b><span>'+direction+'</span></div><div class="row"><b>Boarding stop</b><span>'+l.board_stop.name+' ['+l.board+']</span></div><div class="row"><b>Board location</b><span>'+l.board_stop.name+'</span></div><div class="row"><b>Scheduled pickup</b><span class="time">'+schedule.pickup+'</span></div><div class="row"><b>Exit stop</b><span>'+l.alight_stop.name+' ['+l.alight+']</span></div><div class="row"><b>Exit location</b><span>'+l.alight_stop.name+'</span></div><div class="row"><b>Scheduled exit</b><span>'+schedule.exit+'</span></div><div class="row"><b>Walk time to job</b><span>'+P.walkTime(l.static)+'</span></div><div class="row"><b>Job work time</b><span>'+P.jobWorkTime(D,l)+'</span></div><div class="row"><b>Buffer / risk</b><span>Scheduled estimate - allow timing buffer</span></div><div class="row"><b>Source</b><span>Scheduled estimate</span></div><div class="row"><b>Job / address</b><span>'+l.destination+'</span></div></div>');
+  L.circleMarker(b,{radius:9,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>BOARD</b><br>'+escapeHtml(l.board_stop.name)+'<br>Stop '+escapeHtml(l.board)+'<br>'+escapeHtml(routeLabel(l))+'<br>'+stopArrivalsHtml(l.board)).addTo(pins);
+  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>EXIT</b><br>'+escapeHtml(l.alight_stop.name)+'<br>Stop '+escapeHtml(l.alight)+'<br><b>Destination:</b> '+escapeHtml(l.destination)+'<br>'+stopArrivalsHtml(l.alight)).addTo(pins);
+  details.push('<div class="'+klass+'"><div><span class="badge" style="background:'+c+'">'+escapeHtml(routeLabel(l))+'</span><b>'+escapeHtml(l.label)+'</b></div><div class="row"><b>Route number</b><span>'+escapeHtml(routeLabel(l))+'</span></div><div class="row"><b>Direction</b><span>'+escapeHtml(direction)+'</span></div><div class="row"><b>Boarding stop</b><span>'+escapeHtml(l.board_stop.name)+' ['+escapeHtml(l.board)+']</span></div><div class="row"><b>Board location</b><span>'+escapeHtml(l.board_stop.name)+'</span></div><div class="row"><b>Scheduled pickup</b><span class="time">'+escapeHtml(schedule.pickup)+'</span></div><div class="row"><b>Exit stop</b><span>'+escapeHtml(l.alight_stop.name)+' ['+escapeHtml(l.alight)+']</span></div><div class="row"><b>Exit location</b><span>'+escapeHtml(l.alight_stop.name)+'</span></div><div class="row"><b>Scheduled exit</b><span>'+escapeHtml(schedule.exit)+'</span></div><div class="row"><b>Walk time to job</b><span>'+escapeHtml(P.walkTime(l.static))+'</span></div><div class="row"><b>Job work time</b><span>'+escapeHtml(P.jobWorkTime(D,l))+'</span></div><div class="row"><b>Buffer / risk</b><span>Scheduled estimate - allow timing buffer</span></div><div class="row"><b>Source</b><span>Scheduled estimate</span></div><div class="row"><b>Job / address</b><span>'+escapeHtml(l.destination)+'</span></div>'+routeLegJobControls(l)+'</div>');
+ }
+}
+function render(){
+ lines.clearLayers();pins.clearLayers();jobLayer.clearLayers();busLayer.clearLayers();
+ const bounds=[],routesUsed=new Set(),details=[];
+ if(showTransitRoute){
+  const legs=selectedLegs();
+  drawTransitRoute(legs,bounds,routesUsed,details);
+ }else{
+  details.push('<div class="notice"><b>Job pin mode:</b> transit mapping is hidden. Select jobs, then View route to show transit mapping and detailed stop-by-stop directions.</div>');
  }
  document.getElementById('details').innerHTML=details.join('')||'No verified route section matches this selection.';
  drawWorkJobs(bounds);
  renderWorkJobs();
- if(bounds.length){currentBounds=bounds;map.fitBounds(bounds,{padding:[40,40]});}
+ if(bounds.length){currentBounds=bounds;map.fitBounds(bounds,{padding:[40,40]});}else{currentBounds=null;}
 
  let busRows=[];
- if(live.ok){
+ if(showTransitRoute&&live.ok){
   for(const v of live.vehicles){
    const sr=shortFor(v.trip?.route_id);
-   if(routesUsed.has(sr)&&v.position?.lat!=null){
+   if((showAllLiveBuses||routesUsed.has(sr))&&v.position?.lat!=null){
     L.circleMarker([v.position.lat,v.position.lon],{radius:9,color:'#000',weight:2,fillColor:'#ffb000',fillOpacity:.95})
      .bindPopup(`<b>ACTUAL LIVE WEGO BUS</b><br>${v.vehicle?.label||v.vehicle?.id||'Vehicle'}<br>Route ${sr}<br>${v.stop_id?'Current/next stop '+v.stop_id+'<br>':''}${v.timestamp?'Feed time '+new Date(v.timestamp*1000).toLocaleTimeString():''}`)
      .addTo(busLayer);
@@ -968,11 +1397,12 @@ function render(){
    }
   }
  }
- document.getElementById('buses').innerHTML=busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>');
+ document.getElementById('buses').innerHTML=!showTransitRoute?'<div class="bus">Transit buses are hidden until you press View route.</div>':busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>');
 
  let al=[];
- if(live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
- document.getElementById('alerts').innerHTML=al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+ if(showTransitRoute&&live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
+ document.getElementById('alerts').innerHTML=!showTransitRoute?'<div class="alert">Transit alerts are hidden until you press View route.</div>':al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+ syncRenderedJobSelections();
 }
 function updateCorridorSelection(){
  const all=corridorSel.querySelector('option[value="all-accessible-routes"]');
@@ -983,7 +1413,14 @@ function updateCorridorSelection(){
  fillViews();
 }
 planSel.addEventListener('change',fillCorridors);corridorSel.addEventListener('change',updateCorridorSelection);viewSel.addEventListener('change',render);document.getElementById('allStops').addEventListener('click',()=>{viewSel.value='all-selected-route-sections';render()});document.getElementById('refresh').addEventListener('click',refreshLive);document.getElementById('enableLocation').addEventListener('click',startLocation);document.getElementById('centerMe').addEventListener('click',centerOnMe);
-initWorkApps();planSel.value='Plan C — West + North/East';fillCorridors();refreshLive();setInterval(refreshLive,30000);setTimeout(startLocation,700);
+initWorkApps();
+const defaultPlan=Object.keys(D.plans||{})[0]||'';
+if(defaultPlan)planSel.value=defaultPlan;
+fillCorridors();refreshLive();setInterval(refreshLive,30000);setTimeout(startLocation,700);
+// GTFS static data: load from cache immediately, then schedule daily refresh
+reloadGtfs(false);setInterval(()=>reloadGtfs(false),GTFS_MAX_AGE_MS);
 </script>
 </body>
 </html>
+
+
