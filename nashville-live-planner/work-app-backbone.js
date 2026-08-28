@@ -127,6 +127,57 @@
       status: "provider_by_provider_review",
     },
   ];
+  const API_REGISTRY = [
+    {
+      id: "outlook_mail_read_api",
+      provider: "Microsoft Graph",
+      label: "Outlook / Hotmail Mail.Read API",
+      audience: "Personal Microsoft accounts only",
+      permissions: ["Mail.Read"],
+      app_type: "public client with delegated consent",
+      public_values: {
+        client_id: null,
+        redirect_uris: [
+          "https://nashville-live-audit-transit-planne.vercel.app/",
+          "https://routeplanner.space/",
+          "https://www.routeplanner.space/",
+        ],
+      },
+      storage: "Native secure token cache only; no password, cookie, refresh token, or secret in source or GitHub",
+      background_sync: "Allowed only after user OAuth consent and safe local token storage",
+      status: "ready_for_app_registration",
+    },
+    {
+      id: "gmail_readonly_api",
+      provider: "Google Gmail API",
+      label: "Gmail readonly API",
+      audience: "Google testing mode until verification",
+      permissions: ["gmail.readonly"],
+      app_type: "public web client",
+      public_values: {
+        client_id: "554839816124-pgscs326aspoch273k9b39cpnnthmcps.apps.googleusercontent.com",
+        redirect_uris: ["https://nashville-live-audit-transit-planne.vercel.app/"],
+      },
+      storage: "Memory-only browser token for the current session; no client secret stored in source, GitHub, or browser storage",
+      background_sync: "Allowed only while the browser session token is valid",
+      status: "testing_mode_ready",
+    },
+    {
+      id: "provider_phone_app_bridge_api",
+      provider: "Android app bridge",
+      label: "Phone app connector API",
+      audience: "Installed device only",
+      permissions: ["openProviderApp", "share text/plain", "camera capture"],
+      app_type: "native bridge",
+      public_values: {
+        client_id: null,
+        redirect_uris: [],
+      },
+      storage: "Local planner data only; no provider passwords, API keys, MFA codes, or cookies",
+      background_sync: "Allowed only for local app state, not private provider sessions",
+      status: "ready_for_device_bridge",
+    },
+  ];
 
   const STREET_PATTERN = /\b\d{2,6}\s+[^,\n]*(?:street|st|avenue|ave|road|rd|pike|hwy|highway|lane|ln|drive|dr|boulevard|blvd|way|court|ct|circle|cir|place|pl)\b[^,\n]*(?:,\s*[^,\n]+){0,3}/i;
 
@@ -186,6 +237,30 @@
       sync_interval_minutes: syncInterval,
       last_sync_at: Number(settings.last_sync_at) || 0,
       sync_status: asText(settings.sync_status).slice(0, 160),
+      updated_at: Number(settings.updated_at) || Date.now(),
+    };
+
+    Object.keys(settings || {}).forEach((key) => {
+      if (SECRET_FIELD_PATTERN.test(key)) safe.rejected_secret_fields = true;
+    });
+
+    return safe;
+  }
+
+  function apiById(apiId) {
+    const id = asText(apiId).toLowerCase();
+    return API_REGISTRY.find((api) => api.id === id) || null;
+  }
+
+  function sanitizeApiSettings(settings = {}) {
+    const api = apiById(settings.api_id) || API_REGISTRY[0];
+    const safe = {
+      api_id: api.id,
+      status: asText(settings.status).toLowerCase() || api.status,
+      account_label: asText(settings.account_label).slice(0, 90),
+      background_sync_enabled: Boolean(settings.background_sync_enabled),
+      sync_status: asText(settings.sync_status).slice(0, 180),
+      last_sync_at: Number(settings.last_sync_at) || 0,
       updated_at: Number(settings.updated_at) || Date.now(),
     };
 
@@ -483,6 +558,7 @@
   }
 
   return {
+    API_REGISTRY,
     PROVIDERS,
     CONNECTION_SETUP,
     EMAIL_PERMISSION_OPTIONS,
@@ -499,6 +575,8 @@
     parsePaymentCenterText,
     parseEmailText,
     providerById,
+    apiById,
+    sanitizeApiSettings,
     sanitizeEmailSyncSettings,
     senderAllowed,
     recommendJobs,

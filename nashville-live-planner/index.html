@@ -186,6 +186,12 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
  <div id="liveStatus" class="status">Waiting for live feed…</div>
 </div>
 
+<div class="card">
+ <div class="sectionTitle">Public API / connection registry</div>
+ <div id="apiRegistry" class="recommendations"></div>
+ <div id="apiRegistryStatus" class="jobStatus">Public API IDs, redirect URIs, and sync rules are shown here. No passwords, refresh tokens, cookies, or client secrets are stored.</div>
+</div>
+
 <div class="card"><div id="details"></div></div>
 <div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
@@ -626,6 +632,15 @@ function renderProviderStats(){
   return `<div class="provider"><b>${provider.label}</b><span>${W.connectionLabel(connection)}</span><span>${provider.connection}</span><span>${providerJobs.length} open / ${mapped} mapped on this Nashville plan</span><span><a target="_blank" rel="noopener" href="${provider.boardUrl}">Open provider</a></span></div>`;
  }).join('');
 }
+function renderApiRegistry(){
+ const target=document.getElementById('apiRegistry');
+ if(!target)return;
+ target.innerHTML=(W.API_REGISTRY||[]).map(api=>{
+  const clientId=api.public_values?.client_id||'Not registered yet';
+  const redirectUris=(api.public_values?.redirect_uris||[]).join('<br>')||'None';
+  return `<div class="provider"><b>${api.label}</b><span>${api.provider}</span><span>${api.audience}</span><span><b>Permissions:</b> ${(api.permissions||[]).join(', ')}</span><span><b>Client ID:</b> ${clientId}</span><span><b>Redirect URIs:</b><br>${redirectUris}</span><span>${api.background_sync}</span><span>${api.status}</span></div>`;
+ }).join('');
+}
 function drawWorkJobs(bounds){
  jobLayer.clearLayers();
  const visible=workJobs.filter(job=>W.isOpenAvailableJob(job)||W.isAssignedJob(job)).map(job=>W.scoreJob(job,D,originForRecommendations())).sort((a,b)=>b.recommendation_score-a.recommendation_score);
@@ -711,6 +726,7 @@ function initWorkApps(){
  loadPaymentSnapshots();
  loadEmailSyncSettings();
   renderWorkJobs();
+ renderApiRegistry();
   renderProviderConnection();
  renderEmailSync();
  scheduleEmailSync();

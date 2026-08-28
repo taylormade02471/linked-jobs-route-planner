@@ -50,6 +50,26 @@ test("connection setup lists email OAuth and provider app bridge paths", () => {
   assert.doesNotMatch(JSON.stringify(backbone.CONNECTION_SETUP), /client_secret|GOCSPX|access_token|refresh_token|Mail\.Send|Mail\.ReadWrite/i);
 });
 
+test("API registry exposes only public IDs and safe background sync rules", () => {
+  const ids = backbone.API_REGISTRY.map((api) => api.id);
+  const outlook = backbone.API_REGISTRY.find((api) => api.id === "outlook_mail_read_api");
+  const gmail = backbone.API_REGISTRY.find((api) => api.id === "gmail_readonly_api");
+  const fieldNames = backbone.API_REGISTRY.flatMap((api) => Object.keys(api));
+
+  assert.deepEqual(ids, [
+    "outlook_mail_read_api",
+    "gmail_readonly_api",
+    "provider_phone_app_bridge_api",
+  ]);
+  assert.ok(outlook);
+  assert.equal(outlook.public_values.client_id, null);
+  assert.match(outlook.status, /ready_for_app_registration/);
+  assert.ok(gmail);
+  assert.match(gmail.public_values.client_id, /apps\.googleusercontent\.com$/);
+  assert.match(gmail.background_sync, /browser session token/);
+  assert.doesNotMatch(fieldNames.join(","), /client_secret|refresh_token|access_token|cookie|password|api[_-]?key/i);
+});
+
 test("provider connection settings keep status but reject secrets", () => {
   const safe = backbone.sanitizeConnectionSettings({
     provider_id: "clickworker",
@@ -120,6 +140,25 @@ test("email sync settings preserve allowlist but reject credential fields", () =
   assert.equal(safe.metadata_first, true);
   assert.equal(safe.background_sync_enabled, true);
   assert.equal(safe.sync_interval_minutes, 15);
+  assert.equal(safe.rejected_secret_fields, true);
+  assert.equal(JSON.stringify(safe).includes("do-not-store"), false);
+});
+
+test("api settings sanitize stored registration metadata without secrets", () => {
+  const safe = backbone.sanitizeApiSettings({
+    api_id: "gmail_readonly_api",
+    status: "testing_mode_ready",
+    account_label: "main gmail connector",
+    background_sync_enabled: true,
+    sync_status: "ready",
+    last_sync_at: 1234,
+    client_secret: "do-not-store",
+  });
+
+  assert.equal(safe.api_id, "gmail_readonly_api");
+  assert.equal(safe.status, "testing_mode_ready");
+  assert.equal(safe.background_sync_enabled, true);
+  assert.equal(safe.last_sync_at, 1234);
   assert.equal(safe.rejected_secret_fields, true);
   assert.equal(JSON.stringify(safe).includes("do-not-store"), false);
 });
