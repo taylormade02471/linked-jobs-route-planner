@@ -66,6 +66,7 @@ test("API registry exposes only public IDs and safe background sync rules", () =
   assert.ok(azure);
   assert.match(azure.storage, /Key Vault/);
   assert.match(azure.status, /ready_for_vault_binding/);
+  assert.equal(azure.public_values.vault_name, "linkedjobs-vault");
   assert.equal(azure.public_values.tenant_id, "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5");
   assert.equal(azure.public_values.tenant_name, "Default Directory");
   assert.equal(azure.public_values.primary_domain, "kyletaylor133hotmail.onmicrosoft.com");
@@ -142,6 +143,7 @@ test("Key Vault plan carries the supplied tenant metadata for all bindings", () 
   assert.equal(plan.subscription_id, "subscription-placeholder");
   assert.equal(Object.keys(plan.bindings).length, backbone.KEY_VAULT_BINDINGS.length);
   assert.equal(plan.bindings.survey_merchandiser.secret_name, "survey-merchandiser-api-key");
+  assert.equal(plan.bindings.clickworker.secret_name, "clickworker-api-key");
   assert.equal(plan.bindings.gmail_readonly.secret_name, "");
 });
 
@@ -286,6 +288,13 @@ test("open available filtering excludes applied planned and completed jobs", () 
 
   assert.equal(jobs.filter(backbone.isOpenAvailableJob).length, 2);
   assert.equal(jobs.filter(backbone.isAssignedJob).length, 1);
+});
+
+test("passed jobs are normalized into the completed history bucket", () => {
+  assert.equal(backbone.normalizeStatus("Passed"), "completed");
+  assert.equal(backbone.normalizeStatus("Completed and paid"), "completed");
+  assert.equal(backbone.isCompletedJob({ status: "passed" }), true);
+  assert.equal(backbone.isCompletedJob({ status: "available" }), false);
 });
 
 test("shared phone app text preserves provider pay address and status", () => {

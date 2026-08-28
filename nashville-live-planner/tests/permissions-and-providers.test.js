@@ -56,6 +56,22 @@ test("Nashville planner shows open jobs green assigned jobs yellow and payment s
   assert.match(index, /Payment center snapshot/);
 });
 
+test("Nashville planner links saved jobs to a separate active and passed history page", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+  const history = fs.readFileSync(path.join(plannerRoot, "jobs.html"), "utf8");
+  const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");
+
+  assert.match(index, /jobs\.html/);
+  assert.match(index, /Completed \/ passed \/ paid/);
+  assert.match(history, /Saved jobs and passed history/);
+  assert.match(history, /Available \/ active/);
+  assert.match(history, /Completed \/ passed/);
+  assert.match(history, /Mark visible jobs as passed/);
+  assert.match(history, /Download visible jobs JSON/);
+  assert.match(history, /nashville_phone_work_jobs_v1/);
+  assert.match(backbone, /isCompletedJob/);
+});
+
 test("Nashville planner exposes safe read-only email sync settings", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
   const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");
@@ -116,6 +132,7 @@ test("public privacy and terms pages support restricted email OAuth review", () 
 
 test("Android shell loads the Nashville planner and requests network location and camera permissions", () => {
   const manifest = fs.readFileSync(path.join(projectRoot, "android", "app", "src", "main", "AndroidManifest.xml"), "utf8");
+  const gradleProperties = fs.readFileSync(path.join(projectRoot, "android", "gradle.properties"), "utf8");
   const activity = fs.readFileSync(
     path.join(projectRoot, "android", "app", "src", "main", "java", "com", "linkedjobs", "routeplanner", "MainActivity.java"),
     "utf8",
@@ -125,6 +142,8 @@ test("Android shell loads the Nashville planner and requests network location an
   assert.match(manifest, /android\.permission\.ACCESS_FINE_LOCATION/);
   assert.match(manifest, /android\.permission\.ACCESS_COARSE_LOCATION/);
   assert.match(manifest, /android\.permission\.CAMERA/);
+  assert.match(gradleProperties, /android\.useAndroidX=true/);
+  assert.match(gradleProperties, /android\.enableJetifier=true/);
   assert.match(manifest, /iSurvey\.Android/);
   assert.match(manifest, /net\.fieldagent/);
   assert.match(manifest, /android\.intent\.action\.SEND/);

@@ -136,7 +136,7 @@
       permissions: ["certificates", "keys", "secrets", "api keys"],
       app_type: "vault-backed secret storage",
       public_values: {
-        vault_name: "",
+        vault_name: "linkedjobs-vault",
         tenant_id: "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5",
         tenant_name: "Default Directory",
         primary_domain: "kyletaylor133hotmail.onmicrosoft.com",
@@ -547,7 +547,7 @@
 
   function normalizeStatus(value) {
     const text = asText(value).toLowerCase();
-    if (text.includes("paid") || text.includes("complete") || text.includes("done")) return "completed";
+    if (/\b(paid|complete|completed|done|passed)\b/.test(text)) return "completed";
     if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
     if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
     if (text.includes("available") || text.includes("open")) return "available";
@@ -562,6 +562,10 @@
   function isAssignedJob(job) {
     const status = normalizeStatus(job?.status);
     return status === "assigned" || status === "planned";
+  }
+
+  function isCompletedJob(job) {
+    return normalizeStatus(job?.status) === "completed";
   }
 
   function moneyToCents(value) {
@@ -779,6 +783,7 @@
     connectionLabel,
     coordinateForJob,
     isAssignedJob,
+    isCompletedJob,
     isOpenAvailableJob,
     moneyToCents,
     normalizeAddress,
