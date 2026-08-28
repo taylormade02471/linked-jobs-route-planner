@@ -17,6 +17,7 @@ test("Nashville backbone targets the requested phone work apps", () => {
   );
   assert.ok(backbone.PROVIDERS.every((provider) => provider.loginUrl));
   assert.ok(backbone.PROVIDERS.every((provider) => provider.androidPackage));
+  assert.ok(backbone.PROVIDERS.every((provider) => provider.androidIntentUrl));
 });
 
 test("provider connection settings keep status but reject secrets", () => {

@@ -15,6 +15,7 @@
       boardUrl: "https://survey.com/",
       loginUrl: "https://survey.com/",
       androidPackage: "iSurvey.Android",
+      androidIntentUrl: "intent://open/#Intent;package=iSurvey.Android;end",
       connectionHelp: "Use the Survey Merchandiser app for sign-in, then save only this planner's local connection status.",
     },
     {
@@ -24,6 +25,7 @@
       boardUrl: "https://workplace.clickworker.com/",
       loginUrl: "https://workplace.clickworker.com/",
       androidPackage: "com.clickworker.clickworkerapp",
+      androidIntentUrl: "intent://open/#Intent;package=com.clickworker.clickworkerapp;end",
       connectionHelp: "Open the official Workplace login or phone app; the planner stores status, not the Clickworker password.",
     },
     {
@@ -33,6 +35,7 @@
       boardUrl: "https://fieldnation.com/",
       loginUrl: "https://fieldnation.com/",
       androidPackage: "com.fieldnation.android",
+      androidIntentUrl: "intent://open/#Intent;package=com.fieldnation.android;end",
       connectionHelp: "Use Field Nation's platform or app for sign-in; this planner only stores non-secret connection metadata.",
     },
     {
@@ -42,6 +45,7 @@
       boardUrl: "https://app.fieldagent.net/get-the-app",
       loginUrl: "https://app.fieldagent.net/",
       androidPackage: "net.fieldagent",
+      androidIntentUrl: "intent://open/#Intent;package=net.fieldagent;end",
       connectionHelp: "Use Field Agent's app for map/open jobs; share or capture visible job details into this planner.",
     },
   ];

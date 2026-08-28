@@ -391,6 +391,10 @@ function openProviderApp(){
   window.LinkedJobsAndroid.openProviderApp(provider.id);
   return;
  }
+ if(/Android/i.test(navigator.userAgent)&&provider.androidIntentUrl){
+  window.location.href=provider.androidIntentUrl;
+  return;
+ }
  window.open(provider.loginUrl||provider.boardUrl,'_blank','noopener');
 }
 function renderProviderStats(){
