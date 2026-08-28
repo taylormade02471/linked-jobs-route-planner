@@ -27,15 +27,15 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 </style>
 </head>
 <body>
-<header><h1>Nashville Live Audit Transit Planner</h1><p>No public jobs loaded. The planner starts empty until you import, approve, or sync safe job records.</p></header>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>Only the 18 current assignments verified from the August 28 My Assignments recording are loaded.</p></header>
 <main>
-<div class="notice"><b>Empty public planner:</b> no job cards, provider-board rows, or old route jobs are published on this website right now. Add work later through Android share/import review or safe backend sync.</div>
+<div class="notice"><b>Current jobs only:</b> the previous audit list has been replaced. This board contains the 17 Expires Soon assignments and the 1 Ready to Start assignment shown in the latest recording.</div>
 
 <div class="card metrics">
- <div class="metric">Public posted jobs<strong>0</strong><span>No seeded audit list</span></div>
+ <div class="metric">Current accepted jobs<strong>18</strong><span>Latest recording only</span></div>
  <div class="metric">Imported jobs<strong>0</strong><span>Approve in Import Review first</span></div>
- <div class="metric">Provider map pins<strong>0</strong><span>Green, yellow, red after import</span></div>
- <div class="metric">Transit plan<strong>Empty</strong><span>Select or import work later</span></div>
+ <div class="metric">Nashville-area jobs<strong>15</strong><span>Clarksville jobs remain listed but can be skipped</span></div>
+ <div class="metric">Transit plan<strong>Active</strong><span>Select jobs, then view route</span></div>
 </div>
 
 <div class="card" id="workApps">
@@ -255,6 +255,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="./planner-data.js"></script>
+<script src="./accepted-jobs.js"></script>
 <script src="./transit-picker.js"></script>
 <script src="./work-app-backbone.js"></script>
 <script src="./provider-connectors.js"></script>
@@ -290,6 +291,7 @@ const ANDROID_LOGIN_STATES_KEY='nashville_android_login_states_v1';
 const EMAIL_SYNC_SETTINGS_KEY='nashville_email_sync_settings_v1';
 const KEY_VAULT_PLAN_KEY='nashville_key_vault_plan_v1';
 const EXISTING_JOBS_COMPLETED_KEY='nashville_existing_jobs_moved_to_completed_v1';
+const CURRENT_JOBS_ONLY_KEY='nashville_current_jobs_only_20260828_v1';
 const LEGACY_STORAGE_KEYS=[
  'nashville_phone_work_jobs_v2_empty_launch',
  'nashville_provider_connections_v2_empty_launch',
@@ -1188,6 +1190,10 @@ window.LinkedJobsReceiveAndroidShare=function(payload){
 };
 function seedPlannerJobs(){
  const seeded=W.jobsForMap(jobsFromPlannerData(),{provider_id:'all',status:'all'});
+ if(!localStorage.getItem(CURRENT_JOBS_ONLY_KEY)){
+  workJobs=[];
+  localStorage.setItem(CURRENT_JOBS_ONLY_KEY,String(Date.now()));
+ }
  const existingIds=new Set(workJobs.map(job=>String(job.id)));
  const additions=seeded.filter(job=>!existingIds.has(String(job.id))).map(job=>({
   ...job,
@@ -1201,6 +1207,7 @@ function seedPlannerJobs(){
  }
 }
 function initWorkApps(){
+ loadWorkJobs();
  seedPlannerJobs();
  const provider=document.getElementById('appProvider');
  const providerFilter=document.getElementById('jobProviderFilter');
@@ -1210,7 +1217,6 @@ function initWorkApps(){
  if(providerFilter){
   providerFilter.innerHTML='<option value="all">All apps together</option>'+W.PROVIDERS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
  }
- loadWorkJobs();
  loadProviderConnections();
  loadPaymentSnapshots();
  loadImportReviewItems();
@@ -1422,5 +1428,4 @@ reloadGtfs(false);setInterval(()=>reloadGtfs(false),GTFS_MAX_AGE_MS);
 </script>
 </body>
 </html>
-
 
