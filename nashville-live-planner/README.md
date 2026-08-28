@@ -61,7 +61,7 @@ Provider connection status is also browser-local app data. The planner can remem
 
 The camera tool requests permission only when the user taps **Start camera**. Captured photos stay in browser storage and can be attached to a phone-app job for field reference. The public Vercel app does not receive provider passwords or log into private phone apps.
 
-Saved phone-app jobs are shared between the homepage and `jobs.html` through the same browser-local key, `nashville_phone_work_jobs_v1`. The homepage stays focused on active route work; the separate **Saved jobs and passed history** page has active, completed/passed, and all-saved views, plus local mark-passed/restore actions and JSON download. Marking a job passed changes only the local planner copy and does not submit or accept work on a provider site.
+Saved phone-app jobs are shared between the homepage and `jobs.html` through the same browser-local key, `nashville_phone_work_jobs_v1`. Every rendered job card has a **Job options** menu for keeping the saved copy, moving it to available, applied, assigned, or completed, restoring it to active, or deleting the local copy after confirmation. The separate **Saved jobs and passed history** page has active, completed/passed, and all-saved views plus JSON download. These actions change only the local planner copy and do not submit, accept, complete, or delete work on a provider site.
 
 The Android wrapper uses `https://www.routeplanner.space` as its planner URL and now builds with AndroidX enabled. Its debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk` when building the Android project. `android/local.properties` contains only the local SDK path and is ignored by Git.
 

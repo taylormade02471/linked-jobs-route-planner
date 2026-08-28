@@ -20,10 +20,11 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 .providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
+.jobActions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:end;margin-top:10px}.jobActions label{min-width:0;font-size:12px}.jobActions select,.jobActions button{width:100%;min-height:40px;padding:8px;font-size:13px}.jobActions button{width:auto;font-weight:bold}
 @media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
-@media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
+@media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}.jobActions{grid-template-columns:1fr}.jobActions button{width:100%}}
 </style>
 </head>
 <body>
@@ -122,6 +123,15 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
  <div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
  <div class="sectionTitle">Best open work near your location</div>
  <div id="appRecommendations" class="recommendations"></div>
+ <template id="jobActionOptions">
+  <option value="keep_saved">Keep saved on this board</option>
+  <option value="move_available">Move to available/open</option>
+  <option value="move_applied">Move to applied/requested</option>
+  <option value="move_assigned">Move to claimed/assigned</option>
+  <option value="mark_completed">Mark completed/passed</option>
+  <option value="restore_active">Restore to active</option>
+  <option value="delete_saved">Delete saved job</option>
+ </template>
  <div class="connectionPanel emailPanel">
   <h3>Email job sync permissions</h3>
   <div id="emailSyncStatus" class="jobStatus">Outlook/Hotmail is the first planned read-only email connection. It will use Microsoft Graph delegated Mail.Read after OAuth is configured.</div>
@@ -438,6 +448,8 @@ function clearKeyVaultPlan(){
 function providerLabel(id){
  return (W.providerById(id)||{}).label||id||'Phone app';
 }
+function jobActionOptions(){return document.getElementById('jobActionOptions').innerHTML;}
+function jobActionMessage(action){return ({keep_saved:'Job remains saved on this board.',move_available:'Job moved to available / open locally.',move_applied:'Job moved to applied / requested locally.',move_assigned:'Job moved to claimed / assigned locally.',mark_completed:'Job moved to completed / passed history locally.',restore_active:'Job restored to the active board locally.'})[action]||'Local job updated.';}
 function currentProvider(){
  return W.providerById(document.getElementById('appProvider')?.value);
 }
@@ -758,7 +770,7 @@ function renderWorkJobs(){
  const assignedCount=workJobs.filter(W.isAssignedJob).length;
  const mappedCount=workJobs.filter(job=>(W.isOpenAvailableJob(job)||W.isAssignedJob(job))&&W.coordinateForJob(job,D)).length;
  if(status)status.textContent=`${openCount} open jobs and ${assignedCount} assigned jobs saved here. ${mappedCount} can be mapped against the Nashville planner without paid geocoding. Green = open to claim, yellow = claimed/assigned.`;
- target.innerHTML=recommended.length?recommended.slice(0,8).map((job,index)=>`<div class="workjob"><b>${index+1}. ${job.title}</b><span><span class="greenpin"></span>${providerLabel(job.provider_id)} · ${W.centsLabel(job.pay_cents)} · ${job.minutes||30} min</span><span>${job.address||'Address not listed'}</span><span>${job.payment_status||''}</span><span>${job.recommendation_reason}</span>${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`).join(''):'<div class="workjob"><b>No open phone app jobs saved yet</b><span>Add or paste available work from Survey Merchandiser, Clickworker, Field Nation, or Field Agent.</span></div>';
+ target.innerHTML=recommended.length?recommended.slice(0,8).map((job,index)=>`<div class="workjob" data-job-id="${escapeHtml(job.id)}"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="greenpin"></span>${escapeHtml(providerLabel(job.provider_id))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(job.minutes||30)} min</span><span>${escapeHtml(job.address||'Address not listed')}</span><span>${escapeHtml(job.payment_status||'')}</span><span>${escapeHtml(job.recommendation_reason)}</span>${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}<div class="jobActions"><label>Job options<select data-job-action aria-label="Job options for ${escapeHtml(job.title||'saved job')}">${jobActionOptions()}</select></label><button type="button" data-apply-job-action>Apply</button></div></div>`).join(''):'<div class="workjob"><b>No open phone app jobs saved yet</b><span>Add or paste available work from Survey Merchandiser, Clickworker, Field Nation, or Field Agent.</span></div>';
 }
 function setCameraStatus(message,isError=false){
  const el=document.getElementById('cameraStatus');
@@ -869,6 +881,25 @@ function initWorkApps(){
   const imported=W.parseSharedJobs(text,document.getElementById('appProvider').value).map((job,index)=>index===0?{...job,photo_data_url:capturedPhotoDataUrl}:job);
   workJobs=[...imported,...workJobs].filter((job,index,all)=>all.findIndex(item=>item.id===job.id)===index);
   saveWorkJobs();clearCamera();renderWorkJobs();render();
+ });
+ document.getElementById('appRecommendations')?.addEventListener('click',event=>{
+  const button=event.target.closest('button[data-apply-job-action]');
+  const card=event.target.closest('[data-job-id]');
+  if(!button||!card)return;
+  const index=workJobs.findIndex(job=>String(job.id)===String(card.dataset.jobId));
+  if(index<0)return;
+  const job=workJobs[index];
+  const action=card.querySelector('[data-job-action]')?.value||'keep_saved';
+  if(action==='delete_saved'){
+   if(!confirm(`Delete the saved copy of ${job.title||'this job'}?`))return;
+   workJobs.splice(index,1);
+   saveWorkJobs();render();
+   document.getElementById('appJobStatus').textContent='Saved copy deleted locally.';
+   return;
+  }
+  workJobs[index]=W.applyJobBoardAction(job,action);
+  saveWorkJobs();render();
+  document.getElementById('appJobStatus').textContent=jobActionMessage(action);
  });
  document.getElementById('importPayments')?.addEventListener('click',()=>{
   const imported=W.parsePaymentCenterText(document.getElementById('paymentImportText').value,document.getElementById('appProvider').value);

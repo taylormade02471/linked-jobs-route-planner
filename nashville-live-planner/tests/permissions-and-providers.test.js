@@ -72,6 +72,26 @@ test("Nashville planner links saved jobs to a separate active and passed history
   assert.match(backbone, /isCompletedJob/);
 });
 
+test("every saved job board exposes the same local job options dropdown", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+  const history = fs.readFileSync(path.join(plannerRoot, "jobs.html"), "utf8");
+
+  for (const page of [index, history]) {
+    assert.match(page, /data-job-action/);
+    assert.match(page, /Keep saved on this board/);
+    assert.match(page, /Move to available\/open/);
+    assert.match(page, /Move to applied\/requested/);
+    assert.match(page, /Move to claimed\/assigned/);
+    assert.match(page, /Mark completed\/passed/);
+    assert.match(page, /Restore to active/);
+    assert.match(page, /Delete saved job/);
+    assert.match(page, /Apply/);
+  }
+
+  assert.match(history, /confirm\(`Delete the saved copy/);
+  assert.match(index, /confirm\(`Delete the saved copy/);
+});
+
 test("Nashville planner exposes safe read-only email sync settings", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
   const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");

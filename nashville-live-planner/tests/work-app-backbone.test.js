@@ -305,6 +305,35 @@ test("passed jobs are normalized into the completed history bucket", () => {
   assert.equal(backbone.isCompletedJob({ status: "available" }), false);
 });
 
+test("job board actions preserve a saved job or move it between local statuses", () => {
+  const original = { id: "job-1", title: "Store audit", status: "available" };
+
+  assert.deepEqual(backbone.applyJobBoardAction(original, "keep_saved", 1000), original);
+  assert.equal(backbone.applyJobBoardAction(original, "move_applied", 1000).status, "applied");
+  assert.equal(backbone.applyJobBoardAction(original, "move_assigned", 1000).status, "assigned");
+
+  const completed = backbone.applyJobBoardAction(original, "mark_completed", 1000);
+  assert.equal(completed.status, "completed");
+  assert.equal(completed.completion_status, "passed");
+  assert.equal(completed.completed_at, 1000);
+
+  const reopened = backbone.applyJobBoardAction(completed, "move_available", 2000);
+  assert.equal(reopened.status, "available");
+  assert.equal(reopened.completion_status, undefined);
+  assert.equal(reopened.completed_at, undefined);
+
+  const restored = backbone.applyJobBoardAction(completed, "restore_active", 2000);
+  assert.equal(restored.status, "available");
+  assert.equal(restored.completion_status, undefined);
+  assert.equal(restored.completed_at, undefined);
+});
+
+test("delete saved job action returns no local job", () => {
+  const deleted = backbone.applyJobBoardAction({ id: "job-1", status: "available" }, "delete_saved", 1000);
+
+  assert.equal(deleted, null);
+});
+
 test("shared phone app text preserves provider pay address and status", () => {
   const [job] = backbone.parseSharedJobs(
     "Walgreens audit\n7601 Hwy 70 S, Nashville, TN 37221\nPay $38.50\nDue tomorrow\nAvailable",

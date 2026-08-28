@@ -58,6 +58,15 @@
   const SECRET_FIELD_PATTERN = /(password|passcode|token|secret|cookie|session|authorization|bearer|api[_-]?key|csrf)/i;
   const KEY_VAULT_RAW_SECRET_FIELD_PATTERN = /(password|passcode|token|cookie|session|authorization|bearer|api[_-]?key|csrf|client_secret|secret_value|private[_-]?key|private[_-]?certificate)/i;
   const SYNC_INTERVALS = [0, 5, 10, 15, 30, 60];
+  const JOB_BOARD_ACTIONS = [
+    { value: "keep_saved", label: "Keep saved on this board" },
+    { value: "move_available", label: "Move to available/open" },
+    { value: "move_applied", label: "Move to applied/requested" },
+    { value: "move_assigned", label: "Move to claimed/assigned" },
+    { value: "mark_completed", label: "Mark completed/passed" },
+    { value: "restore_active", label: "Restore to active" },
+    { value: "delete_saved", label: "Delete saved job" },
+  ];
   const EMAIL_PERMISSION_OPTIONS = [
     {
       id: "outlook_mail_read",
@@ -571,6 +580,32 @@
     return normalizeStatus(job?.status) === "completed";
   }
 
+  function withoutCompletion(job, status) {
+    const next = { ...(job || {}), status };
+    delete next.completion_status;
+    delete next.completed_at;
+    return next;
+  }
+
+  function applyJobBoardAction(job, action, now = Date.now()) {
+    const current = { ...(job || {}) };
+    if (action === "delete_saved") return null;
+    if (action === "move_available" || action === "restore_active") {
+      return withoutCompletion(current, "available");
+    }
+    if (action === "move_applied") return withoutCompletion(current, "applied");
+    if (action === "move_assigned") return withoutCompletion(current, "assigned");
+    if (action === "mark_completed") {
+      return {
+        ...current,
+        status: "completed",
+        completion_status: "passed",
+        completed_at: now,
+      };
+    }
+    return current;
+  }
+
   function moneyToCents(value) {
     const match = asText(value).match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
     return match ? Math.round(Number(match[1]) * 100) : 0;
@@ -778,12 +813,14 @@
     API_REGISTRY,
     KEY_VAULT_BINDINGS,
     KEY_VAULT_STATUSES,
+    JOB_BOARD_ACTIONS,
     PROVIDERS,
     CONNECTION_SETUP,
     EMAIL_PERMISSION_OPTIONS,
     SYNC_INTERVALS,
     centsLabel,
     connectionLabel,
+    applyJobBoardAction,
     coordinateForJob,
     isAssignedJob,
     isCompletedJob,
