@@ -70,7 +70,7 @@
       label: "Gmail read-only email",
       scope: "https://www.googleapis.com/auth/gmail.readonly",
       permission: "Gmail API readonly",
-      status: "restricted_later",
+      status: "oauth_client_created_testing",
     },
   ];
   const CONNECTION_SETUP = [
@@ -94,13 +94,17 @@
       type: "email_oauth",
       provider: "Google Gmail API",
       permission: "gmail.readonly only",
+      clientId: "554839816124-pgscs326aspoch273k9b39cpnnthmcps.apps.googleusercontent.com",
+      allowedOrigins: [
+        "https://nashville-live-audit-transit-planne.vercel.app",
+        "https://routeplanner.space",
+        "https://www.routeplanner.space",
+      ],
       redirectUris: [
         "https://nashville-live-audit-transit-planne.vercel.app/",
-        "https://routeplanner.space/",
-        "https://www.routeplanner.space/",
       ],
-      storage: "Native secure token cache after Google verification",
-      status: "restricted_later",
+      storage: "Native secure token cache after Google verification; no client secret in the public app",
+      status: "oauth_client_created_testing_gmail_api_enabled",
     },
     {
       id: "provider_phone_app_bridge",

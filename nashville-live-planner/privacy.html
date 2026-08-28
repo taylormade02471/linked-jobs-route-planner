@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy - Nashville Live Audit Transit Planner</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17251f;
+      --muted: #5d6f65;
+      --line: #d7e4dc;
+      --paper: #fffaf0;
+      --green: #12834b;
+      --blue: #0f5f78;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #f5fff7 0%, #fffaf0 48%, #eef7ff 100%);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 40px 20px 56px;
+    }
+
+    article {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(23, 37, 31, 0.12);
+      padding: clamp(24px, 4vw, 44px);
+    }
+
+    h1, h2 {
+      line-height: 1.2;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+    }
+
+    h2 {
+      margin-top: 2rem;
+      color: var(--blue);
+    }
+
+    a {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .updated {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <p><a href="/">Back to planner</a></p>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: August 27, 2026</p>
+
+      <p>
+        Nashville Live Audit Transit Planner is a private, field-use planner for organizing
+        nearby work opportunities, transit options, walking time, and route risk. The app is
+        designed to keep sensitive account data off GitHub, out of public source code, and out
+        of Vercel project files.
+      </p>
+
+      <h2>Information Used</h2>
+      <p>
+        The planner can use job details that you manually paste, share from your phone, or later
+        connect through approved read-only email access. Job details may include provider name,
+        assignment title, address, pay, due date, status, and notes needed for route planning.
+      </p>
+      <p>
+        If you grant browser or Android permission, the planner can use your current location to
+        place you on the map and estimate distance to jobs or transit stops. Camera capture, if
+        enabled, is for local field-reference photos that stay on the device unless you choose to
+        export or share them elsewhere.
+      </p>
+
+      <h2>Email Access</h2>
+      <p>
+        The planned email integrations are read-only. Outlook/Hotmail uses Microsoft Graph
+        delegated Mail.Read. Gmail uses the Gmail API readonly scope:
+        https://www.googleapis.com/auth/gmail.readonly. The app should scan sender, subject,
+        and date first, then fetch message body only when the sender/source is approved for job
+        planning.
+      </p>
+      <p>
+        The planner does not request email send, delete, modify, or mailbox management access.
+        It does not ask for your email password.
+      </p>
+
+      <h2>Storage</h2>
+      <p>
+        Planner settings, imported jobs, provider connection status, and route notes are stored
+        as local app data on the device/browser where you use the app. OAuth tokens should be
+        stored only in an approved browser OAuth cache or native Android secure storage. Passwords,
+        cookies, MFA codes, refresh tokens, client secrets, and private API keys
+        must not be committed to GitHub or stored in public app files.
+      </p>
+
+      <h2>Provider Apps</h2>
+      <p>
+        The planner can open official provider apps or login pages for Survey Merchandiser,
+        Clickworker, Field Nation, and Field Agent. It must not bypass CAPTCHA, MFA, challenge
+        pages, app security, or private app storage. Login remains under your control.
+      </p>
+
+      <h2>Transit Data</h2>
+      <p>
+        Transit suggestions use verified static GTFS schedule data and available official realtime
+        feeds. Static schedule results are labeled as scheduled estimates. The planner should not
+        invent route sections, stop names, or live verification when verified data is missing.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        For questions about this private planner, use the account/contact email configured in the
+        OAuth provider console for this app.
+      </p>
+    </article>
+  </main>
+</body>
+</html>

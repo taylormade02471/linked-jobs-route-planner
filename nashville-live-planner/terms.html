@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terms of Service - Nashville Live Audit Transit Planner</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17251f;
+      --muted: #5d6f65;
+      --line: #d7e4dc;
+      --paper: #fffaf0;
+      --green: #12834b;
+      --blue: #0f5f78;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 18% 12%, #dff8e8 0, transparent 28%),
+        linear-gradient(135deg, #fffaf0 0%, #f2fbff 100%);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 40px 20px 56px;
+    }
+
+    article {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(23, 37, 31, 0.12);
+      padding: clamp(24px, 4vw, 44px);
+    }
+
+    h1, h2 {
+      line-height: 1.2;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+    }
+
+    h2 {
+      margin-top: 2rem;
+      color: var(--blue);
+    }
+
+    a {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .updated {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <p><a href="/">Back to planner</a></p>
+      <h1>Terms of Service</h1>
+      <p class="updated">Last updated: August 27, 2026</p>
+
+      <p>
+        Nashville Live Audit Transit Planner is a private planning tool for field work, transit,
+        walking routes, job review, and local route notes. It helps organize information, but you
+        remain responsible for confirming assignment availability, provider rules, deadlines,
+        transit status, safety, and pay details with the official source.
+      </p>
+
+      <h2>Use of Work Provider Data</h2>
+      <p>
+        Only connect or import job information that you are allowed to view and use. Provider
+        websites and phone apps may have their own terms. The planner should use official app
+        links, visible user-approved shares, approved read-only email access, or verified APIs.
+        It must not bypass login, CAPTCHA, MFA, challenge pages, access controls, or private app
+        storage.
+      </p>
+
+      <h2>Email Permissions</h2>
+      <p>
+        Email connections are intended for read-only job discovery and route planning. Outlook
+        access should use Microsoft Graph delegated Mail.Read. Gmail access should use
+        https://www.googleapis.com/auth/gmail.readonly. The planner must not send, delete,
+        modify, or manage email.
+      </p>
+
+      <h2>Local Storage And Credentials</h2>
+      <p>
+        Planner data is stored locally on your device/browser unless you choose to export or
+        deploy changes. Do not enter provider passwords, MFA codes, cookies, client secrets,
+        refresh tokens, or private API keys into public source files, GitHub, or ordinary planner
+        text boxes.
+      </p>
+
+      <h2>Transit And Route Estimates</h2>
+      <p>
+        Transit and walking guidance are planning aids. Static schedule data is an estimate, and
+        realtime transit feeds may be delayed, unavailable, or incomplete. Always verify critical
+        trips, routes, stops, and job timing before relying on them in the field.
+      </p>
+
+      <h2>No Warranty</h2>
+      <p>
+        The planner is provided as-is for personal planning support. It does not guarantee job
+        availability, provider approval, payment, transit arrival, route safety, or legal/tax
+        outcomes.
+      </p>
+    </article>
+  </main>
+</body>
+</html>

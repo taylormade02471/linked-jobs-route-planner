@@ -33,6 +33,7 @@ test("email permission options include Outlook Mail.Read without write permissio
 test("connection setup lists email OAuth and provider app bridge paths", () => {
   const ids = backbone.CONNECTION_SETUP.map((item) => item.id);
   const outlook = backbone.CONNECTION_SETUP.find((item) => item.id === "outlook_mail_read_oauth");
+  const gmail = backbone.CONNECTION_SETUP.find((item) => item.id === "gmail_readonly_oauth");
   const appBridge = backbone.CONNECTION_SETUP.find((item) => item.id === "provider_phone_app_bridge");
 
   assert.deepEqual(ids, [
@@ -43,8 +44,10 @@ test("connection setup lists email OAuth and provider app bridge paths", () => {
   ]);
   assert.match(outlook.permission, /Mail\.Read only/);
   assert.ok(outlook.redirectUris.includes("https://nashville-live-audit-transit-planne.vercel.app/"));
+  assert.equal(gmail.clientId, "554839816124-pgscs326aspoch273k9b39cpnnthmcps.apps.googleusercontent.com");
+  assert.match(gmail.status, /oauth_client_created_testing/);
   assert.match(appBridge.permission, /text\/plain share intake/);
-  assert.doesNotMatch(JSON.stringify(backbone.CONNECTION_SETUP), /client_secret|access_token|refresh_token|Mail\.Send|Mail\.ReadWrite/i);
+  assert.doesNotMatch(JSON.stringify(backbone.CONNECTION_SETUP), /client_secret|GOCSPX|access_token|refresh_token|Mail\.Send|Mail\.ReadWrite/i);
 });
 
 test("provider connection settings keep status but reject secrets", () => {

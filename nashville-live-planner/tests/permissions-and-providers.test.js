@@ -74,6 +74,21 @@ test("Nashville planner exposes safe read-only email sync settings", () => {
   assert.doesNotMatch(index, /Mail\.Send|Mail\.ReadWrite|emailPassword|emailToken|access_token|refresh_token/i);
 });
 
+test("public privacy and terms pages support restricted email OAuth review", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+  const privacy = fs.readFileSync(path.join(plannerRoot, "privacy.html"), "utf8");
+  const terms = fs.readFileSync(path.join(plannerRoot, "terms.html"), "utf8");
+
+  assert.match(index, /privacy\.html/);
+  assert.match(index, /terms\.html/);
+  assert.match(privacy, /Microsoft Graph\s+delegated Mail\.Read/);
+  assert.match(privacy, /gmail\.readonly/);
+  assert.match(privacy, /does not ask for your email password/i);
+  assert.match(privacy, /must not be committed to GitHub/i);
+  assert.match(terms, /provider passwords, MFA codes, cookies, client secrets/i);
+  assert.match(terms, /must not send, delete,\s+modify, or manage email/i);
+});
+
 test("Android shell loads the Nashville planner and requests network location and camera permissions", () => {
   const manifest = fs.readFileSync(path.join(projectRoot, "android", "app", "src", "main", "AndroidManifest.xml"), "utf8");
   const activity = fs.readFileSync(
