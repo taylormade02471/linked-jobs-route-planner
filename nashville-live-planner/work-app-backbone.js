@@ -48,6 +48,7 @@
 
   const SAFE_CONNECTION_STATUSES = new Set(["not_connected", "signed_in_external", "needs_login"]);
   const SECRET_FIELD_PATTERN = /(password|passcode|token|secret|cookie|session|authorization|bearer|api[_-]?key|csrf)/i;
+  const SYNC_INTERVALS = [0, 5, 10, 15, 30, 60];
 
   const STREET_PATTERN = /\b\d{2,6}\s+[^,\n]*(?:street|st|avenue|ave|road|rd|pike|hwy|highway|lane|ln|drive|dr|boulevard|blvd|way|court|ct|circle|cir|place|pl)\b[^,\n]*(?:,\s*[^,\n]+){0,3}/i;
 
@@ -67,11 +68,18 @@
 
   function sanitizeConnectionSettings(settings = {}) {
     const provider = providerById(settings.provider_id);
+    const requestedInterval = Number(settings.sync_interval_minutes);
+    const syncInterval = SYNC_INTERVALS.includes(requestedInterval) ? requestedInterval : 0;
     const safe = {
       provider_id: provider.id,
       status: safeConnectionStatus(settings.status),
       account_label: asText(settings.account_label).slice(0, 90),
       notes: asText(settings.notes).slice(0, 180),
+      stay_signed_in_external: Boolean(settings.stay_signed_in_external),
+      background_sync_enabled: Boolean(settings.background_sync_enabled) && syncInterval > 0,
+      sync_interval_minutes: syncInterval,
+      last_sync_at: Number(settings.last_sync_at) || 0,
+      sync_status: asText(settings.sync_status).slice(0, 140),
       updated_at: Number(settings.updated_at) || Date.now(),
     };
 
@@ -80,6 +88,13 @@
     });
 
     return safe;
+  }
+
+  function nextSyncAt(connection, now = Date.now()) {
+    const safe = sanitizeConnectionSettings(connection);
+    if (!safe.background_sync_enabled || !safe.sync_interval_minutes) return 0;
+    const last = safe.last_sync_at || now;
+    return last + safe.sync_interval_minutes * 60 * 1000;
   }
 
   function connectionLabel(connection) {
@@ -313,6 +328,7 @@
 
   return {
     PROVIDERS,
+    SYNC_INTERVALS,
     centsLabel,
     connectionLabel,
     coordinateForJob,
@@ -325,6 +341,7 @@
     parsePaymentCenterText,
     providerById,
     recommendJobs,
+    nextSyncAt,
     sanitizeConnectionSettings,
     scoreJob,
   };

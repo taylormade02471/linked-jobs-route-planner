@@ -25,6 +25,11 @@ test("provider connection settings keep status but reject secrets", () => {
     status: "signed_in_external",
     account_label: "main phone account",
     notes: "Logged in through Workplace",
+    stay_signed_in_external: true,
+    background_sync_enabled: true,
+    sync_interval_minutes: 10,
+    last_sync_at: 1000,
+    sync_status: "Last visible app share saved",
     password: "do-not-store",
     access_token: "do-not-store",
     cookie: "do-not-store",
@@ -32,17 +37,40 @@ test("provider connection settings keep status but reject secrets", () => {
 
   assert.deepEqual(Object.keys(safe).sort(), [
     "account_label",
+    "background_sync_enabled",
+    "last_sync_at",
     "notes",
     "provider_id",
     "rejected_secret_fields",
     "status",
+    "stay_signed_in_external",
+    "sync_interval_minutes",
+    "sync_status",
     "updated_at",
   ]);
   assert.equal(safe.provider_id, "clickworker");
   assert.equal(safe.status, "signed_in_external");
+  assert.equal(safe.stay_signed_in_external, true);
+  assert.equal(safe.background_sync_enabled, true);
+  assert.equal(safe.sync_interval_minutes, 10);
+  assert.equal(safe.last_sync_at, 1000);
   assert.equal(safe.rejected_secret_fields, true);
   assert.equal(JSON.stringify(safe).includes("do-not-store"), false);
   assert.equal(backbone.connectionLabel(safe), "Connected on this phone/browser");
+  assert.equal(backbone.nextSyncAt(safe, 2000), 601000);
+});
+
+test("background sync settings reject unsupported intervals", () => {
+  const safe = backbone.sanitizeConnectionSettings({
+    provider_id: "survey_merchandiser",
+    status: "signed_in_external",
+    background_sync_enabled: true,
+    sync_interval_minutes: 7,
+  });
+
+  assert.equal(safe.background_sync_enabled, false);
+  assert.equal(safe.sync_interval_minutes, 0);
+  assert.equal(backbone.nextSyncAt(safe), 0);
 });
 
 test("open available filtering excludes applied planned and completed jobs", () => {

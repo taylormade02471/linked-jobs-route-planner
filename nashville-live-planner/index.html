@@ -48,12 +48,20 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <label class="wide">Local notes, no secrets
     <textarea id="providerConnectionNotes" placeholder="Example: signed in through the phone app; use provider app for accepting work. Do not paste passwords, tokens, cookies, or MFA codes."></textarea>
    </label>
+   <label>
+    <span><input id="providerStaySignedIn" type="checkbox"> Keep using provider app/browser saved login</span>
+   </label>
+   <label>Auto-check interval
+    <select id="providerSyncInterval"><option value="0">Off</option><option value="5">Every 5 minutes</option><option value="10">Every 10 minutes</option><option value="15">Every 15 minutes</option><option value="30">Every 30 minutes</option><option value="60">Every hour</option></select>
+   </label>
   </div>
   <div class="actions">
    <a id="openProviderBoard" target="_blank" rel="noopener">Open provider board/login</a>
    <button id="openProviderApp" type="button">Open installed phone app</button>
    <button id="saveProviderConnected" type="button">Mark connected here</button>
    <button id="saveProviderNeedsLogin" type="button">Mark needs login</button>
+   <button id="saveProviderBackground" type="button">Save background update settings</button>
+   <button id="checkProviderNow" type="button">Check provider now</button>
    <button id="clearProviderConnection" type="button">Clear this connection</button>
   </div>
  </div>
@@ -172,6 +180,7 @@ let workJobs=[];
 let providerConnections={};
 let paymentSnapshots=[];
 let cameraStream=null,capturedPhotoDataUrl='';
+let providerSyncTimer=null;
 
 const planSel=document.getElementById('plan'),corridorSel=document.getElementById('corridor'),viewSel=document.getElementById('view');
 const planLabels={
@@ -300,25 +309,81 @@ function renderProviderConnection(){
  const status=document.getElementById('providerConnectionStatus');
  const account=document.getElementById('providerAccountLabel');
  const notes=document.getElementById('providerConnectionNotes');
+ const stay=document.getElementById('providerStaySignedIn');
+ const interval=document.getElementById('providerSyncInterval');
  const open=document.getElementById('openProviderBoard');
- if(status)status.textContent=`${provider.label}: ${W.connectionLabel(connection)}. ${provider.connectionHelp}`;
+ const next=W.nextSyncAt(connection);
+ const syncText=connection.background_sync_enabled?` Auto-check every ${connection.sync_interval_minutes} min while this planner is open; next check ${new Date(next).toLocaleTimeString()}.`:' Auto-check is off.';
+ if(status)status.textContent=`${provider.label}: ${W.connectionLabel(connection)}. ${provider.connectionHelp}${connection.stay_signed_in_external?' Uses provider app/browser saved login.':''}${syncText} ${connection.sync_status||''}`;
  if(account&&document.activeElement!==account)account.value=connection.account_label||'';
  if(notes&&document.activeElement!==notes)notes.value=connection.notes||'';
+ if(stay)stay.checked=Boolean(connection.stay_signed_in_external);
+ if(interval)interval.value=String(connection.sync_interval_minutes||0);
  if(open){open.href=provider.loginUrl||provider.boardUrl;open.textContent=`Open ${provider.label}`;}
 }
-function setProviderConnection(status){
+function setProviderConnection(status,overrides={}){
  const provider=currentProvider();
+ const existing=currentConnection(provider.id);
  const safe=W.sanitizeConnectionSettings({
+  ...existing,
   provider_id:provider.id,
   status,
   account_label:document.getElementById('providerAccountLabel')?.value,
   notes:document.getElementById('providerConnectionNotes')?.value,
+  stay_signed_in_external:document.getElementById('providerStaySignedIn')?.checked,
+  background_sync_enabled:Number(document.getElementById('providerSyncInterval')?.value||0)>0,
+  sync_interval_minutes:Number(document.getElementById('providerSyncInterval')?.value||0),
+  ...overrides,
   updated_at:Date.now(),
  });
  providerConnections[provider.id]=safe;
  saveProviderConnections();
+ scheduleProviderSync();
  renderProviderStats();
  renderProviderConnection();
+}
+function saveProviderBackgroundSettings(){
+ setProviderConnection(currentConnection(currentProvider().id).status||'signed_in_external',{
+  sync_status:'Background update settings saved locally. Actual provider job pulls need official app share, visible page connector, or native approved bridge.',
+ });
+}
+function markProviderChecked(providerId,message){
+ const provider=W.providerById(providerId);
+ const existing=currentConnection(provider.id);
+ providerConnections[provider.id]=W.sanitizeConnectionSettings({
+  ...existing,
+  last_sync_at:Date.now(),
+  sync_status:message,
+  updated_at:Date.now(),
+ });
+ saveProviderConnections();
+}
+function checkProviderNow(){
+ const provider=currentProvider();
+ markProviderChecked(provider.id,'Checked locally. Open/share/capture visible provider jobs to update saved jobs.');
+ renderProviderStats();
+ renderProviderConnection();
+ openProviderApp();
+}
+function scheduleProviderSync(){
+ if(providerSyncTimer!==null){clearTimeout(providerSyncTimer);providerSyncTimer=null;}
+ const now=Date.now();
+ const due=W.PROVIDERS.map(provider=>currentConnection(provider.id)).filter(connection=>connection.background_sync_enabled).map(connection=>W.nextSyncAt(connection,now)).filter(Boolean).sort((a,b)=>a-b)[0];
+ if(!due)return;
+ providerSyncTimer=setTimeout(runProviderSyncDue,Math.max(1000,due-now));
+}
+function runProviderSyncDue(){
+ const now=Date.now();
+ W.PROVIDERS.forEach(provider=>{
+  const connection=currentConnection(provider.id);
+  if(!connection.background_sync_enabled)return;
+  if(W.nextSyncAt(connection,now)<=now+1000){
+   markProviderChecked(provider.id,'Auto-check ran while planner was open. Waiting for provider share/capture connector data.');
+  }
+ });
+ renderProviderStats();
+ renderProviderConnection();
+ scheduleProviderSync();
 }
 function openProviderApp(){
  const provider=currentProvider();
@@ -435,6 +500,8 @@ function initWorkApps(){
   renderProviderStats();
   renderProviderConnection();
  });
+ document.getElementById('saveProviderBackground')?.addEventListener('click',saveProviderBackgroundSettings);
+ document.getElementById('checkProviderNow')?.addEventListener('click',checkProviderNow);
  document.getElementById('addWorkJob')?.addEventListener('click',()=>{
   const job={
    id:'',

@@ -34,8 +34,13 @@ test("Nashville planner stores provider connection state without credential fiel
   assert.match(index, /PROVIDER_CONNECTIONS_KEY/);
   assert.match(index, /Mark connected here/);
   assert.match(index, /Open installed phone app/);
+  assert.match(index, /Keep using provider app\/browser saved login/);
+  assert.match(index, /Auto-check interval/);
+  assert.match(index, /Save background update settings/);
+  assert.match(index, /Check provider now/);
   assert.match(index, /Account label, not password/);
   assert.match(backbone, /sanitizeConnectionSettings/);
+  assert.match(backbone, /background_sync_enabled/);
   assert.match(backbone, /SECRET_FIELD_PATTERN/);
   assert.doesNotMatch(index, /id="providerPassword"|id="providerToken"|access_token|refresh_token/i);
 });
