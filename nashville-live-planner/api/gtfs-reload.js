@@ -1,5 +1,7 @@
 // api/gtfs-reload.js — fetches live WeGo GTFS zip and returns fresh routes + stops
-export const config = { runtime: "nodejs" };
+const { inflateRaw } = require("zlib");
+const { promisify } = require("util");
+const inflateRawAsync = promisify(inflateRaw);
 
 const GTFS_URL = "https://www.wegotransit.com/GoogleExport/google_transit.zip";
 
@@ -15,7 +17,6 @@ const ROUTE_COLORS = {
   "93":"#CC0033","94":"#005596","95":"#006666",
 };
 
-// Minimal CSV parser (handles quoted fields)
 function parseCSV(text) {
   const lines = text.replace(/\r/g, "").split("\n").filter(Boolean);
   if (!lines.length) return [];
@@ -35,11 +36,6 @@ function parseCSV(text) {
   });
 }
 
-// Unzip without external deps — use Node's built-in zlib + manual ZIP parsing
-import { inflateRaw } from "zlib";
-import { promisify } from "util";
-const inflateRawAsync = promisify(inflateRaw);
-
 function readUint32LE(buf, offset) {
   return buf[offset] | (buf[offset+1]<<8) | (buf[offset+2]<<16) | (buf[offset+3]<<24);
 }
@@ -51,7 +47,6 @@ async function unzipFiles(buf, wantedFiles) {
   const result = {};
   let i = 0;
   while (i < buf.length - 4) {
-    // Local file header signature
     if (buf[i] !== 0x50 || buf[i+1] !== 0x4B || buf[i+2] !== 0x03 || buf[i+3] !== 0x04) { i++; continue; }
     const compression = readUint16LE(buf, i + 8);
     const compressedSize = readUint32LE(buf, i + 18);
@@ -60,15 +55,10 @@ async function unzipFiles(buf, wantedFiles) {
     const filename = buf.slice(i + 30, i + 30 + filenameLen).toString("utf8");
     const dataStart = i + 30 + filenameLen + extraLen;
     const compressedData = buf.slice(dataStart, dataStart + compressedSize);
-
     if (wantedFiles.includes(filename)) {
       let content;
-      if (compression === 0) {
-        content = compressedData.toString("utf8");
-      } else if (compression === 8) {
-        const decompressed = await inflateRawAsync(compressedData);
-        content = decompressed.toString("utf8");
-      }
+      if (compression === 0) content = compressedData.toString("utf8");
+      else if (compression === 8) content = (await inflateRawAsync(compressedData)).toString("utf8");
       if (content) result[filename] = content;
     }
     i = dataStart + compressedSize;
@@ -76,7 +66,7 @@ async function unzipFiles(buf, wantedFiles) {
   return result;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "public, max-age=43200"); // cache 12 hours
 
