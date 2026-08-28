@@ -64,8 +64,11 @@ test("Nashville planner exposes safe read-only email sync settings", () => {
   assert.match(index, /EMAIL_SYNC_SETTINGS_KEY/);
   assert.match(index, /Open Outlook\/Hotmail inbox/);
   assert.match(index, /Save email permission settings/);
+  assert.match(index, /Connection setup checklist/);
   assert.match(index, /Scan sender\/subject\/date first/);
   assert.match(backbone, /Microsoft Graph delegated Mail\.Read/);
+  assert.match(backbone, /outlook_mail_read_oauth/);
+  assert.match(backbone, /provider_phone_app_bridge/);
   assert.match(backbone, /senderAllowed/);
   assert.match(backbone, /parseEmailText/);
   assert.doesNotMatch(index, /Mail\.Send|Mail\.ReadWrite|emailPassword|emailToken|access_token|refresh_token/i);

@@ -148,6 +148,8 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <button id="importEmailJobs" type="button">Import pasted email jobs</button>
    <button id="clearEmailSettings" type="button">Clear email settings</button>
   </div>
+  <div class="sectionTitle">Connection setup checklist</div>
+  <div id="connectionSetupList" class="recommendations"></div>
  </div>
  <div class="paymentPanel">
   <div class="sectionTitle">Payment center snapshot</div>
@@ -444,6 +446,15 @@ function renderEmailSync(){
  const selected=W.EMAIL_PERMISSION_OPTIONS.find(option=>option.id===settings.permission_id)||W.EMAIL_PERMISSION_OPTIONS[0];
  const syncText=settings.background_sync_enabled?` Auto-check every ${settings.sync_interval_minutes} min while this planner is open.`:' Auto-check is off.';
  if(status)status.textContent=`${selected.permission}. ${selected.status==='needs_oauth_client'?'OAuth app registration is still required before live mailbox reads.':'Requires provider verification before live mailbox reads.'} ${syncText} ${settings.sync_status||''}`;
+ renderConnectionSetupList();
+}
+function renderConnectionSetupList(){
+ const target=document.getElementById('connectionSetupList');
+ if(!target)return;
+ target.innerHTML=W.CONNECTION_SETUP.map(item=>{
+  const redirects=(item.redirectUris||[]).length?`Redirects: ${item.redirectUris.join(', ')}`:'No OAuth redirect required';
+  return `<div class="workjob"><b>${item.label}</b><span>${item.provider}</span><span>${item.permission}</span><span>${redirects}</span><span>${item.storage}</span><span>Status: ${item.status.replaceAll('_',' ')}</span></div>`;
+ }).join('');
 }
 function setEmailSyncSettings(overrides={}){
  emailSyncSettings=W.sanitizeEmailSyncSettings({

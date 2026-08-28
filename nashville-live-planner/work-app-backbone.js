@@ -73,6 +73,56 @@
       status: "restricted_later",
     },
   ];
+  const CONNECTION_SETUP = [
+    {
+      id: "outlook_mail_read_oauth",
+      label: "Outlook / Hotmail OAuth",
+      type: "email_oauth",
+      provider: "Microsoft Graph",
+      permission: "Delegated Mail.Read only",
+      redirectUris: [
+        "https://nashville-live-audit-transit-planne.vercel.app/",
+        "https://routeplanner.space/",
+        "https://www.routeplanner.space/",
+      ],
+      storage: "Native Android MSAL secure token cache or approved browser OAuth cache",
+      status: "needs_microsoft_app_registration",
+    },
+    {
+      id: "gmail_readonly_oauth",
+      label: "Gmail OAuth",
+      type: "email_oauth",
+      provider: "Google Gmail API",
+      permission: "gmail.readonly only",
+      redirectUris: [
+        "https://nashville-live-audit-transit-planne.vercel.app/",
+        "https://routeplanner.space/",
+        "https://www.routeplanner.space/",
+      ],
+      storage: "Native secure token cache after Google verification",
+      status: "restricted_later",
+    },
+    {
+      id: "provider_phone_app_bridge",
+      label: "Phone app provider bridge",
+      type: "provider_app_bridge",
+      provider: "Survey Merchandiser, Clickworker, Field Nation, Field Agent",
+      permission: "Android app launch plus text/plain share intake",
+      redirectUris: [],
+      storage: "Local planner app data for parsed jobs, not provider credentials",
+      status: "available_for_android_wrapper",
+    },
+    {
+      id: "provider_visible_page_connector",
+      label: "Visible web page connector",
+      type: "provider_web_connector",
+      provider: "Provider websites after manual login",
+      permission: "Read visible job rows only after user login",
+      redirectUris: [],
+      storage: "Local planner app data for parsed jobs, not website passwords or cookies",
+      status: "provider_by_provider_review",
+    },
+  ];
 
   const STREET_PATTERN = /\b\d{2,6}\s+[^,\n]*(?:street|st|avenue|ave|road|rd|pike|hwy|highway|lane|ln|drive|dr|boulevard|blvd|way|court|ct|circle|cir|place|pl)\b[^,\n]*(?:,\s*[^,\n]+){0,3}/i;
 
@@ -430,6 +480,7 @@
 
   return {
     PROVIDERS,
+    CONNECTION_SETUP,
     EMAIL_PERMISSION_OPTIONS,
     SYNC_INTERVALS,
     centsLabel,

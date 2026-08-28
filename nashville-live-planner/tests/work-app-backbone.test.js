@@ -30,6 +30,23 @@ test("email permission options include Outlook Mail.Read without write permissio
   assert.doesNotMatch(JSON.stringify(backbone.EMAIL_PERMISSION_OPTIONS), /Mail\.ReadWrite|Mail\.Send/i);
 });
 
+test("connection setup lists email OAuth and provider app bridge paths", () => {
+  const ids = backbone.CONNECTION_SETUP.map((item) => item.id);
+  const outlook = backbone.CONNECTION_SETUP.find((item) => item.id === "outlook_mail_read_oauth");
+  const appBridge = backbone.CONNECTION_SETUP.find((item) => item.id === "provider_phone_app_bridge");
+
+  assert.deepEqual(ids, [
+    "outlook_mail_read_oauth",
+    "gmail_readonly_oauth",
+    "provider_phone_app_bridge",
+    "provider_visible_page_connector",
+  ]);
+  assert.match(outlook.permission, /Mail\.Read only/);
+  assert.ok(outlook.redirectUris.includes("https://nashville-live-audit-transit-planne.vercel.app/"));
+  assert.match(appBridge.permission, /text\/plain share intake/);
+  assert.doesNotMatch(JSON.stringify(backbone.CONNECTION_SETUP), /client_secret|access_token|refresh_token|Mail\.Send|Mail\.ReadWrite/i);
+});
+
 test("provider connection settings keep status but reject secrets", () => {
   const safe = backbone.sanitizeConnectionSettings({
     provider_id: "clickworker",
