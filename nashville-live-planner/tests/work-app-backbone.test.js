@@ -18,6 +18,16 @@ test("Nashville backbone targets the requested phone work apps", () => {
   assert.ok(backbone.PROVIDERS.every((provider) => provider.loginUrl));
   assert.ok(backbone.PROVIDERS.every((provider) => provider.androidPackage));
   assert.ok(backbone.PROVIDERS.every((provider) => provider.androidIntentUrl));
+  assert.ok(backbone.PROVIDERS.every((provider) => provider.emailDomains.length));
+});
+
+test("email permission options include Outlook Mail.Read without write permission", () => {
+  const outlook = backbone.EMAIL_PERMISSION_OPTIONS.find((option) => option.id === "outlook_mail_read");
+
+  assert.ok(outlook);
+  assert.equal(outlook.permission, "Microsoft Graph delegated Mail.Read");
+  assert.match(outlook.scope, /Mail\.Read$/);
+  assert.doesNotMatch(JSON.stringify(backbone.EMAIL_PERMISSION_OPTIONS), /Mail\.ReadWrite|Mail\.Send/i);
 });
 
 test("provider connection settings keep status but reject secrets", () => {
@@ -72,6 +82,47 @@ test("background sync settings reject unsupported intervals", () => {
   assert.equal(safe.background_sync_enabled, false);
   assert.equal(safe.sync_interval_minutes, 0);
   assert.equal(backbone.nextSyncAt(safe), 0);
+});
+
+test("email sync settings preserve allowlist but reject credential fields", () => {
+  const safe = backbone.sanitizeEmailSyncSettings({
+    account_label: "Hotmail job inbox",
+    permission_id: "outlook_mail_read",
+    sender_allowlist: "survey.com\nfieldagent.net",
+    metadata_first: true,
+    background_sync_enabled: true,
+    sync_interval_minutes: 15,
+    access_token: "do-not-store",
+  });
+
+  assert.equal(safe.account_label, "Hotmail job inbox");
+  assert.equal(safe.permission_id, "outlook_mail_read");
+  assert.equal(safe.metadata_first, true);
+  assert.equal(safe.background_sync_enabled, true);
+  assert.equal(safe.sync_interval_minutes, 15);
+  assert.equal(safe.rejected_secret_fields, true);
+  assert.equal(JSON.stringify(safe).includes("do-not-store"), false);
+});
+
+test("email parser imports allowed provider senders and ignores other senders", () => {
+  const settings = backbone.sanitizeEmailSyncSettings({
+    sender_allowlist: "survey.com\nfieldagent.net",
+  });
+  const imported = backbone.parseEmailText(
+    "From: alerts@survey.com\nSubject: New Nashville assignment\n\nStore audit\n3019 Dickerson Pike, Nashville, TN\nPay $18.00\nAvailable",
+    settings,
+  );
+  const ignored = backbone.parseEmailText(
+    "From: random@example.com\nSubject: coupon\n\nPay $100",
+    settings,
+  );
+
+  assert.equal(imported.ignored, false);
+  assert.equal(imported.provider_id, "survey_merchandiser");
+  assert.equal(imported.jobs[0].source, "email-import");
+  assert.equal(imported.jobs[0].pay_cents, 1800);
+  assert.equal(ignored.ignored, true);
+  assert.equal(ignored.reason, "sender_not_allowed");
 });
 
 test("open available filtering excludes applied planned and completed jobs", () => {

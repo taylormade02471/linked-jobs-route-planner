@@ -24,6 +24,8 @@ The Android wrapper can attempt to open installed provider apps by package name.
 
 Payment-center snapshots can be pasted from visible provider screens and stored locally for field reference. Payment rows are app data only; they are not provider credentials and are not committed.
 
+Email job sync settings are browser-local app data. The first planned mailbox integration is Outlook/Hotmail using Microsoft Graph delegated `Mail.Read` only. The planner stores account labels, sender allowlists, metadata-first preferences, and local sync timestamps. It does not request `Mail.Send`, `Mail.ReadWrite`, passwords, cookies, refresh tokens, or provider credentials. Until OAuth is configured through a registered Microsoft app or native Android MSAL bridge, pasted/shared email text is the safe import path.
+
 Provider connection status is also browser-local app data. The planner can remember that a provider is signed in on this device and can reopen that provider's official app/login surface, but it does not store provider passwords, tokens, cookies, MFA codes, or API keys in source code, GitHub, Vercel, or browser storage.
 
 The camera tool requests permission only when the user taps **Start camera**. Captured photos stay in browser storage and can be attached to a phone-app job for field reference. The public Vercel app does not receive provider passwords or log into private phone apps.

@@ -16,6 +16,7 @@
       loginUrl: "https://survey.com/",
       androidPackage: "iSurvey.Android",
       androidIntentUrl: "intent://open/#Intent;package=iSurvey.Android;end",
+      emailDomains: ["survey.com"],
       connectionHelp: "Use the Survey Merchandiser app for sign-in, then save only this planner's local connection status.",
     },
     {
@@ -26,6 +27,7 @@
       loginUrl: "https://workplace.clickworker.com/",
       androidPackage: "com.clickworker.clickworkerapp",
       androidIntentUrl: "intent://open/#Intent;package=com.clickworker.clickworkerapp;end",
+      emailDomains: ["clickworker.com"],
       connectionHelp: "Open the official Workplace login or phone app; the planner stores status, not the Clickworker password.",
     },
     {
@@ -36,6 +38,7 @@
       loginUrl: "https://fieldnation.com/",
       androidPackage: "com.fieldnation.android",
       androidIntentUrl: "intent://open/#Intent;package=com.fieldnation.android;end",
+      emailDomains: ["fieldnation.com"],
       connectionHelp: "Use Field Nation's platform or app for sign-in; this planner only stores non-secret connection metadata.",
     },
     {
@@ -46,6 +49,7 @@
       loginUrl: "https://app.fieldagent.net/",
       androidPackage: "net.fieldagent",
       androidIntentUrl: "intent://open/#Intent;package=net.fieldagent;end",
+      emailDomains: ["fieldagent.net"],
       connectionHelp: "Use Field Agent's app for map/open jobs; share or capture visible job details into this planner.",
     },
   ];
@@ -53,6 +57,22 @@
   const SAFE_CONNECTION_STATUSES = new Set(["not_connected", "signed_in_external", "needs_login"]);
   const SECRET_FIELD_PATTERN = /(password|passcode|token|secret|cookie|session|authorization|bearer|api[_-]?key|csrf)/i;
   const SYNC_INTERVALS = [0, 5, 10, 15, 30, 60];
+  const EMAIL_PERMISSION_OPTIONS = [
+    {
+      id: "outlook_mail_read",
+      label: "Outlook / Hotmail read-only email",
+      scope: "https://graph.microsoft.com/Mail.Read",
+      permission: "Microsoft Graph delegated Mail.Read",
+      status: "needs_oauth_client",
+    },
+    {
+      id: "gmail_readonly",
+      label: "Gmail read-only email",
+      scope: "https://www.googleapis.com/auth/gmail.readonly",
+      permission: "Gmail API readonly",
+      status: "restricted_later",
+    },
+  ];
 
   const STREET_PATTERN = /\b\d{2,6}\s+[^,\n]*(?:street|st|avenue|ave|road|rd|pike|hwy|highway|lane|ln|drive|dr|boulevard|blvd|way|court|ct|circle|cir|place|pl)\b[^,\n]*(?:,\s*[^,\n]+){0,3}/i;
 
@@ -92,6 +112,84 @@
     });
 
     return safe;
+  }
+
+  function defaultEmailAllowlist() {
+    return PROVIDERS.flatMap((provider) => provider.emailDomains || []).join("\n");
+  }
+
+  function sanitizeEmailSyncSettings(settings = {}) {
+    const requestedInterval = Number(settings.sync_interval_minutes);
+    const syncInterval = SYNC_INTERVALS.includes(requestedInterval) ? requestedInterval : 0;
+    const safe = {
+      account_label: asText(settings.account_label).slice(0, 90),
+      permission_id: EMAIL_PERMISSION_OPTIONS.some((option) => option.id === settings.permission_id)
+        ? settings.permission_id
+        : "outlook_mail_read",
+      sender_allowlist: asText(settings.sender_allowlist || defaultEmailAllowlist()).slice(0, 600),
+      metadata_first: settings.metadata_first !== false,
+      background_sync_enabled: Boolean(settings.background_sync_enabled) && syncInterval > 0,
+      sync_interval_minutes: syncInterval,
+      last_sync_at: Number(settings.last_sync_at) || 0,
+      sync_status: asText(settings.sync_status).slice(0, 160),
+      updated_at: Number(settings.updated_at) || Date.now(),
+    };
+
+    Object.keys(settings || {}).forEach((key) => {
+      if (SECRET_FIELD_PATTERN.test(key)) safe.rejected_secret_fields = true;
+    });
+
+    return safe;
+  }
+
+  function senderAllowed(sender, allowlist) {
+    const senderText = asText(sender).toLowerCase();
+    const rules = asText(allowlist || defaultEmailAllowlist())
+      .toLowerCase()
+      .split(/[\s,;]+/)
+      .map((rule) => rule.trim().replace(/^@/, ""))
+      .filter(Boolean);
+    return rules.some((rule) => senderText === rule || senderText.endsWith("@" + rule) || senderText.includes("@" + rule));
+  }
+
+  function providerForSender(sender) {
+    const senderText = asText(sender).toLowerCase();
+    return PROVIDERS.find((provider) =>
+      (provider.emailDomains || []).some((domain) => senderText.includes("@" + domain) || senderText.endsWith(domain)),
+    ) || null;
+  }
+
+  function parseEmailText(text, settings = {}) {
+    const safeSettings = sanitizeEmailSyncSettings(settings);
+    const raw = String(text || "");
+    const from = (raw.match(/^from:\s*(.+)$/im) || [])[1] || "";
+    const subject = (raw.match(/^subject:\s*(.+)$/im) || [])[1] || "";
+    if (from && !senderAllowed(from, safeSettings.sender_allowlist)) {
+      return {
+        ignored: true,
+        reason: "sender_not_allowed",
+        from: asText(from),
+        subject: asText(subject),
+      };
+    }
+
+    const provider = providerForSender(from) || providerById(settings.provider_id);
+    const parsedJobs = parseSharedJobs(raw, provider.id)
+      .filter((job) => job.address || job.pay_cents || /\b(available|assigned|claimed|payment|due|deadline)\b/i.test(job.source_text || ""))
+      .map((job) => ({
+        ...job,
+        source: "email-import",
+        email_from: asText(from),
+        email_subject: asText(subject),
+      }));
+
+    return {
+      ignored: false,
+      from: asText(from),
+      subject: asText(subject),
+      provider_id: provider.id,
+      jobs: parsedJobs,
+    };
   }
 
   function nextSyncAt(connection, now = Date.now()) {
@@ -332,6 +430,7 @@
 
   return {
     PROVIDERS,
+    EMAIL_PERMISSION_OPTIONS,
     SYNC_INTERVALS,
     centsLabel,
     connectionLabel,
@@ -343,7 +442,10 @@
     normalizeStatus,
     parseSharedJobs,
     parsePaymentCenterText,
+    parseEmailText,
     providerById,
+    sanitizeEmailSyncSettings,
+    senderAllowed,
     recommendJobs,
     nextSyncAt,
     sanitizeConnectionSettings,

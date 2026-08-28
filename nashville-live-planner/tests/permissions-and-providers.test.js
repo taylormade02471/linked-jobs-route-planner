@@ -56,6 +56,21 @@ test("Nashville planner shows open jobs green assigned jobs yellow and payment s
   assert.match(index, /Payment center snapshot/);
 });
 
+test("Nashville planner exposes safe read-only email sync settings", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+  const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");
+
+  assert.match(index, /Email job sync permissions/);
+  assert.match(index, /EMAIL_SYNC_SETTINGS_KEY/);
+  assert.match(index, /Open Outlook\/Hotmail inbox/);
+  assert.match(index, /Save email permission settings/);
+  assert.match(index, /Scan sender\/subject\/date first/);
+  assert.match(backbone, /Microsoft Graph delegated Mail\.Read/);
+  assert.match(backbone, /senderAllowed/);
+  assert.match(backbone, /parseEmailText/);
+  assert.doesNotMatch(index, /Mail\.Send|Mail\.ReadWrite|emailPassword|emailToken|access_token|refresh_token/i);
+});
+
 test("Android shell loads the Nashville planner and requests network location and camera permissions", () => {
   const manifest = fs.readFileSync(path.join(projectRoot, "android", "app", "src", "main", "AndroidManifest.xml"), "utf8");
   const activity = fs.readFileSync(
