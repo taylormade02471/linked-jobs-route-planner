@@ -198,6 +198,128 @@
     },
   ];
 
+  const KEY_VAULT_BINDINGS = [
+    {
+      id: "planner_backend",
+      label: "Linked Jobs Planner backend",
+      provider: "Microsoft Azure",
+      authorization: "Azure managed identity or workload identity for the planner runtime",
+      purpose: "Private runtime configuration for an Azure-hosted backend",
+      defaultSecretName: "planner-api-secret",
+      defaultCertificateName: "planner-api-cert",
+      defaultKeyName: "planner-data-key",
+      defaultApiReferenceName: "",
+      status: "needs_vault_selection",
+    },
+    {
+      id: "survey_merchandiser",
+      label: "Survey Merchandiser",
+      provider: "Survey Merchandiser",
+      authorization: "Official provider API, OAuth, or export only; otherwise use Android share or visible-page intake",
+      purpose: "Store a provider-issued API reference only if Survey Merchandiser supplies one",
+      defaultSecretName: "survey-merchandiser-api-key",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "survey-merchandiser-api-ref",
+      status: "provider_official_access_required",
+    },
+    {
+      id: "clickworker",
+      label: "Clickworker",
+      provider: "Clickworker",
+      authorization: "Official provider API, OAuth, or export only; otherwise use Android share or visible-page intake",
+      purpose: "Store a provider-issued API reference only if Clickworker supplies one",
+      defaultSecretName: "clickworker-api-key",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "clickworker-api-ref",
+      status: "provider_official_access_required",
+    },
+    {
+      id: "field_nation",
+      label: "Field Nation",
+      provider: "Field Nation",
+      authorization: "Official provider API, OAuth, or export only; otherwise use Android share or visible-page intake",
+      purpose: "Store a provider-issued API reference only if Field Nation supplies one",
+      defaultSecretName: "field-nation-api-key",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "field-nation-api-ref",
+      status: "provider_official_access_required",
+    },
+    {
+      id: "field_agent",
+      label: "Field Agent",
+      provider: "Field Agent",
+      authorization: "Official provider API, OAuth, or export only; otherwise use Android share or visible-page intake",
+      purpose: "Store a provider-issued API reference only if Field Agent supplies one",
+      defaultSecretName: "field-agent-api-key",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "field-agent-api-ref",
+      status: "provider_official_access_required",
+    },
+    {
+      id: "outlook_mail_read",
+      label: "Outlook / Hotmail Mail.Read",
+      provider: "Microsoft Graph",
+      authorization: "Delegated Mail.Read only through Microsoft identity OAuth",
+      purpose: "Public-client OAuth metadata; native MSAL owns the token cache",
+      defaultSecretName: "",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "outlook-mail-read-client-ref",
+      status: "needs_microsoft_app_registration",
+    },
+    {
+      id: "gmail_readonly",
+      label: "Gmail readonly",
+      provider: "Google Gmail API",
+      authorization: "gmail.readonly only through Google OAuth",
+      purpose: "Public-client OAuth metadata; the browser or native client owns the session token",
+      defaultSecretName: "",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "gmail-readonly-client-ref",
+      status: "testing_mode_ready",
+    },
+    {
+      id: "provider_phone_app_bridge",
+      label: "Android provider app bridge",
+      provider: "Android app bridge",
+      authorization: "Installed provider app plus user-approved text/plain share",
+      purpose: "No provider credential storage; save only parsed planner data locally",
+      defaultSecretName: "",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "",
+      status: "ready_for_device_bridge",
+    },
+    {
+      id: "provider_visible_page_connector",
+      label: "Visible provider page connector",
+      provider: "Provider websites",
+      authorization: "User signs in manually; read visible job rows only",
+      purpose: "No website password or cookie storage; save parsed planner data locally",
+      defaultSecretName: "",
+      defaultCertificateName: "",
+      defaultKeyName: "",
+      defaultApiReferenceName: "",
+      status: "provider_by_provider_review",
+    },
+  ];
+
+  const KEY_VAULT_STATUSES = new Set([
+    "needs_vault_selection",
+    "reference_ready",
+    "bound_to_azure_runtime",
+    "provider_official_access_required",
+    "needs_microsoft_app_registration",
+    "testing_mode_ready",
+    "ready_for_device_bridge",
+    "provider_by_provider_review",
+  ]);
+
   const STREET_PATTERN = /\b\d{2,6}\s+[^,\n]*(?:street|st|avenue|ave|road|rd|pike|hwy|highway|lane|ln|drive|dr|boulevard|blvd|way|court|ct|circle|cir|place|pl)\b[^,\n]*(?:,\s*[^,\n]+){0,3}/i;
 
   function asText(value) {
@@ -269,6 +391,67 @@
   function apiById(apiId) {
     const id = asText(apiId).toLowerCase();
     return API_REGISTRY.find((api) => api.id === id) || null;
+  }
+
+  function keyVaultBindingById(connectionId) {
+    const id = asText(connectionId).toLowerCase();
+    return KEY_VAULT_BINDINGS.find((binding) => binding.id === id) || null;
+  }
+
+  function sanitizeKeyVaultBinding(settings = {}) {
+    const definition = keyVaultBindingById(settings.connection_id) || KEY_VAULT_BINDINGS[0];
+    const safe = {
+      connection_id: definition.id,
+      vault_name: asText(settings.vault_name).slice(0, 90),
+      secret_name: asText(settings.secret_name === undefined ? definition.defaultSecretName : settings.secret_name).slice(0, 90),
+      certificate_name: asText(settings.certificate_name === undefined ? definition.defaultCertificateName : settings.certificate_name).slice(0, 90),
+      key_name: asText(settings.key_name === undefined ? definition.defaultKeyName : settings.key_name).slice(0, 90),
+      api_reference_name: asText(settings.api_reference_name === undefined ? definition.defaultApiReferenceName : settings.api_reference_name).slice(0, 90),
+      status: KEY_VAULT_STATUSES.has(asText(settings.status).toLowerCase())
+        ? asText(settings.status).toLowerCase()
+        : definition.status,
+      background_sync_enabled: Boolean(settings.background_sync_enabled),
+      sync_status: asText(settings.sync_status).slice(0, 180),
+      updated_at: Number(settings.updated_at) || Date.now(),
+    };
+
+    Object.keys(settings || {}).forEach((key) => {
+      if (SECRET_FIELD_PATTERN.test(key)) safe.rejected_secret_fields = true;
+    });
+
+    return safe;
+  }
+
+  function sanitizeKeyVaultPlan(settings = {}) {
+    const azure = apiById("azure_key_vault") || {};
+    const publicValues = azure.public_values || {};
+    const vaultName = asText(settings.vault_name === undefined ? publicValues.vault_name : settings.vault_name).slice(0, 90);
+    const plan = {
+      vault_name: vaultName,
+      tenant_id: asText(settings.tenant_id === undefined ? publicValues.tenant_id : settings.tenant_id).slice(0, 90),
+      tenant_name: asText(settings.tenant_name === undefined ? publicValues.tenant_name : settings.tenant_name).slice(0, 90),
+      primary_domain: asText(settings.primary_domain === undefined ? publicValues.primary_domain : settings.primary_domain).slice(0, 120),
+      license: asText(settings.license === undefined ? publicValues.license : settings.license).slice(0, 90),
+      subscription_id: asText(settings.subscription_id).slice(0, 90),
+      bindings: {},
+      updated_at: Number(settings.updated_at) || Date.now(),
+    };
+
+    KEY_VAULT_BINDINGS.forEach((definition) => {
+      const supplied = settings.bindings && settings.bindings[definition.id] ? settings.bindings[definition.id] : {};
+      plan.bindings[definition.id] = sanitizeKeyVaultBinding({
+        ...supplied,
+        connection_id: definition.id,
+        vault_name: vaultName || supplied.vault_name || "",
+      });
+      if (plan.bindings[definition.id].rejected_secret_fields) plan.rejected_secret_fields = true;
+    });
+
+    Object.keys(settings || {}).forEach((key) => {
+      if (SECRET_FIELD_PATTERN.test(key)) plan.rejected_secret_fields = true;
+    });
+
+    return plan;
   }
 
   function sanitizeApiSettings(settings = {}) {
@@ -586,6 +769,8 @@
 
   return {
     API_REGISTRY,
+    KEY_VAULT_BINDINGS,
+    KEY_VAULT_STATUSES,
     PROVIDERS,
     CONNECTION_SETUP,
     EMAIL_PERMISSION_OPTIONS,
@@ -603,6 +788,9 @@
     parseEmailText,
     providerById,
     apiById,
+    keyVaultBindingById,
+    sanitizeKeyVaultBinding,
+    sanitizeKeyVaultPlan,
     sanitizeApiSettings,
     sanitizeEmailSyncSettings,
     senderAllowed,

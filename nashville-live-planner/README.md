@@ -39,6 +39,24 @@ Azure Key Vault is the place to keep the private pieces for selected connections
 
 The planner only keeps safe metadata such as vault name, tenant ID, certificate name, and secret reference names. It must not store the private certificate material or secret values in GitHub, Vercel, or browser storage.
 
+The homepage now includes an **Azure Key Vault connection plan** covering every planned connection. It saves only metadata in browser-local app data:
+
+| Connection | Suggested reference names | Actual access required |
+| --- | --- | --- |
+| Linked Jobs Planner backend | `planner-api-secret`, `planner-api-cert`, `planner-data-key` | Azure-hosted backend identity with least-privilege Key Vault access |
+| Survey Merchandiser | `survey-merchandiser-api-key`, `survey-merchandiser-api-ref` | Provider-issued API/OAuth/export flow; otherwise Android share or visible-page intake |
+| Clickworker | `clickworker-api-key`, `clickworker-api-ref` | Provider-issued API/OAuth/export flow; otherwise Android share or visible-page intake |
+| Field Nation | `field-nation-api-key`, `field-nation-api-ref` | Provider-issued API/OAuth/export flow; otherwise Android share or visible-page intake |
+| Field Agent | `field-agent-api-key`, `field-agent-api-ref` | Provider-issued API/OAuth/export flow; otherwise Android share or visible-page intake |
+| Outlook / Hotmail | `outlook-mail-read-client-ref` | Microsoft identity app registration and delegated `Mail.Read`; public client uses native MSAL token storage |
+| Gmail readonly | `gmail-readonly-client-ref` | Google OAuth verification/testing status; public client session token is not a Key Vault secret |
+| Android provider app bridge | No secret, certificate, or key required | Installed app and user-approved `text/plain` share |
+| Visible provider page connector | No secret, certificate, or key required | User signs in manually; read visible rows only |
+
+These are reference names, not created Azure objects. To finish the Azure side, create or select the vault in the Azure Portal, create only the planner-owned certificate/key/secret objects, and add provider-specific secret objects only after the provider gives an official API/OAuth credential. A Vercel/browser page cannot directly read Key Vault; an Azure-hosted backend with managed identity or workload identity must be bound before background secret lookup is enabled.
+
+The plan uses the supplied tenant metadata: `Default Directory`, tenant `1befa2db-da34-4cd9-a1d6-d543f8f9c0e5`, primary domain `kyletaylor133hotmail.onmicrosoft.com`, and `Microsoft Entra ID Free`. Subscription ID and final vault name remain blank until selected in Azure.
+
 Provider connection status is also browser-local app data. The planner can remember that a provider is signed in on this device and can reopen that provider's official app/login surface, but it does not store provider passwords, tokens, cookies, MFA codes, or API keys in source code, GitHub, Vercel, or browser storage.
 
 The camera tool requests permission only when the user taps **Start camera**. Captured photos stay in browser storage and can be attached to a phone-app job for field reference. The public Vercel app does not receive provider passwords or log into private phone apps.

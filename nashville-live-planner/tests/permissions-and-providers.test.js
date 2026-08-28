@@ -79,6 +79,26 @@ test("Nashville planner exposes safe read-only email sync settings", () => {
   assert.doesNotMatch(index, /Mail\.Send|Mail\.ReadWrite|emailPassword|emailToken|localStorage\.setItem\([^)]*token|refresh_token/i);
 });
 
+test("Nashville planner exposes the complete Key Vault reference plan", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+  const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");
+
+  assert.match(index, /Azure Key Vault connection plan/);
+  assert.match(index, /KEY_VAULT_PLAN_KEY/);
+  assert.match(index, /Save Key Vault references locally/);
+  assert.match(index, /Clear Key Vault plan/);
+  assert.match(index, /No private secret values are accepted/);
+  assert.match(index, /keyVaultBindings/);
+  assert.match(backbone, /KEY_VAULT_BINDINGS/);
+  assert.match(backbone, /sanitizeKeyVaultPlan/);
+  assert.match(backbone, /planner-api-secret/);
+  assert.match(backbone, /survey-merchandiser-api-key/);
+  assert.match(backbone, /clickworker-api-key/);
+  assert.match(backbone, /field-nation-api-key/);
+  assert.match(backbone, /field-agent-api-key/);
+  assert.doesNotMatch(index, /id="keyVaultSecretValue"|id="keyVaultPassword"|id="keyVaultClientSecret"/i);
+});
+
 test("public privacy and terms pages support restricted email OAuth review", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
   const privacy = fs.readFileSync(path.join(plannerRoot, "privacy.html"), "utf8");

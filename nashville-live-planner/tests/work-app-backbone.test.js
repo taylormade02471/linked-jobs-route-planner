@@ -79,6 +79,72 @@ test("API registry exposes only public IDs and safe background sync rules", () =
   assert.doesNotMatch(fieldNames.join(","), /client_secret|refresh_token|access_token|cookie|password|api[_-]?key/i);
 });
 
+test("Key Vault binding plan covers every planned connection with reference-only metadata", () => {
+  const ids = backbone.KEY_VAULT_BINDINGS.map((binding) => binding.id);
+
+  assert.deepEqual(ids, [
+    "planner_backend",
+    "survey_merchandiser",
+    "clickworker",
+    "field_nation",
+    "field_agent",
+    "outlook_mail_read",
+    "gmail_readonly",
+    "provider_phone_app_bridge",
+    "provider_visible_page_connector",
+  ]);
+  assert.equal(backbone.keyVaultBindingById("field_agent").defaultSecretName, "field-agent-api-key");
+  assert.equal(backbone.keyVaultBindingById("outlook_mail_read").defaultSecretName, "");
+  assert.ok(backbone.KEY_VAULT_BINDINGS.every((binding) => binding.authorization));
+  const definitionFields = backbone.KEY_VAULT_BINDINGS.flatMap((binding) => Object.keys(binding));
+  assert.doesNotMatch(definitionFields.join(","), /client_secret|refresh_token|access_token|cookie|password|secret_value/i);
+});
+
+test("Key Vault binding settings retain references but never raw secret material", () => {
+  const safe = backbone.sanitizeKeyVaultBinding({
+    connection_id: "field_agent",
+    vault_name: "linkedjobs-vault",
+    secret_name: "field-agent-api-key",
+    certificate_name: "field-agent-cert",
+    key_name: "field-agent-key",
+    status: "reference_ready",
+    secret_value: "do-not-store",
+    client_secret: "do-not-store",
+  });
+
+  assert.equal(safe.connection_id, "field_agent");
+  assert.equal(safe.vault_name, "linkedjobs-vault");
+  assert.equal(safe.secret_name, "field-agent-api-key");
+  assert.equal(safe.certificate_name, "field-agent-cert");
+  assert.equal(safe.key_name, "field-agent-key");
+  assert.equal(safe.status, "reference_ready");
+  assert.equal(safe.rejected_secret_fields, true);
+  assert.doesNotMatch(JSON.stringify(safe), /do-not-store/);
+});
+
+test("Key Vault plan carries the supplied tenant metadata for all bindings", () => {
+  const plan = backbone.sanitizeKeyVaultPlan({
+    vault_name: "linkedjobs-vault",
+    subscription_id: "subscription-placeholder",
+    bindings: {
+      survey_merchandiser: {
+        secret_name: "survey-merchandiser-api-key",
+        status: "provider_official_access_required",
+      },
+    },
+  });
+
+  assert.equal(plan.vault_name, "linkedjobs-vault");
+  assert.equal(plan.tenant_id, "1befa2db-da34-4cd9-a1d6-d543f8f9c0e5");
+  assert.equal(plan.tenant_name, "Default Directory");
+  assert.equal(plan.primary_domain, "kyletaylor133hotmail.onmicrosoft.com");
+  assert.equal(plan.license, "Microsoft Entra ID Free");
+  assert.equal(plan.subscription_id, "subscription-placeholder");
+  assert.equal(Object.keys(plan.bindings).length, backbone.KEY_VAULT_BINDINGS.length);
+  assert.equal(plan.bindings.survey_merchandiser.secret_name, "survey-merchandiser-api-key");
+  assert.equal(plan.bindings.gmail_readonly.secret_name, "");
+});
+
 test("provider connection settings keep status but reject secrets", () => {
   const safe = backbone.sanitizeConnectionSettings({
     provider_id: "clickworker",

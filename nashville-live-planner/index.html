@@ -19,6 +19,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 .providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
+.keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
 @media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
@@ -192,6 +193,28 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
  <div id="apiRegistryStatus" class="jobStatus">Public API IDs, redirect URIs, and sync rules are shown here. No passwords, refresh tokens, cookies, or client secrets are stored.</div>
 </div>
 
+<div class="card keyVaultPanel">
+ <div class="sectionTitle">Azure Key Vault connection plan</div>
+ <div class="notice"><b>Safe mode:</b> No private secret values are accepted here. This page stores only the vault name, tenant metadata, and reference names. Actual Key Vault access requires an Azure-hosted backend identity; the Vercel/browser page does not read Key Vault directly.</div>
+ <div class="workform">
+  <label>Key Vault name, metadata only
+   <input id="keyVaultName" placeholder="Example: linkedjobs-vault" autocomplete="off">
+  </label>
+  <label>Azure subscription ID, metadata only
+   <input id="keyVaultSubscriptionId" placeholder="Paste the subscription ID, not a secret" autocomplete="off">
+  </label>
+  <div class="wide">
+   <div id="keyVaultTenantSummary" class="jobStatus"></div>
+  </div>
+ </div>
+ <div id="keyVaultBindings" class="kvGrid"></div>
+ <div class="actions">
+  <button id="saveKeyVaultPlan" type="button">Save Key Vault references locally</button>
+  <button id="clearKeyVaultPlan" type="button">Clear Key Vault plan</button>
+ </div>
+ <div id="keyVaultPlanStatus" class="jobStatus">Suggested names are shown for planning only. Create the vault objects in Azure Portal, then enter the final names here.</div>
+</div>
+
 <div class="card"><div id="details"></div></div>
 <div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
@@ -221,10 +244,12 @@ const WORK_JOBS_KEY='nashville_phone_work_jobs_v1';
 const PROVIDER_CONNECTIONS_KEY='nashville_provider_connections_v1';
 const PAYMENT_SNAPSHOTS_KEY='nashville_payment_snapshots_v1';
 const EMAIL_SYNC_SETTINGS_KEY='nashville_email_sync_settings_v1';
+const KEY_VAULT_PLAN_KEY='nashville_key_vault_plan_v1';
 let workJobs=[];
 let providerConnections={};
 let paymentSnapshots=[];
 let emailSyncSettings={};
+let keyVaultPlan={};
 let cameraStream=null,capturedPhotoDataUrl='';
 let providerSyncTimer=null;
 let emailSyncTimer=null;
@@ -347,6 +372,67 @@ function loadEmailSyncSettings(){
 }
 function saveEmailSyncSettings(){
  localStorage.setItem(EMAIL_SYNC_SETTINGS_KEY,JSON.stringify(emailSyncSettings));
+}
+function escapeHtml(value){
+ return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function keyVaultStatusLabel(value){return String(value||'').replaceAll('_',' ');}
+function loadKeyVaultPlan(){
+ try{keyVaultPlan=W.sanitizeKeyVaultPlan(JSON.parse(localStorage.getItem(KEY_VAULT_PLAN_KEY)||'{}'));}
+ catch{keyVaultPlan=W.sanitizeKeyVaultPlan({});}
+}
+function saveKeyVaultPlan(){
+ localStorage.setItem(KEY_VAULT_PLAN_KEY,JSON.stringify(keyVaultPlan));
+}
+function renderKeyVaultPlan(){
+ const target=document.getElementById('keyVaultBindings');
+ const vaultInput=document.getElementById('keyVaultName');
+ const subscriptionInput=document.getElementById('keyVaultSubscriptionId');
+ const tenantSummary=document.getElementById('keyVaultTenantSummary');
+ if(!target)return;
+ keyVaultPlan=W.sanitizeKeyVaultPlan(keyVaultPlan);
+ if(vaultInput&&document.activeElement!==vaultInput)vaultInput.value=keyVaultPlan.vault_name||'';
+ if(subscriptionInput&&document.activeElement!==subscriptionInput)subscriptionInput.value=keyVaultPlan.subscription_id||'';
+ if(tenantSummary)tenantSummary.textContent=`Tenant: ${keyVaultPlan.tenant_name} · ${keyVaultPlan.tenant_id} · ${keyVaultPlan.primary_domain} · ${keyVaultPlan.license}`;
+ target.innerHTML=W.KEY_VAULT_BINDINGS.map(definition=>{
+  const binding=keyVaultPlan.bindings[definition.id]||W.sanitizeKeyVaultBinding({connection_id:definition.id,vault_name:keyVaultPlan.vault_name});
+  const options=[...W.KEY_VAULT_STATUSES].map(status=>`<option value="${escapeHtml(status)}"${status===binding.status?' selected':''}>${escapeHtml(keyVaultStatusLabel(status))}</option>`).join('');
+  const placeholder=(value)=>value||'Not used for this connection';
+  return `<div class="kvBinding" data-kv-connection="${escapeHtml(definition.id)}"><h3>${escapeHtml(definition.label)}</h3><p>${escapeHtml(definition.provider)} · ${escapeHtml(definition.purpose)}</p><p><b>Authorization:</b> ${escapeHtml(definition.authorization)}</p><div class="kvFields"><label>API/reference name<input data-kv-field="api_reference_name" value="${escapeHtml(binding.api_reference_name)}" placeholder="${escapeHtml(placeholder(definition.defaultApiReferenceName))}" autocomplete="off"></label><label>Secret reference name<input data-kv-field="secret_name" value="${escapeHtml(binding.secret_name)}" placeholder="${escapeHtml(placeholder(definition.defaultSecretName))}" autocomplete="off"></label><label>Certificate reference name<input data-kv-field="certificate_name" value="${escapeHtml(binding.certificate_name)}" placeholder="${escapeHtml(placeholder(definition.defaultCertificateName))}" autocomplete="off"></label><label>Key reference name<input data-kv-field="key_name" value="${escapeHtml(binding.key_name)}" placeholder="${escapeHtml(placeholder(definition.defaultKeyName))}" autocomplete="off"></label><label>Binding status<select data-kv-field="status">${options}</select></label></div><div class="kvReferenceNote">Reference names only. Never paste the secret, token, password, cookie, MFA code, or private certificate material.</div></div>`;
+ }).join('');
+}
+function readKeyVaultPlanFromForm(){
+ const bindings={};
+ document.querySelectorAll('[data-kv-connection]').forEach(card=>{
+  const id=card.dataset.kvConnection;
+  bindings[id]={};
+  ['api_reference_name','secret_name','certificate_name','key_name','status'].forEach(field=>{
+   const input=card.querySelector(`[data-kv-field="${field}"]`);
+   if(input)bindings[id][field]=input.value;
+  });
+ });
+ return W.sanitizeKeyVaultPlan({
+  ...keyVaultPlan,
+  vault_name:document.getElementById('keyVaultName')?.value||'',
+  subscription_id:document.getElementById('keyVaultSubscriptionId')?.value||'',
+  bindings,
+  updated_at:Date.now(),
+ });
+}
+function saveKeyVaultPlanFromForm(){
+ keyVaultPlan=readKeyVaultPlanFromForm();
+ saveKeyVaultPlan();
+ const status=document.getElementById('keyVaultPlanStatus');
+ if(status)status.textContent=keyVaultPlan.rejected_secret_fields?'Saved safe reference names locally. Secret-like fields were rejected and were not stored.':'Saved vault metadata and reference names locally. No private secret values were stored.';
+ renderKeyVaultPlan();
+}
+function clearKeyVaultPlan(){
+ if(!confirm('Clear the local Key Vault metadata and reference names?'))return;
+ keyVaultPlan=W.sanitizeKeyVaultPlan({});
+ saveKeyVaultPlan();
+ const status=document.getElementById('keyVaultPlanStatus');
+ if(status)status.textContent='Local Key Vault plan cleared. Suggested reference names are shown again.';
+ renderKeyVaultPlan();
 }
 function providerLabel(id){
  return (W.providerById(id)||{}).label||id||'Phone app';
@@ -725,8 +811,10 @@ function initWorkApps(){
  loadProviderConnections();
  loadPaymentSnapshots();
  loadEmailSyncSettings();
+ loadKeyVaultPlan();
   renderWorkJobs();
  renderApiRegistry();
+ renderKeyVaultPlan();
   renderProviderConnection();
  renderEmailSync();
  scheduleEmailSync();
@@ -744,6 +832,8 @@ function initWorkApps(){
  document.getElementById('saveProviderBackground')?.addEventListener('click',saveProviderBackgroundSettings);
  document.getElementById('checkProviderNow')?.addEventListener('click',checkProviderNow);
  document.getElementById('saveEmailSync')?.addEventListener('click',()=>setEmailSyncSettings({sync_status:'Email permission settings saved locally.'}));
+ document.getElementById('saveKeyVaultPlan')?.addEventListener('click',saveKeyVaultPlanFromForm);
+ document.getElementById('clearKeyVaultPlan')?.addEventListener('click',clearKeyVaultPlan);
  document.getElementById('connectGmail')?.addEventListener('click',connectGmailReadonly);
  document.getElementById('scanGmailNow')?.addEventListener('click',()=>scanGmailNow());
  document.getElementById('checkEmailNow')?.addEventListener('click',checkEmailNow);
