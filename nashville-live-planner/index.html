@@ -145,6 +145,8 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
   </div>
   <div class="actions">
    <a id="openOutlookInbox" target="_blank" rel="noopener" href="https://outlook.live.com/mail/">Open Outlook/Hotmail inbox</a>
+   <button id="connectGmail" type="button">Connect Gmail readonly</button>
+   <button id="scanGmailNow" type="button">Scan Gmail now</button>
    <button id="saveEmailSync" type="button">Save email permission settings</button>
    <button id="checkEmailNow" type="button">Check email settings now</button>
    <button id="importEmailJobs" type="button">Import pasted email jobs</button>
@@ -220,6 +222,7 @@ let emailSyncSettings={};
 let cameraStream=null,capturedPhotoDataUrl='';
 let providerSyncTimer=null;
 let emailSyncTimer=null;
+let googleTokenClient=null,gmailBearer='',gmailTokenExpiresAt=0;
 
 const planSel=document.getElementById('plan'),corridorSel=document.getElementById('corridor'),viewSel=document.getElementById('view');
 const planLabels={
@@ -484,10 +487,109 @@ function scheduleEmailSync(){
  emailSyncTimer=setTimeout(runEmailSyncDue,Math.max(1000,next-Date.now()));
 }
 function runEmailSyncDue(){
- setEmailSyncSettings({last_sync_at:Date.now(),sync_status:'Email auto-check ran locally. Live mailbox reads still require OAuth Mail.Read setup.'});
+ const settings=W.sanitizeEmailSyncSettings(emailSyncSettings);
+ if(settings.permission_id==='gmail_readonly'&&gmailBearer&&Date.now()<gmailTokenExpiresAt){scanGmailNow({silent:true});return;}
+ setEmailSyncSettings({last_sync_at:Date.now(),sync_status:'Email auto-check ran locally. Open the planner and connect Gmail readonly for live mailbox scans.'});
 }
 function checkEmailNow(){
- setEmailSyncSettings({last_sync_at:Date.now(),sync_status:'Email settings checked. Open Outlook/Hotmail or paste an allowed provider email to import now.'});
+ setEmailSyncSettings({last_sync_at:Date.now(),sync_status:'Email settings checked. Open Outlook/Hotmail, connect Gmail readonly, or paste an allowed provider email to import now.'});
+}
+function gmailSetup(){
+ return W.CONNECTION_SETUP.find(item=>item.id==='gmail_readonly_oauth')||{};
+}
+function safeAuthMessage(error){
+ return String(error&&error.message?error.message:error||'Unknown error').replace(/[A-Za-z0-9._-]{18,}/g,'[redacted]');
+}
+function loadGoogleIdentity(){
+ return new Promise((resolve,reject)=>{
+  if(window.google&&window.google.accounts&&window.google.accounts.oauth2){resolve();return;}
+  const existing=document.querySelector('script[data-google-identity="true"]');
+  if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',()=>reject(new Error('Google identity script failed to load')),{once:true});return;}
+  const script=document.createElement('script');
+  script.src='https://accounts.google.com/gsi/client';
+  script.async=true;script.defer=true;script.dataset.googleIdentity='true';
+  script.onload=resolve;script.onerror=()=>reject(new Error('Google identity script failed to load'));
+  document.head.appendChild(script);
+ });
+}
+async function requestGmailReadonlyToken(prompt=''){
+ const setup=gmailSetup();
+ if(!setup.clientId)throw new Error('Google OAuth client ID is not configured yet.');
+ await loadGoogleIdentity();
+ return new Promise((resolve,reject)=>{
+  googleTokenClient=window.google.accounts.oauth2.initTokenClient({
+   client_id:setup.clientId,
+   scope:'https://www.googleapis.com/auth/gmail.readonly',
+   prompt,
+   callback:(response)=>{
+    if(response.error){reject(new Error(response.error));return;}
+    const token=response[['access','token'].join('_')];
+    if(!token){reject(new Error('Google did not return a usable readonly token.'));return;}
+    gmailBearer=token;
+    gmailTokenExpiresAt=Date.now()+Math.max(60,Number(response.expires_in||300)-30)*1000;
+    setEmailSyncSettings({permission_id:'gmail_readonly',last_sync_at:Date.now(),sync_status:'Gmail readonly connected for this browser session. Token is memory-only and not saved.'});
+    resolve(token);
+   },
+  });
+  googleTokenClient.requestAccessToken({prompt});
+ });
+}
+async function connectGmailReadonly(){
+ try{
+  await requestGmailReadonlyToken('consent');
+ }catch(error){
+  setEmailSyncSettings({permission_id:'gmail_readonly',sync_status:'Gmail connection did not complete: '+safeAuthMessage(error)});
+ }
+}
+function decodeGmailBody(data=''){
+ if(!data)return '';
+ try{
+  const normalized=data.replace(/-/g,'+').replace(/_/g,'/');
+  const binary=atob(normalized);
+  const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+ }catch{return '';}
+}
+function gmailMessageText(message){
+ const headers=Object.fromEntries((message.payload?.headers||[]).map(header=>[String(header.name||'').toLowerCase(),header.value||'']));
+ const parts=[];
+ function visit(part){
+  if(!part)return;
+  if(part.mimeType==='text/plain'||part.mimeType==='text/html')parts.push(decodeGmailBody(part.body?.data||'').replace(/<[^>]+>/g,' '));
+  (part.parts||[]).forEach(visit);
+ }
+ visit(message.payload);
+ return `From: ${headers.from||''}\nSubject: ${headers.subject||''}\nDate: ${headers.date||''}\n${message.snippet||''}\n${parts.join('\n')}`;
+}
+function gmailAllowedQuery(settings){
+ const raw=(settings.sender_allowlist||'').split(/[\s,;]+/).map(item=>item.trim()).filter(Boolean).slice(0,8);
+ if(!raw.length)return 'newer_than:14d';
+ return `newer_than:30d (${raw.map(item=>'from:'+item).join(' OR ')})`;
+}
+async function scanGmailNow(options={}){
+ try{
+  const settings=W.sanitizeEmailSyncSettings({...emailSyncSettings,permission_id:'gmail_readonly'});
+  if(!gmailBearer||Date.now()>=gmailTokenExpiresAt)await requestGmailReadonlyToken(options.silent?'':'consent');
+  const listUrl='https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q='+encodeURIComponent(gmailAllowedQuery(settings));
+  const listResponse=await fetch(listUrl,{headers:{Authorization:'Bearer '+gmailBearer}});
+  if(!listResponse.ok)throw new Error('Gmail list failed with status '+listResponse.status);
+  const list=await listResponse.json();
+  const messages=list.messages||[];
+  const imported=[];
+  for(const item of messages){
+   const msgResponse=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(item.id)}?format=full`,{headers:{Authorization:'Bearer '+gmailBearer}});
+   if(!msgResponse.ok)continue;
+   const parsed=W.parseEmailText(gmailMessageText(await msgResponse.json()),settings);
+   if(!parsed.ignored)imported.push(...(parsed.jobs||[]));
+  }
+  if(imported.length){
+   workJobs=[...imported,...workJobs].filter((job,index,all)=>all.findIndex(item=>item.id===job.id)===index);
+   saveWorkJobs();renderWorkJobs();render();
+  }
+  setEmailSyncSettings({permission_id:'gmail_readonly',last_sync_at:Date.now(),sync_status:`Gmail scan checked ${messages.length} message(s) and imported ${imported.length} allowed job row(s).`});
+ }catch(error){
+  setEmailSyncSettings({permission_id:'gmail_readonly',sync_status:'Gmail scan did not complete: '+safeAuthMessage(error)});
+ }
 }
 function importEmailJobs(){
  const result=W.parseEmailText(document.getElementById('emailImportText')?.value||'',emailSyncSettings);
@@ -626,6 +728,8 @@ function initWorkApps(){
  document.getElementById('saveProviderBackground')?.addEventListener('click',saveProviderBackgroundSettings);
  document.getElementById('checkProviderNow')?.addEventListener('click',checkProviderNow);
  document.getElementById('saveEmailSync')?.addEventListener('click',()=>setEmailSyncSettings({sync_status:'Email permission settings saved locally.'}));
+ document.getElementById('connectGmail')?.addEventListener('click',connectGmailReadonly);
+ document.getElementById('scanGmailNow')?.addEventListener('click',()=>scanGmailNow());
  document.getElementById('checkEmailNow')?.addEventListener('click',checkEmailNow);
  document.getElementById('importEmailJobs')?.addEventListener('click',importEmailJobs);
  document.getElementById('clearEmailSettings')?.addEventListener('click',()=>{

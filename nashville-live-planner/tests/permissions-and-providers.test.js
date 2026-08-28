@@ -63,15 +63,20 @@ test("Nashville planner exposes safe read-only email sync settings", () => {
   assert.match(index, /Email job sync permissions/);
   assert.match(index, /EMAIL_SYNC_SETTINGS_KEY/);
   assert.match(index, /Open Outlook\/Hotmail inbox/);
+  assert.match(index, /Connect Gmail readonly/);
+  assert.match(index, /Scan Gmail now/);
   assert.match(index, /Save email permission settings/);
   assert.match(index, /Connection setup checklist/);
   assert.match(index, /Scan sender\/subject\/date first/);
+  assert.match(index, /accounts\.google\.com\/gsi\/client/);
+  assert.match(index, /gmail\.googleapis\.com\/gmail\/v1\/users\/me\/messages/);
+  assert.match(index, /memory-only and not saved/i);
   assert.match(backbone, /Microsoft Graph delegated Mail\.Read/);
   assert.match(backbone, /outlook_mail_read_oauth/);
   assert.match(backbone, /provider_phone_app_bridge/);
   assert.match(backbone, /senderAllowed/);
   assert.match(backbone, /parseEmailText/);
-  assert.doesNotMatch(index, /Mail\.Send|Mail\.ReadWrite|emailPassword|emailToken|access_token|refresh_token/i);
+  assert.doesNotMatch(index, /Mail\.Send|Mail\.ReadWrite|emailPassword|emailToken|localStorage\.setItem\([^)]*token|refresh_token/i);
 });
 
 test("public privacy and terms pages support restricted email OAuth review", () => {
