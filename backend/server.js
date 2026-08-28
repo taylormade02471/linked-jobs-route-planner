@@ -9,6 +9,8 @@ const frontendDir = path.join(rootDir, "frontend");
 const dataDir = path.join(rootDir, "data");
 const jobsPath = path.join(dataDir, "jobs.json");
 const sourceConfigPath = path.join(dataDir, "source-config.json");
+const credentialsPath = path.join(dataDir, "credentials.json");
+const credentialKeyPath = path.join(dataDir, "credentials.key");
 
 const PORT = Number(process.env.PORT || 3300);
 const USERNAME = process.env.APP_USER || process.env.BASIC_AUTH_USER || "kyle";
@@ -24,6 +26,8 @@ const SESSION_COOKIE = "route_planner_session";
 
 let jobs = loadJobs();
 let sourceConfig = loadSourceConfig();
+let credentials = loadCredentials();
+let credentialsKey = loadCredentialsKey();
 let clients = new Set();
 let scrapeRunning = false;
 
@@ -59,6 +63,78 @@ function saveSourceConfig(nextConfig) {
     ...nextConfig,
   };
   fs.writeFileSync(sourceConfigPath, JSON.stringify(sourceConfig, null, 2), "utf8");
+}
+
+function loadCredentialsKey() {
+  try {
+    const raw = fs.readFileSync(credentialKeyPath, "utf8").trim();
+    if (raw) return Buffer.from(raw, "base64");
+  } catch {}
+  const key = crypto.randomBytes(32);
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(credentialKeyPath, key.toString("base64"), "utf8");
+  return key;
+}
+
+function loadCredentials() {
+  try {
+    const raw = fs.readFileSync(credentialsPath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      credentials = parsed.map((entry) => normalizeCredential(entry, entry.id || crypto.randomUUID()));
+      saveCredentials();
+      return credentials;
+    }
+    if (!parsed || typeof parsed !== "object" || !parsed.encrypted) return [];
+    return decryptCredentials(parsed.payload);
+  } catch {
+    return [];
+  }
+}
+
+function saveCredentials() {
+  fs.mkdirSync(dataDir, { recursive: true });
+  const payload = encryptCredentials(credentials);
+  fs.writeFileSync(credentialsPath, JSON.stringify({ encrypted: true, payload }, null, 2), "utf8");
+}
+
+function encryptCredentials(list) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", credentialsKey, iv);
+  const json = Buffer.from(JSON.stringify(list), "utf8");
+  const encrypted = Buffer.concat([cipher.update(json), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return {
+    iv: iv.toString("base64"),
+    tag: tag.toString("base64"),
+    data: encrypted.toString("base64"),
+  };
+}
+
+function decryptCredentials(payload) {
+  if (!payload || typeof payload !== "object") return [];
+  const iv = Buffer.from(String(payload.iv || ""), "base64");
+  const tag = Buffer.from(String(payload.tag || ""), "base64");
+  const data = Buffer.from(String(payload.data || ""), "base64");
+  if (!iv.length || !tag.length || !data.length) return [];
+  const decipher = crypto.createDecipheriv("aes-256-gcm", credentialsKey, iv);
+  decipher.setAuthTag(tag);
+  const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+  const parsed = JSON.parse(decrypted.toString("utf8"));
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function normalizeCredential(entry, fallbackId = crypto.randomUUID()) {
+  const now = new Date().toISOString();
+  return {
+    id: String(entry.id || fallbackId),
+    app_name: String(entry.app_name || entry.appName || "App").trim(),
+    login_url: String(entry.login_url || entry.loginUrl || "").trim(),
+    username: String(entry.username || "").trim(),
+    password: String(entry.password || ""),
+    notes: String(entry.notes || "").trim(),
+    updated_at: now,
+  };
 }
 
 function json(res, statusCode, payload) {
@@ -263,6 +339,18 @@ function upsertJobs(nextJobs) {
   broadcast("jobs", { jobs });
 }
 
+function publicCredentials() {
+  return credentials.map((credential) => ({
+    id: credential.id,
+    app_name: credential.app_name,
+    login_url: credential.login_url,
+    username: credential.username,
+    notes: credential.notes,
+    updated_at: credential.updated_at,
+    has_password: Boolean(credential.password),
+  }));
+}
+
 function serveStatic(filePath, res) {
   try {
     const ext = path.extname(filePath).toLowerCase();
@@ -302,6 +390,12 @@ const server = http.createServer(async (req, res) => {
   if (method === "GET" && url.pathname === "/") {
     if (!requireAuth(req, res)) return;
     serveStatic(path.join(frontendDir, "index.html"), res);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/credentials") {
+    if (!requireAuth(req, res)) return;
+    serveStatic(path.join(frontendDir, "credentials.html"), res);
     return;
   }
 
@@ -370,6 +464,45 @@ const server = http.createServer(async (req, res) => {
   if (method === "GET" && url.pathname === "/api/source-config") {
     if (!requireAuth(req, res)) return;
     json(res, 200, publicSourceConfig());
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/credentials") {
+    if (!requireAuth(req, res)) return;
+    json(res, 200, { credentials: publicCredentials() });
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/credentials") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const action = String(body.action || "upsert").toLowerCase();
+    if (action === "delete") {
+      const id = String(body.id || "");
+      credentials = credentials.filter((credential) => credential.id !== id);
+      saveCredentials();
+      json(res, 200, { ok: true, credentials: publicCredentials() });
+      return;
+    }
+
+    const next = normalizeCredential(body, body.id ? String(body.id) : undefined);
+    const index = credentials.findIndex((credential) => credential.id === next.id);
+    if (index >= 0) {
+      credentials[index] = {
+        ...credentials[index],
+        ...next,
+        password: next.password ? next.password : credentials[index].password,
+      };
+    } else {
+      credentials.unshift(next);
+    }
+    saveCredentials();
+    json(res, 200, { ok: true, credential: publicCredentials().find((item) => item.id === next.id) });
     return;
   }
 

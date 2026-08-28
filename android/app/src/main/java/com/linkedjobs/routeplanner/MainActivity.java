@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -17,12 +18,18 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "LinkedJobsRoutePlanner";
     private static final String PLANNER_URL = "https://www.routeplanner.space";
+    private static final String SHARED_INBOX_FILE = "shared_inbox/latest.txt";
+    private WebView webView;
     private PermissionRequest pendingWebPermissionRequest;
     private GeolocationPermissions.Callback pendingGeolocationCallback;
     private String pendingGeolocationOrigin;
@@ -37,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
             this::handlePermissionResult
         );
 
-        WebView webView = new WebView(this);
+        webView = new WebView(this);
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
@@ -91,6 +98,40 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void openProviderApp(String providerId) {
             runOnUiThread(() -> openProviderAppOnUiThread(providerId));
+        }
+
+        @JavascriptInterface
+        public void saveSharedText(String text) {
+            runOnUiThread(() -> saveSharedTextToLocalInbox(text));
+        }
+
+        @JavascriptInterface
+        public String getBridgeStatus() {
+            return "Android bridge ready";
+        }
+    }
+
+    private void saveSharedTextToLocalInbox(String text) {
+        if (text == null || text.trim().isEmpty()) return;
+        try {
+            File file = new File(getFilesDir(), SHARED_INBOX_FILE);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                // Keep shared imports in the app's local private storage.
+                parent.mkdirs();
+            }
+            try (FileOutputStream out = new FileOutputStream(file, false)) {
+                out.write(text.getBytes(StandardCharsets.UTF_8));
+            }
+            Log.i(TAG, "Saved shared text to local inbox");
+            if (webView != null) {
+                webView.post(() -> webView.evaluateJavascript(
+                    "window.LinkedJobsReceiveSharedText && window.LinkedJobsReceiveSharedText(" + JSONObject.quote(text) + ");",
+                    null
+                ));
+            }
+        } catch (Exception error) {
+            Log.e(TAG, "Unable to save shared text", error);
         }
     }
 

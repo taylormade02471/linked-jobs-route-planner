@@ -28,6 +28,27 @@ body {
   margin: 0 auto;
 }
 
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 13px 18px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(16, 33, 51, 0.12);
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -60,6 +81,41 @@ h1 {
   grid-template-columns: 1.5fr 1fr;
   gap: 18px;
   align-items: stretch;
+}
+
+.credentials-shell {
+  max-width: 980px;
+}
+
+.hero-card {
+  padding: 18px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1.5fr 0.8fr;
+}
+
+.compact-stats {
+  align-self: start;
+}
+
+.callout-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.callout {
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(15, 118, 110, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.callout strong {
+  display: block;
+  margin-bottom: 4px;
 }
 
 .lead {
@@ -107,6 +163,11 @@ h1 {
   padding: 18px;
 }
 
+.settings h2,
+.hero-card h2 {
+  margin: 0;
+}
+
 .settings-head {
   display: flex;
   align-items: flex-start;
@@ -135,6 +196,11 @@ h1 {
 .settings-form {
   display: grid;
   gap: 14px;
+}
+
+.jobs-table + .panel,
+.panel + .panel {
+  margin-top: 18px;
 }
 
 .settings-form label {
@@ -200,6 +266,17 @@ button.secondary {
   border: 1px solid rgba(16, 33, 51, 0.12);
 }
 
+button.danger {
+  color: #8b1e1e;
+  background: rgba(255, 235, 235, 0.9);
+  border: 1px solid rgba(139, 30, 30, 0.18);
+}
+
+button.tiny {
+  padding: 8px 12px;
+  font-size: 0.92rem;
+}
+
 .jobs-table {
   width: 100%;
   border-collapse: collapse;
@@ -229,8 +306,18 @@ button.secondary {
   font-weight: 700;
 }
 
+.cred-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
   .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card {
     grid-template-columns: 1fr;
   }
 }

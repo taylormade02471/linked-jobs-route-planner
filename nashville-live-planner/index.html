@@ -62,7 +62,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
    <button id="openProviderApp" type="button">Open installed phone app</button>
    <button id="saveProviderConnected" type="button">Mark connected here</button>
    <button id="saveProviderNeedsLogin" type="button">Mark needs login</button>
-   <button id="saveProviderBackground" type="button">Save background update settings</button>
+  <button id="saveProviderBackground" type="button">Save background update settings</button>
    <button id="checkProviderNow" type="button">Check provider now</button>
    <button id="clearProviderConnection" type="button">Clear this connection</button>
   </div>
@@ -398,7 +398,7 @@ function setProviderConnection(status,overrides={}){
 }
 function saveProviderBackgroundSettings(){
  setProviderConnection(currentConnection(currentProvider().id).status||'signed_in_external',{
-  sync_status:'Background update settings saved locally. Actual provider job pulls need official app share, visible page connector, or native approved bridge.',
+  sync_status:'Saved locally. For live provider data, use the Android Studio bridge, visible page connector, or official app share. The Android app writes shared text to its local inbox file and the planner can import it.',
  });
 }
 function markProviderChecked(providerId,message){

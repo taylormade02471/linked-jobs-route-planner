@@ -11,10 +11,17 @@ const logoutForm = document.querySelector("#logoutForm");
 const sourceConfigForm = document.querySelector("#sourceConfigForm");
 const reloadSourceButton = document.querySelector("#reloadSourceButton");
 const sourceStatus = document.querySelector("#sourceStatus");
+const credentialsForm = document.querySelector("#credentialsForm");
+const credentialsTableBody = document.querySelector("#credentialsTableBody");
+const credentialRowTemplate = document.querySelector("#credentialRowTemplate");
+const credentialsStatus = document.querySelector("#credentialsStatus");
+const clearCredentialButton = document.querySelector("#clearCredentialButton");
+const reloadCredentialsButton = document.querySelector("#reloadCredentialsButton");
 const template = document.querySelector("#jobRowTemplate");
 
 let allJobs = [];
 let filteredJobs = [];
+let allCredentials = [];
 
 function setConnection(text) {
   connectionState.textContent = text;
@@ -23,6 +30,12 @@ function setConnection(text) {
 function setSourceStatus(text) {
   if (sourceStatus) {
     sourceStatus.textContent = text;
+  }
+}
+
+function setCredentialsStatus(text) {
+  if (credentialsStatus) {
+    credentialsStatus.textContent = text;
   }
 }
 
@@ -101,6 +114,107 @@ async function loadSourceConfig() {
   sourceConfigForm.source_username.value = payload.source_username || "";
   sourceConfigForm.source_password.value = "";
   setSourceStatus(payload.has_password ? "Saved" : "Needs password");
+}
+
+function clearCredentialsForm() {
+  if (!credentialsForm) return;
+  credentialsForm.id.value = "";
+  credentialsForm.app_name.value = "";
+  credentialsForm.login_url.value = "";
+  credentialsForm.username.value = "";
+  credentialsForm.password.value = "";
+  credentialsForm.notes.value = "";
+}
+
+function fillCredentialsForm(credential) {
+  if (!credentialsForm || !credential) return;
+  credentialsForm.id.value = credential.id || "";
+  credentialsForm.app_name.value = credential.app_name || "";
+  credentialsForm.login_url.value = credential.login_url || "";
+  credentialsForm.username.value = credential.username || "";
+  credentialsForm.password.value = "";
+  credentialsForm.notes.value = credential.notes || "";
+}
+
+function renderCredentials() {
+  if (!credentialsTableBody || !credentialRowTemplate) return;
+  credentialsTableBody.innerHTML = "";
+  allCredentials.forEach((credential) => {
+    const row = credentialRowTemplate.content.firstElementChild.cloneNode(true);
+    row.querySelector(".cred-app").textContent = credential.app_name || "—";
+    row.querySelector(".cred-url").textContent = credential.login_url || "—";
+    row.querySelector(".cred-user").textContent = credential.username || "—";
+    row.querySelector(".cred-notes").textContent = credential.notes || "—";
+    row.querySelector(".cred-status").textContent = credential.has_password ? "Saved locally" : "No password";
+
+    const actions = row.querySelector(".cred-actions");
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "secondary tiny";
+    editButton.textContent = "Edit";
+    editButton.addEventListener("click", () => {
+      fillCredentialsForm(credential);
+      setCredentialsStatus(`Editing ${credential.app_name || "credential"}. Password stays local and must be re-entered only if you want to change it.`);
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "danger tiny";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", async () => {
+      if (!confirm(`Delete saved login for ${credential.app_name || "this app"}?`)) {
+        return;
+      }
+      await saveCredential({ action: "delete", id: credential.id });
+    });
+
+    actions.append(editButton, deleteButton);
+    credentialsTableBody.appendChild(row);
+  });
+}
+
+async function loadCredentials() {
+  if (!credentialsTableBody) return;
+  setCredentialsStatus("Loading");
+  const response = await fetch("/api/credentials", { credentials: "include" });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+  const payload = await response.json();
+  allCredentials = payload.credentials || [];
+  setCredentialsStatus(allCredentials.length ? `${allCredentials.length} saved login(s)` : "No saved logins");
+  renderCredentials();
+}
+
+async function saveCredential(extra = {}) {
+  if (!credentialsForm) return;
+  setCredentialsStatus("Saving");
+  const response = await fetch("/api/credentials", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      action: extra.action || "upsert",
+      id: extra.id || credentialsForm.id.value.trim(),
+      app_name: credentialsForm.app_name.value.trim(),
+      login_url: credentialsForm.login_url.value.trim(),
+      username: credentialsForm.username.value.trim(),
+      password: extra.password ?? credentialsForm.password.value,
+      notes: credentialsForm.notes.value.trim(),
+    }),
+  });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+  const payload = await response.json();
+  allCredentials = payload.credentials || allCredentials;
+  renderCredentials();
+  clearCredentialsForm();
+  setCredentialsStatus(allCredentials.length ? `${allCredentials.length} saved login(s)` : "No saved logins");
 }
 
 function openRoute() {
@@ -208,5 +322,21 @@ if (reloadSourceButton) {
   });
 }
 
+if (credentialsForm) {
+  credentialsForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveCredential();
+  });
+}
+
+if (clearCredentialButton) {
+  clearCredentialButton.addEventListener("click", clearCredentialsForm);
+}
+
+if (reloadCredentialsButton) {
+  reloadCredentialsButton.addEventListener("click", loadCredentials);
+}
+
 loadJobs();
 loadSourceConfig();
+loadCredentials();

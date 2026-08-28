@@ -163,6 +163,22 @@ test("api settings sanitize stored registration metadata without secrets", () =>
   assert.equal(JSON.stringify(safe).includes("do-not-store"), false);
 });
 
+test("credentials manager stays on a separate page and uses encrypted local storage", () => {
+  const projectRoot = path.join(__dirname, "..", "..");
+  const backend = fs.readFileSync(path.join(projectRoot, "backend", "server.js"), "utf8");
+  const credentialsPage = fs.readFileSync(path.join(projectRoot, "frontend", "credentials.html"), "utf8");
+  const credentialsJs = fs.readFileSync(path.join(projectRoot, "frontend", "credentials.js"), "utf8");
+  const index = fs.readFileSync(path.join(projectRoot, "frontend", "index.html"), "utf8");
+
+  assert.match(backend, /\/credentials/);
+  assert.match(backend, /aes-256-gcm/);
+  assert.match(backend, /credentials\.key/);
+  assert.match(credentialsPage, /Credentials Manager/);
+  assert.match(credentialsPage, /encrypted at\s+rest/i);
+  assert.match(credentialsJs, /fetch\("\/api\/credentials"/);
+  assert.match(index, /Open Credentials Manager/);
+});
+
 test("email parser imports allowed provider senders and ignores other senders", () => {
   const settings = backbone.sanitizeEmailSyncSettings({
     sender_allowlist: "survey.com\nfieldagent.net",

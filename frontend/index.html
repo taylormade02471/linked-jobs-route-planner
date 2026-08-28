@@ -12,9 +12,12 @@
         <p class="eyebrow">Live route planner</p>
         <h1>Linked Jobs Route Planner</h1>
       </div>
-      <form id="logoutForm" method="post" action="/logout">
-        <button type="submit" class="secondary">Log out</button>
-      </form>
+      <div class="topbar-actions">
+        <a class="secondary-link" href="/credentials">Open Credentials Manager</a>
+        <form id="logoutForm" method="post" action="/logout">
+          <button type="submit" class="secondary">Log out</button>
+        </form>
+      </div>
     </header>
 
     <main class="shell">
@@ -104,6 +107,7 @@
           <tbody id="jobsTableBody"></tbody>
         </table>
       </section>
+
     </main>
 
     <template id="jobRowTemplate">
