@@ -129,6 +129,22 @@
   ];
   const API_REGISTRY = [
     {
+      id: "azure_key_vault",
+      provider: "Microsoft Azure",
+      label: "Azure Key Vault metadata",
+      audience: "Local app config only",
+      permissions: ["certificates", "keys", "secrets", "api keys"],
+      app_type: "vault-backed secret storage",
+      public_values: {
+        vault_name: "",
+        tenant_id: "",
+        subscription_id: "",
+      },
+      storage: "Private secrets stay in Azure Key Vault; only names and references are stored in the planner",
+      background_sync: "Allowed only for metadata refresh and secret reference lookup",
+      status: "ready_for_vault_binding",
+    },
+    {
       id: "outlook_mail_read_api",
       provider: "Microsoft Graph",
       label: "Outlook / Hotmail Mail.Read API",
@@ -258,6 +274,11 @@
       api_id: api.id,
       status: asText(settings.status).toLowerCase() || api.status,
       account_label: asText(settings.account_label).slice(0, 90),
+      vault_name: asText(settings.vault_name).slice(0, 90),
+      tenant_id: asText(settings.tenant_id).slice(0, 90),
+      subscription_id: asText(settings.subscription_id).slice(0, 90),
+      certificate_name: asText(settings.certificate_name).slice(0, 90),
+      secret_name: asText(settings.secret_name).slice(0, 90),
       background_sync_enabled: Boolean(settings.background_sync_enabled),
       sync_status: asText(settings.sync_status).slice(0, 180),
       last_sync_at: Number(settings.last_sync_at) || 0,

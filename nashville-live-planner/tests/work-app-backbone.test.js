@@ -52,15 +52,20 @@ test("connection setup lists email OAuth and provider app bridge paths", () => {
 
 test("API registry exposes only public IDs and safe background sync rules", () => {
   const ids = backbone.API_REGISTRY.map((api) => api.id);
+  const azure = backbone.API_REGISTRY.find((api) => api.id === "azure_key_vault");
   const outlook = backbone.API_REGISTRY.find((api) => api.id === "outlook_mail_read_api");
   const gmail = backbone.API_REGISTRY.find((api) => api.id === "gmail_readonly_api");
   const fieldNames = backbone.API_REGISTRY.flatMap((api) => Object.keys(api));
 
   assert.deepEqual(ids, [
+    "azure_key_vault",
     "outlook_mail_read_api",
     "gmail_readonly_api",
     "provider_phone_app_bridge_api",
   ]);
+  assert.ok(azure);
+  assert.match(azure.storage, /Key Vault/);
+  assert.match(azure.status, /ready_for_vault_binding/);
   assert.ok(outlook);
   assert.equal(outlook.public_values.client_id, null);
   assert.match(outlook.status, /ready_for_app_registration/);

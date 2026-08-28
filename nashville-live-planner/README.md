@@ -30,6 +30,15 @@ Google Cloud OAuth setup has been started for Gmail read-only testing. The publi
 
 The app now also exposes a safe public API registry in the UI so you can see which connection surfaces are public, which are still waiting on registration, and which can support browser-local or native background sync. That registry records only public client IDs and redirect URIs. It never stores passwords, cookies, refresh tokens, or client secrets.
 
+Azure Key Vault is the place to keep the private pieces for selected connections:
+
+- certificates
+- keys
+- secrets
+- API keys
+
+The planner only keeps safe metadata such as vault name, tenant ID, certificate name, and secret reference names. It must not store the private certificate material or secret values in GitHub, Vercel, or browser storage.
+
 Provider connection status is also browser-local app data. The planner can remember that a provider is signed in on this device and can reopen that provider's official app/login surface, but it does not store provider passwords, tokens, cookies, MFA codes, or API keys in source code, GitHub, Vercel, or browser storage.
 
 The camera tool requests permission only when the user taps **Start camera**. Captured photos stay in browser storage and can be attached to a phone-app job for field reference. The public Vercel app does not receive provider passwords or log into private phone apps.
