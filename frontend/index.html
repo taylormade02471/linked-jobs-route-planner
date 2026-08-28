@@ -5,15 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Linked Jobs Route Planner</title>
     <link rel="stylesheet" href="/frontend/styles.css" />
+    <style>
+      .tier-green { background:#d1fae5; border-left:4px solid #10b981; }
+      .tier-yellow { background:#fef9c3; border-left:4px solid #eab308; }
+      .tier-red { background:#fee2e2; border-left:4px solid #ef4444; }
+      .tier-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:.7rem; font-weight:700; }
+      .badge-green { background:#10b981; color:#fff; }
+      .badge-yellow { background:#eab308; color:#fff; }
+      .badge-red { background:#ef4444; color:#fff; }
+      .tier-tabs { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+      .tier-tabs button { padding:5px 14px; border:1px solid #d1d5db; border-radius:20px; background:#fff; cursor:pointer; font-size:.82rem; }
+      .tier-tabs button.active { background:#1e6452; color:#fff; border-color:#1e6452; }
+      .best-route-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px 16px; margin-top:12px; }
+      .best-route-box h3 { margin:0 0 8px; font-size:1rem; }
+      .best-route-box ol { margin:0; padding-left:18px; font-size:.85rem; line-height:1.8; }
+      .route-meta-info { font-size:.78rem; color:#065f46; margin-top:6px; }
+      details { border:1px solid #e5e7eb; border-radius:8px; padding:6px 14px 12px; margin:12px 0; background:#fff; }
+      details summary { cursor:pointer; font-weight:600; padding:8px 0; user-select:none; font-size:1rem; }
+      .stat-earn { color:#065f46; font-weight:700; }
+      .metrics-row { display:flex; gap:12px; flex-wrap:wrap; margin:12px 0; }
+      .metric-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:10px 16px; min-width:110px; }
+      .metric-card span { display:block; font-size:.75rem; color:#6b7280; }
+      .metric-card strong { font-size:1.4rem; }
+      .map-frame { width:100%; height:340px; border:none; display:block; border-radius:8px; border:1px solid #d1d5db; margin-top:8px; }
+    </style>
   </head>
   <body>
     <header class="topbar">
       <div>
-        <p class="eyebrow">Live route planner</p>
+        <p class="eyebrow">Survey Merchandiser · Tobacco Audit · $8.25/store</p>
         <h1>Linked Jobs Route Planner</h1>
       </div>
       <div class="topbar-actions">
-        <a class="secondary-link" href="/credentials">Open Credentials Manager</a>
+        <button id="buildBestRoute" class="primary" style="background:#1e6452">🚌 Best Transit Route</button>
+        <button id="refreshButton" class="secondary">↻ Refresh</button>
+        <button id="exportButton" class="secondary">Export CSV</button>
+        <a class="secondary-link" href="/credentials">Credentials</a>
         <form id="logoutForm" method="post" action="/logout">
           <button type="submit" class="secondary">Log out</button>
         </form>
@@ -21,102 +48,120 @@
     </header>
 
     <main class="shell">
-      <section class="hero">
-        <div>
-          <p class="lead">
-            Live jobs come in from the signed-in browser tab or extension. This dashboard keeps
-            its own 7-day login session so you do not have to leave the browser session open.
-          </p>
-          <div class="actions">
-            <button id="refreshButton" class="primary">Refresh jobs</button>
-            <button id="routeButton" class="secondary">Open selected route</button>
-            <button id="exportButton" class="secondary">Export CSV</button>
+      <!-- Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card"><span>Total Jobs</span><strong id="jobCount">0</strong></div>
+        <div class="metric-card"><span>🟢 WeGo Direct</span><strong id="greenCount">0</strong></div>
+        <div class="metric-card"><span>Selected</span><strong id="selectedCount">0</strong></div>
+        <div class="metric-card"><span>Est. Earnings</span><strong id="earnCount" class="stat-earn">$0.00</strong></div>
+        <div class="metric-card"><span>Connection</span><strong id="connectionState">Idle</strong></div>
+      </div>
+
+      <!-- Route Builder -->
+      <details id="routeSection" open>
+        <summary>🚌 Best Transit Day Route (94 WeGo Bus → Nashville)</summary>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:0 0 280px">
+            <label style="display:block;margin-bottom:6px">Start (home base)
+              <input id="startAddress" type="text" placeholder="Clarksville, TN" style="width:100%;margin-top:3px;padding:6px;border:1px solid #d1d5db;border-radius:4px" />
+            </label>
+            <label style="display:block;margin-bottom:6px">End (return stop)
+              <input id="endAddress" type="text" placeholder="Nashville Greyhound or home" style="width:100%;margin-top:3px;padding:6px;border:1px solid #d1d5db;border-radius:4px" />
+            </label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+              <button id="selectGreenBtn" class="secondary">✅ Select all 🟢</button>
+              <button id="selectVisibleBtn" class="secondary">Select visible</button>
+              <button id="clearSelectedBtn" class="secondary">Clear</button>
+            </div>
+            <button id="openMapsBtn" class="primary" style="width:100%;margin-top:6px">Open in Google Maps</button>
+            <p id="routeStatus" style="font-size:.8rem;color:#6b7280;margin-top:6px">Select jobs to build transit route.</p>
+            <div id="bestRouteBox" class="best-route-box" style="display:none">
+              <h3>🏆 Optimised Day Route</h3>
+              <ol id="bestRouteList"></ol>
+              <p class="route-meta-info" id="bestRouteMeta"></p>
+            </div>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <p style="font-size:.8rem;color:#6b7280;margin:0 0 4px">WeGo Route 94: Clarksville Transit Center → Nashville</p>
+            <iframe id="mapFrame" class="map-frame"
+              src="https://www.google.com/maps/embed/v1/place?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&q=Nashville,TN"
+              allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
         </div>
-        <div class="panel stats">
-          <div>
-            <span class="stat-label">Jobs</span>
-            <strong id="jobCount">0</strong>
-          </div>
-          <div>
-            <span class="stat-label">Selected</span>
-            <strong id="selectedCount">0</strong>
-          </div>
-          <div>
-            <span class="stat-label">Live</span>
-            <strong id="connectionState">Idle</strong>
-          </div>
+      </details>
+
+      <!-- Job Board -->
+      <details open>
+        <summary>📋 Job Board — Survey Merchandiser Tobacco Audit</summary>
+
+        <div class="tier-tabs" role="group">
+          <button class="active" data-tier="all">All (<span id="tabAll">0</span>)</button>
+          <button data-tier="green">🟢 WeGo Direct (<span id="tabGreen">0</span>)</button>
+          <button data-tier="yellow">🟡 Extended Walk (<span id="tabYellow">0</span>)</button>
+          <button data-tier="red">🔴 Drive Only (<span id="tabRed">0</span>)</button>
         </div>
-      </section>
 
-      <section class="panel controls">
-        <input id="searchInput" type="search" placeholder="Filter jobs by title, city, state, or address" />
-        <label class="inline">
-          <input id="selectAll" type="checkbox" />
-          Select all visible
-        </label>
-      </section>
-
-      <section class="panel settings">
-        <div class="settings-head">
-          <div>
-            <p class="eyebrow">Live source</p>
-            <h2>Save your Jobslinger login safely</h2>
-          </div>
-          <span id="sourceStatus" class="pill">Not loaded</span>
+        <div class="panel controls" style="margin-bottom:8px">
+          <input id="searchInput" type="search" placeholder="Filter by store, city, route…" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;width:280px" />
+          <label class="inline" style="margin-left:12px">
+            <input id="selectAll" type="checkbox" /> Select all visible
+          </label>
         </div>
-        <form id="sourceConfigForm" class="settings-form">
-          <label>
-            Source name
-            <input name="source_name" placeholder="Jobslinger MegaLog" />
-          </label>
-          <label>
-            Source URL
-            <input name="source_url" placeholder="https://www.jobslingerplus.com/MegaLog" />
-          </label>
-          <label>
-            Username
-            <input name="source_username" autocomplete="username" />
-          </label>
-          <label>
-            Password
-            <input name="source_password" type="password" autocomplete="current-password" />
-          </label>
-          <div class="actions">
-            <button type="submit" class="primary">Save live login</button>
-            <button type="button" id="reloadSourceButton" class="secondary">Reload saved login</button>
+
+        <div class="panel" style="overflow-x:auto">
+          <table class="jobs-table" id="jobsTable">
+            <thead>
+              <tr>
+                <th>✓</th>
+                <th>Tier</th>
+                <th>Store</th>
+                <th>Address</th>
+                <th>Pay</th>
+                <th>WeGo Route</th>
+                <th>Distance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="jobsTableBody"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <!-- Credentials / Live Sync -->
+      <details>
+        <summary>🔗 Live Sync & Account Settings</summary>
+        <section class="panel settings">
+          <div class="settings-head">
+            <div>
+              <p class="eyebrow">Live source</p>
+              <h2>Save your Jobslinger login safely</h2>
+            </div>
+            <span id="sourceStatus" class="pill">Not loaded</span>
           </div>
-        </form>
-        <p class="helper">
-          Saved settings stay on your machine in the ignored backend data folder. If the site is
-          offline, the route planner keeps showing the last successful scrape.
-        </p>
-      </section>
-
-      <section class="panel">
-        <table class="jobs-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Title</th>
-              <th>Address</th>
-              <th>Location</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody id="jobsTableBody"></tbody>
-        </table>
-      </section>
-
+          <form id="sourceConfigForm" class="settings-form">
+            <label>Source name<input name="source_name" placeholder="Jobslinger MegaLog" /></label>
+            <label>Source URL<input name="source_url" placeholder="https://www.jobslingerplus.com/MegaLog" /></label>
+            <label>Username<input name="source_username" autocomplete="username" /></label>
+            <label>Password<input name="source_password" type="password" autocomplete="current-password" /></label>
+            <div class="actions">
+              <button type="submit" class="primary">Save live login</button>
+              <button type="button" id="reloadSourceButton" class="secondary">Reload saved login</button>
+            </div>
+          </form>
+        </section>
+      </details>
     </main>
 
     <template id="jobRowTemplate">
       <tr>
         <td><input type="checkbox" class="job-check" /></td>
+        <td class="job-tier"></td>
         <td class="job-title"></td>
         <td class="job-address"></td>
-        <td class="job-location"></td>
-        <td class="job-source"></td>
+        <td class="job-pay"></td>
+        <td class="job-transit"></td>
+        <td class="job-distance"></td>
+        <td class="job-status"></td>
       </tr>
     </template>
 

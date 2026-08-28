@@ -10,7 +10,8 @@ function readVisibleJobs() {
   const jobs = [];
 
   rows.forEach((row, index) => {
-    const cells = Array.from(row.querySelectorAll("td,th")).map((cell) =>
+    if (row.querySelector("th")) return;
+    const cells = Array.from(row.querySelectorAll("td")).map((cell) =>
       cell.textContent.trim()
     );
     if (cells.length < 2) return;

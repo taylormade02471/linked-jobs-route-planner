@@ -315,6 +315,14 @@ function normalizeJob(job, index = 0) {
     notes: String(job.notes || ""),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
+    // Survey Merchandiser / transit planner extended fields
+    pay: String(job.pay || job.Pay || job.Fee || "$8.25"),
+    tier: String(job.tier || job.transitTier || ""),
+    transit: String(job.transit || job.transitRoute || ""),
+    distance: String(job.distance || ""),
+    status: String(job.status || job.Status || "available"),
+    due: String(job.due || job.deadline || job.Due || ""),
+    campaign: String(job.campaign || ""),
   };
 }
 
