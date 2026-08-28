@@ -245,7 +245,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 <footer class="siteFooter"><b>Privacy-first field planner:</b> <a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a></footer>
@@ -271,6 +271,15 @@ let currentBounds=null;
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
+document.getElementById('navigateNextJob').onclick=navigateNextJob;
+document.getElementById('openGoogleRoute').onclick=openGoogleRoute;
+document.getElementById('toggleAllBuses').onclick=()=>{
+ showAllLiveBuses=!showAllLiveBuses;
+ const button=document.getElementById('toggleAllBuses');
+ button.classList.toggle('active',showAllLiveBuses);
+ button.textContent=showAllLiveBuses?'All WeGo buses':'Selected route buses';
+ render();
+};
 const lines=L.layerGroup().addTo(map), pins=L.layerGroup().addTo(map), jobLayer=L.layerGroup().addTo(map), busLayer=L.layerGroup().addTo(map), locationLayer=L.layerGroup().addTo(map);
 let myPosition=null,myAccuracy=null,myLocationMarker=null,myAccuracyCircle=null,locationWatchId=null;
 const WORK_JOBS_KEY='nashville_phone_work_jobs_v1';
@@ -302,6 +311,7 @@ let googleTokenClient=null,gmailBearer='',gmailTokenExpiresAt=0;
 let activeJobTab='open';
 let selectedRouteJobIds=new Set();
 let showTransitRoute=false;
+let showAllLiveBuses=true;
 
 function clearLegacyPlannerStorage(){
  LEGACY_STORAGE_KEYS.filter(key=>key!==WORK_JOBS_KEY).forEach(key=>localStorage.removeItem(key));
@@ -451,6 +461,28 @@ function drawMyLocation(lat,lon,accuracy){
  myAccuracyCircle=L.circle(myPosition,{radius:Math.max(accuracy||0,8),color:'#1976d2',weight:1,fillColor:'#64b5f6',fillOpacity:.13}).addTo(locationLayer);
  myLocationMarker=L.circleMarker(myPosition,{radius:10,color:'#0d47a1',weight:3,fillColor:'#42a5f5',fillOpacity:1,className:'mePulse'}).bindPopup(`<b>YOU ARE HERE</b><br>Accuracy: about ${Math.round(accuracy||0)} m<br>Updated: ${new Date().toLocaleTimeString()}`).addTo(locationLayer);
  updateLocationStatus(`<b>Location LIVE</b> — accuracy about ${Math.round(accuracy||0)} m — updated ${new Date().toLocaleTimeString()}`);
+}
+function navigationJobs(){
+ return visibleJobsForActiveTab().filter(job=>job&&job.address).slice(0,20);
+}
+function googleMapsRouteUrl(jobs){
+ const list=(jobs||[]).filter(job=>job&&job.address);if(!list.length)return '';
+ const origin=myPosition?myPosition.join(','):'Elizabeth Duff Transit Center at WeGo Central, Nashville, TN';
+ const destination=encodeURIComponent(list[list.length-1].address);
+ const waypoints=list.slice(0,-1).map(job=>encodeURIComponent(job.address)).join('|');
+ return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin)+'&destination='+destination+(waypoints?'&waypoints='+waypoints:'')+'&travelmode=transit';
+}
+function updateNavigationStatus(message,error=false){const el=document.getElementById('navigationStatus');if(el){el.textContent=message;el.classList.toggle('danger',Boolean(error));}}
+function navigateNextJob(){
+ const jobs=navigationJobs();if(!jobs.length){updateNavigationStatus('No active jobs with addresses are available.',true);return;}
+ const job=jobs[0];updateNavigationStatus('Next job: '+(job.name||job.title||'Job')+' — '+job.address+(myPosition?' · live location origin':' · WeGo Central origin'));
+ window.open(googleMapsRouteUrl([job]),'_blank','noopener');
+}
+function openGoogleRoute(){
+ const jobs=selectedRouteJobIds.size?navigationJobs().filter(job=>selectedRouteJobIds.has(String(job.id))):navigationJobs().slice(0,10);
+ if(!jobs.length){updateNavigationStatus('Select jobs or add active jobs with addresses first.',true);return;}
+ updateNavigationStatus('Opened Google Maps with '+jobs.length+' stop(s) for live transit and voice guidance.');
+ window.open(googleMapsRouteUrl(jobs),'_blank','noopener');
 }
 function startLocation(){
  if(!navigator.geolocation){updateLocationStatus('<b>Location unavailable:</b> this browser does not support geolocation.');return;}
@@ -1175,8 +1207,14 @@ window.LinkedJobsReceiveAndroidShare=function(payload){
  document.getElementById('appJobStatus').textContent=`Android ${normalized.kind} received. OCR/PDF extraction is the next build step; for now paste the visible job text or capture a readable photo.`;
  document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
 };
+function seedPlannerJobs(){
+ const seeded=Object.entries(D.jobs||{}).map(([id,job])=>({...job,id,status:job.status||'available'})).filter(job=>job.address);
+ const existing=new Set(workJobs.map(job=>String(job.id)));
+ const additions=seeded.filter(job=>!existing.has(String(job.id)));
+ if(additions.length){workJobs=[...additions,...workJobs];saveWorkJobs();}
+}
 function initWorkApps(){
- moveExistingSavedJobsToCompletedOnce();
+ seedPlannerJobs();
  const provider=document.getElementById('appProvider');
  const providerFilter=document.getElementById('jobProviderFilter');
  if(provider){
@@ -1351,7 +1389,7 @@ function render(){
  if(showTransitRoute&&live.ok){
   for(const v of live.vehicles){
    const sr=shortFor(v.trip?.route_id);
-   if(routesUsed.has(sr)&&v.position?.lat!=null){
+   if((showAllLiveBuses||routesUsed.has(sr))&&v.position?.lat!=null){
     L.circleMarker([v.position.lat,v.position.lon],{radius:9,color:'#000',weight:2,fillColor:'#ffb000',fillOpacity:.95})
      .bindPopup(`<b>ACTUAL LIVE WEGO BUS</b><br>${v.vehicle?.label||v.vehicle?.id||'Vehicle'}<br>Route ${sr}<br>${v.stop_id?'Current/next stop '+v.stop_id+'<br>':''}${v.timestamp?'Feed time '+new Date(v.timestamp*1000).toLocaleTimeString():''}`)
      .addTo(busLayer);
