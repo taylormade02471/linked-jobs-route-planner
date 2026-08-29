@@ -25,3 +25,5 @@ android/app/build/
 android/app/src/main/res/raw/msal_config.local.json
 .DS_Store
 Thumbs.db
+
+.vercel
