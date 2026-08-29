@@ -28,7 +28,8 @@ main>#mainMap{order:1}
 .jobBoardSummary::-webkit-details-marker{display:none}
 .jobBoardSummary small{display:block;color:var(--muted);font-weight:400;margin-top:4px}
 #workApps[open]>.jobBoardSummary{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
-#appRecommendations{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,32%);overflow-x:auto;gap:8px;padding-bottom:5px}
+#appRecommendations{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,32%);overflow-x:auto;overflow-y:hidden;gap:8px;padding-bottom:8px;scroll-snap-type:x proximity}
+#appRecommendations .workjob{scroll-snap-align:start}
 @media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-auto-columns:minmax(260px,82%)}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
@@ -508,7 +509,7 @@ function navigateNextJob(){
  window.open(googleMapsRouteUrl([job]),'_blank','noopener');
 }
 function openGoogleRoute(){
- const jobs=selectedRouteJobIds.size?navigationJobs().filter(job=>selectedRouteJobIds.has(String(job.id))):navigationJobs().slice(0,10);
+ const jobs=selectedRouteJobIds.size?navigationJobs().filter(job=>selectedRouteJobIds.has(String(job.id))):navigationJobs().slice(0,20);
  if(!jobs.length){updateNavigationStatus('Select jobs or add active jobs with addresses first.',true);return;}
  updateNavigationStatus('Opened Google Maps with '+jobs.length+' stop(s) for live transit and voice guidance.');
  window.open(googleMapsRouteUrl(jobs),'_blank','noopener');
@@ -1177,7 +1178,7 @@ function renderWorkJobs(){
   accepted:'No accepted or claimed jobs saved yet. Accepted work will show here in yellow, and urgent needs-completion work will show in red.',
   completed:'No completed jobs saved yet. Old live-site jobs and pending-payment rows belong here, out of route scoring.',
  }[activeJobTab];
- target.innerHTML=visible.length?visible.slice(0,24).map((job,index)=>{
+ target.innerHTML=visible.length?visible.map((job,index)=>{
   const canRoute=W.isRouteVisibleJob(job);
   const checkbox=canRoute?`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select for route or move</label>`:`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select to move</label>`;
   return `<div class="workjob"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(workTimeLabel(job))} · ${escapeHtml(job.status)}</span><span><b>Location:</b> ${escapeHtml(job.location_name||'Location name not listed')}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Ready state:</b> ${escapeHtml(job.ready_state||'Not listed')}</span><span><b>Timer after accept:</b> ${escapeHtml(job.timer_minutes?job.timer_minutes+' min':'Not listed')}</span><span><b>Photos:</b> ${escapeHtml(job.photos_required==null?'Not listed':job.photos_required)}</span><span><b>Purchase:</b> ${escapeHtml(job.purchase_required==null?'Not listed':job.purchase_required?'Required':'Not required')}</span><span><b>Requirements:</b> ${escapeHtml(job.requirements||'Not listed')}</span><span><b>Payment:</b> ${escapeHtml(job.payment_status||'Not listed')}</span><span><b>Source distance:</b> ${escapeHtml(job.distance_miles?job.distance_miles+' mi from provider app':'Not listed')}</span><span><b>Review note:</b> ${escapeHtml(job.review_note||'None')}</span><span><b>Map/source:</b> ${escapeHtml(job.recommendation_reason||'No route score needed')} ${job.coordinate?escapeHtml(' · '+job.coordinate.source):''}</span>${checkbox}${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
