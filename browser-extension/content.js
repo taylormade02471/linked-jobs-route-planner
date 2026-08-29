@@ -39,6 +39,8 @@ function readVisibleJobs() {
 
     jobs.push({
       id,
+      provider_id: "jobslinger",
+      source_job_id: id,
       title,
       client,
       distance,
@@ -68,6 +70,7 @@ async function syncJobs() {
       },
       body: JSON.stringify({
         source: "browser-extension",
+        provider_id: "jobslinger",
         page_url: window.location.href,
         jobs,
       }),

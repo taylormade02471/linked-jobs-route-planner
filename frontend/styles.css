@@ -183,6 +183,86 @@ h1 {
   gap: 14px;
 }
 
+.transit-picker {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 20px;
+  background:
+    linear-gradient(125deg, rgba(15, 118, 110, 0.11), rgba(245, 158, 11, 0.08)),
+    rgba(255, 255, 255, 0.72);
+}
+
+.transit-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.transit-picker label {
+  display: grid;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.transit-picker select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(16, 33, 51, 0.14);
+  border-radius: 14px;
+  padding: 11px 13px;
+  color: var(--ink);
+  font: inherit;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.transit-picker select[multiple] {
+  min-height: 132px;
+}
+
+.transit-picker select:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  background: rgba(236, 242, 244, 0.82);
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.transit-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.selection-chip {
+  padding: 9px 13px;
+  color: #0f4f48;
+  border: 1px solid rgba(15, 118, 110, 0.24);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.selection-chip.is-active {
+  color: #fff;
+  border-color: transparent;
+  background: #0f766e;
+}
+
+.transit-picker-summary {
+  flex: 1 1 320px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .settings-form label {
   display: grid;
   gap: 8px;
@@ -357,6 +437,136 @@ button.secondary {
   font-style: normal;
 }
 
+.route-map-legend {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(16, 33, 51, 0.14);
+}
+
+.legend-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 2px solid #052e16;
+}
+
+.legend-dot.available {
+  background: #39ff14;
+}
+
+.linked-boards {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(16, 33, 51, 0.1);
+}
+
+.linked-boards-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.linked-boards-head h3 {
+  margin: 0;
+}
+
+.job-boards-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.job-board-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(16, 33, 51, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 14px;
+  box-shadow: 0 12px 30px rgba(16, 33, 51, 0.07);
+}
+
+.job-board-card.needs_adapter {
+  background: rgba(248, 250, 252, 0.74);
+}
+
+.job-board-card.muted {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.job-board-card strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.job-board-card p {
+  color: var(--muted);
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.job-board-status {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.job-board-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.job-board-counts span {
+  display: grid;
+  gap: 2px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 9px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.job-board-counts strong {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.08rem;
+}
+
+.job-board-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.job-board-footer a {
+  color: var(--accent-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .route-output {
   margin-top: 18px;
   display: grid;
@@ -483,6 +693,75 @@ button.secondary {
   font-weight: 700;
   line-height: 1.45;
   margin-bottom: 12px;
+}
+
+.route-transit-details {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.09), rgba(34, 197, 94, 0.05));
+}
+
+.route-transit-details-empty {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  border-color: rgba(245, 158, 11, 0.24);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.route-transit-details-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.route-transit-details-head strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.route-transit-details-head span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #0f4f48;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(15, 118, 110, 0.12);
+}
+
+.route-transit-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+}
+
+.route-transit-details-grid div {
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.route-transit-details-grid dt {
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.route-transit-details-grid dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.35;
 }
 
 .route-card-legs ul {
@@ -809,11 +1088,31 @@ button.secondary {
 }
 
 @media (max-width: 900px) {
+  .linked-boards-head,
+  .job-board-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .route-map-legend {
+    left: 12px;
+    right: auto;
+    bottom: 12px;
+  }
+
   .job-details-grid {
     grid-template-columns: 1fr;
   }
 
   .route-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .transit-picker-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-transit-details-grid {
     grid-template-columns: 1fr;
   }
 }

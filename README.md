@@ -11,7 +11,9 @@ It is not the Shopify project.
 - Splits active jobs and completed jobs into separate tabs
 - Lets you open a job page in a new tab from the app
 - Lets you filter jobs, select stops, and open a route in Google Maps
-- Can import Transitland GTFS feeds for transit stop lookup
+- Can import GTFS feeds with routes, trips, stops, stop times, and optional shapes
+- Uses a verified three-level transit picker: plan option, corridor, then route section or exact stop
+- Shows transit legs only when a GTFS trip actually connects the boarding and exit stops
 - Includes a free Android skeleton that points at the local app
 
 ## Local login
@@ -47,39 +49,67 @@ You can override them in `backend/.env`.
    - `http://localhost:3300/login`
    - `http://localhost:3300/`
 
+By default the desktop server binds to `127.0.0.1`, so it is local-only on your computer. To intentionally allow another device on your trusted network to reach it, start it with `HOST=0.0.0.0`. The `/api/health` response reports whether network access is enabled.
+
+## Target work apps
+
+The active target providers are:
+
+- Survey Merchandiser
+- Clickworker
+- Field Nation
+
+These are phone-app-first sources. The planner should use a verified share, export, web board, email, or official API path for each provider. It must not read private app storage, bypass login challenges, or store provider passwords in tracked files.
+
 ## Live data sync
 
-The browser extension and backend scraper both read jobs from the Jobslinger MegaLog page:
+Provider connections send normalized open jobs to:
 
 - `POST /api/jobs`
 
-That endpoint is left open for sync so the app does not depend on a browser session staying open.
-The extension also polls on a timer, so updates keep flowing even when the page does not mutate.
+The planner is designed to recommend work from open available jobs, not from jobs you have already submitted, marked paid, completed, or moved into awaiting payment. The route planner compares the linked-board jobs against your current location, due dates, pay, route clustering, nearby GTFS stops, and walking time. Route recommendations include estimated route pay when the job board provides pay data.
 
-The Jobslinger login page includes a square-click challenge, so the reliable flow is:
+## Save source settings
 
-1. Log in on the main Jobslinger homepage in Chrome
-2. Open the Jobslinger MegaLog page
-3. Load the unpacked extension or click `Open live browser` in the app
-4. Keep the route planner running and the live jobs will stream into it
-
-## Save live login
-
-Use the dashboard's Live Source panel to store the Jobslinger homepage login locally and set the MegaLog data page.
+Use the dashboard's Phone App Sources panel to store non-secret source settings, such as a provider web login URL or job board URL if that provider offers one.
 
 - The data is written only to the ignored backend data folder
-- The password is never shown back in the UI
-- If the site is offline, the dashboard still shows the last successful scrape from disk
+- Provider passwords should not be stored in source code or GitHub
+- If a provider does not expose a web board/API/share flow, mark it as needing a phone connection rather than inventing jobs
 
 ## Install the browser extension
+
+The current unpacked extension is legacy Jobslinger-specific. It is not the main direction for Survey Merchandiser, Clickworker, or Field Nation until provider-specific phone/web adapters are verified.
 
 1. Open Chrome and go to `chrome://extensions`
 2. Turn on `Developer mode`
 3. Click `Load unpacked`
 4. Select the [`browser-extension`](browser-extension) folder from this repository
-5. Open the main Jobslinger page in the browser and keep the dashboard running at `http://localhost:3300/`
+5. Keep the dashboard running at `http://localhost:3300/`
 
 If the page layout changes, the extension may need selector tweaks, but it will stay live as long as the page is open and the local route planner is running.
+
+## Verified transit selection
+
+The transit picker is intentionally fail-closed. It only shows route sections when the cached GTFS feed has matching `routes.txt`, `trips.txt`, `stops.txt`, and `stop_times.txt` records. Static GTFS results are always labeled **Scheduled estimate**. A future verified real-time source may label its result **Live verified**.
+
+Jobs can declare their approved transit access without creating route names or sections in the app. A job's optional fields use IDs from the verified GTFS cache:
+
+```json
+{
+  "plan_ids": ["today"],
+  "transit_access": {
+    "route_ids": ["verified-route-id"],
+    "section_ids": ["verified-route-id:direction-id:start-stop-id:end-stop-id"],
+    "stop_ids": ["verified-stop-id"],
+    "walk_time_minutes": 7,
+    "job_work_time_minutes": 30,
+    "buffer_risk_label": "Scheduled estimate - allow timing buffer"
+  }
+}
+```
+
+With no verified job-to-route, section, or stop relationship, the dashboard says so rather than inferring or inventing a transit section. The backend exposes the current picker shape at `GET /api/transit-picker`.
 
 ## API
 
@@ -90,8 +120,11 @@ If the page layout changes, the extension may need selector tweaks, but it will 
 - `POST /api/start`
 - `POST /api/scrape`
 - `POST /api/import-gtfs`
+- `POST /api/import-cts-zip`
 - `GET /api/gtfs/status`
 - `GET /api/gtfs/nearest`
+- `GET /api/transit-picker`
+- `POST /api/route-plan`
 
 ## Android
 

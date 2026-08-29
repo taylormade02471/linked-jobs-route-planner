@@ -7,6 +7,11 @@ const os = require("os");
 const { chromium } = require("playwright-core");
 const transitland = require("./transitland");
 const { buildExtensionSyncStatus } = require("./sourceSync");
+const {
+  buildJobBoardSummaries,
+  identifyProviderForJob,
+  isOpenAvailableJob,
+} = require("../shared/domain/providers");
 
 const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
@@ -15,6 +20,7 @@ const jobsPath = path.join(dataDir, "jobs.json");
 const sourceConfigPath = path.join(dataDir, "source-config.json");
 
 const PORT = Number(process.env.PORT || 3300);
+const HOST = process.env.HOST || "127.0.0.1";
 const USERNAME = process.env.APP_USER || process.env.BASIC_AUTH_USER || "kyle";
 const PASSWORD =
   process.env.APP_PASSWORD ||
@@ -25,8 +31,8 @@ const SESSION_SECRET =
   process.env.AUTH_SESSION_SECRET || "change-this-before-sharing";
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "route_planner_session";
-const DEFAULT_LOGIN_URL = "https://www.jobslingerplus.com/";
-const DEFAULT_DATA_URL = "https://www.jobslingerplus.com/MegaLog";
+const DEFAULT_LOGIN_URL = "";
+const DEFAULT_DATA_URL = "";
 const LIVE_POLL_INTERVAL_MS = 60 * 1000;
 const CHROME_PATHS = [
   process.env.CHROME_PATH,
@@ -52,7 +58,7 @@ let sourceStatus = {
 
 async function ensureDefaultTransitFeed() {
   const defaultId = transitland.CTS_DEFAULT_ONESTOP_ID || "o-clarksville~tn~us";
-  if (transitland.hasGtfsCache(defaultId)) return;
+  if (transitland.hasVerifiedGtfsSchedule(defaultId)) return;
   try {
     await transitland.importGtfsFromLocalZip({ onestopId: defaultId, feedUrl: "local-cts-zip" });
     console.log(`Loaded default transit feed for ${defaultId}`);
@@ -198,6 +204,41 @@ function parseBody(req) {
   });
 }
 
+function idList(value) {
+  const rawValues = Array.isArray(value) ? value : [value];
+  return [...new Set(
+    rawValues
+      .flatMap((item) => String(item || "").split(","))
+      .map((item) => item.trim())
+      .filter(Boolean),
+  )];
+}
+
+function transitSelectionFromInput(input = {}, searchParams = null) {
+  const outer = input && typeof input === "object" ? input : {};
+  const nested = outer.transit_selection || outer.transitSelection;
+  const source = nested && typeof nested === "object" ? { ...outer, ...nested } : outer;
+  const queryValues = searchParams
+    ? [
+        ...searchParams.getAll("corridor_id"),
+        ...searchParams.getAll("corridor_ids"),
+        ...searchParams.getAll("corridorId"),
+        ...searchParams.getAll("corridorIds"),
+      ]
+    : [];
+  const corridorIds = idList(
+    source.corridor_ids || source.corridorIds || source.corridor_id || source.corridorId || queryValues,
+  );
+  return {
+    plan_id: String(source.plan_id || source.planId || searchParams?.get("plan_id") || searchParams?.get("planId") || "").trim(),
+    corridor_ids: corridorIds.length ? corridorIds : ["all-accessible-routes"],
+    section_id: String(
+      source.section_id || source.sectionId || searchParams?.get("section_id") || searchParams?.get("sectionId") || "all-selected-route-sections",
+    ).trim(),
+    stop_id: String(source.stop_id || source.stopId || searchParams?.get("stop_id") || searchParams?.get("stopId") || "all-stops-selected").trim(),
+  };
+}
+
 function parseCookies(header) {
   const cookies = {};
   String(header || "")
@@ -322,8 +363,10 @@ function normalizeJob(job, index = 0) {
       ""
   );
   const mapsUrl = String(job.maps_url || job.mapsUrl || job.map_url || job.mapUrl || "");
+  const provider = identifyProviderForJob(job);
   return {
     id: String(job.id || crypto.randomUUID()),
+    provider_id: String(job.provider_id || provider?.provider_id || ""),
     title: String(job.title || job.name || "Job"),
     address: String(job.address || job.location || ""),
     city: String(job.city || ""),
@@ -347,6 +390,66 @@ function normalizeJob(job, index = 0) {
     detail_fields: extractDetailFields(rawDetails),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
+  };
+}
+
+function jobCoordinate(job = {}) {
+  const lat = Number(job.lat);
+  const lng = Number(job.lng ?? job.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng };
+}
+
+function jobAddressQuery(job = {}) {
+  return String(
+    job.address ||
+      job.address1 ||
+      job.detail_fields?.address ||
+      [job.city, job.state, job.postcode || job.zip].filter(Boolean).join(", ")
+  )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function geocodeOpenAvailableJobs(limit = 20) {
+  const max = Math.max(1, Math.min(Number(limit) || 20, 50));
+  let attempted = 0;
+  let updated = 0;
+  const results = [];
+
+  for (const job of jobs) {
+    if (attempted >= max) break;
+    if (!isOpenAvailableJob(job) || jobCoordinate(job)) continue;
+    const query = jobAddressQuery(job);
+    if (!query) continue;
+
+    attempted += 1;
+    const geocoded = await transitland.geocodeAddress(query).catch(() => null);
+    if (!geocoded || !Number.isFinite(geocoded.lat) || !Number.isFinite(geocoded.lon)) {
+      results.push({ job_id: job.id, ok: false, query });
+      continue;
+    }
+
+    job.lat = geocoded.lat;
+    job.lng = geocoded.lon;
+    job.geocoded_from = "job address";
+    job.geocoded_display_name = geocoded.display_name || "";
+    job.updated_at = new Date().toISOString();
+    updated += 1;
+    results.push({ job_id: job.id, ok: true, query, lat: job.lat, lng: job.lng });
+  }
+
+  if (updated) {
+    saveJobs();
+    broadcast("jobs", { jobs });
+  }
+
+  return {
+    ok: true,
+    attempted,
+    updated,
+    results,
+    boards: buildJobBoardSummaries({ jobs, sourceStatus }),
   };
 }
 
@@ -392,7 +495,7 @@ function extractDetailFields(detailText = "") {
 function publicSourceConfig() {
   return {
     source_name: String(
-      sourceConfig.source_name || sourceConfig.sourceName || "Jobslinger homepage"
+      sourceConfig.source_name || sourceConfig.sourceName || "Phone app source"
     ),
     login_url: String(sourceConfig.login_url || sourceConfig.loginUrl || DEFAULT_LOGIN_URL),
     data_url: String(sourceConfig.data_url || sourceConfig.dataUrl || DEFAULT_DATA_URL),
@@ -420,7 +523,7 @@ function getLiveLoginUrl() {
 }
 
 function getLiveSourceName() {
-  return String(sourceConfig.source_name || sourceConfig.sourceName || "Jobslinger");
+  return String(sourceConfig.source_name || sourceConfig.sourceName || "Linked work app");
 }
 
 function getLiveDataUrl() {
@@ -620,7 +723,15 @@ async function openLiveBrowserToSource() {
   const context = await ensureLiveBrowser();
   const page = context.pages()[0] || liveBrowserPage || (await context.newPage());
   liveBrowserPage = page;
-  await page.goto(getLiveLoginUrl(), { waitUntil: "domcontentloaded" }).catch(() => {});
+  const loginUrl = getLiveLoginUrl();
+  if (!loginUrl) {
+    updateSourceStatus({
+      state: "needs-connection",
+      message: "Choose a provider web URL or phone-app connection method first",
+    });
+    throw new Error("Choose a provider web URL or phone-app connection method first");
+  }
+  await page.goto(loginUrl, { waitUntil: "domcontentloaded" }).catch(() => {});
   await maybeAutofillLogin(page);
   return { ok: true, browserOpen: true, login_url: getLiveLoginUrl() };
 }
@@ -850,6 +961,8 @@ const server = http.createServer(async (req, res) => {
       ok: true,
       service: "linked-jobs-route-planner",
       port: PORT,
+      host: HOST,
+      network_access_enabled: HOST === "0.0.0.0",
       auth_enabled: true,
     });
     return;
@@ -870,6 +983,32 @@ const server = http.createServer(async (req, res) => {
   if (method === "GET" && url.pathname === "/api/jobs") {
     if (!requireAuth(req, res)) return;
     json(res, 200, { jobs });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/job-boards") {
+    if (!requireAuth(req, res)) return;
+    json(res, 200, {
+      ok: true,
+      boards: buildJobBoardSummaries({ jobs, sourceStatus }),
+    });
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/jobs/geocode-open") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const limit = Number(body?.limit || url.searchParams.get("limit") || 20);
+    const result = await geocodeOpenAvailableJobs(limit).catch((error) => ({
+      ok: false,
+      error: String(error && error.message ? error.message : error),
+    }));
+    json(res, result.ok ? 200 : 500, result);
     return;
   }
 
@@ -985,10 +1124,30 @@ const server = http.createServer(async (req, res) => {
       ok: true,
       imported: true,
       feedUrl: cache.feedUrl,
+      routes: Array.isArray(cache.routes) ? cache.routes.length : 0,
+      trips: Array.isArray(cache.trips) ? cache.trips.length : 0,
       stops: Array.isArray(cache.stops) ? cache.stops.length : 0,
       stop_times: Array.isArray(cache.stop_times) ? cache.stop_times.length : 0,
+      verified_schedule: transitland.hasVerifiedGtfsSchedule(onestopId),
       importedAt: cache.importedAt || "",
     });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/transit-picker") {
+    if (!requireAuth(req, res)) return;
+    const onestopId = String(url.searchParams.get("onestop_id") || url.searchParams.get("onestopId") || "").trim();
+    if (!onestopId) {
+      json(res, 400, { ok: false, error: "Missing onestop_id" });
+      return;
+    }
+
+    const picker = transitland.getTransitPickerData({
+      onestopId,
+      jobs,
+      selection: transitSelectionFromInput({}, url.searchParams),
+    });
+    json(res, 200, picker);
     return;
   }
 
@@ -1049,11 +1208,7 @@ const server = http.createServer(async (req, res) => {
         jobsInput = [];
       }
     } else {
-      jobsInput = jobs.filter((job) => {
-        const source = String(job.source || "");
-        const sourceUrl = String(job.source_url || "");
-        return !job.is_completed && (!source || source !== "browser-extension" || /jobslingerplus\.com/i.test(sourceUrl));
-      });
+      jobsInput = jobs.filter(isOpenAvailableJob);
     }
 
     if (!onestopId) {
@@ -1069,6 +1224,7 @@ const server = http.createServer(async (req, res) => {
       onestopId,
       origin: originInput,
       jobs: jobsInput,
+      transitSelection: transitSelectionFromInput(body),
     }).catch((error) => ({
       ok: false,
       error: String(error && error.message ? error.message : error),
@@ -1185,8 +1341,13 @@ const server = http.createServer(async (req, res) => {
   sendText(res, 404, "Not found");
 });
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server listening on http://127.0.0.1:${PORT}`);
+server.listen(PORT, HOST, () => {
+  const localUrl = `http://127.0.0.1:${PORT}`;
+  const boundUrl = HOST === "0.0.0.0" ? `http://0.0.0.0:${PORT}` : `http://${HOST}:${PORT}`;
+  console.log(`Server listening on ${localUrl}`);
+  if (boundUrl !== localUrl) {
+    console.log(`Network binding enabled at ${boundUrl}`);
+  }
 });
 
 ensureDefaultTransitFeed();

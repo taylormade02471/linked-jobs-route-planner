@@ -17,6 +17,8 @@ const reloadSourceButton = document.querySelector("#reloadSourceButton");
 const openSourceButton = document.querySelector("#openSourceButton");
 const scrapeNowButton = document.querySelector("#scrapeNowButton");
 const sourceStatus = document.querySelector("#sourceStatus");
+const refreshBoardsButton = document.querySelector("#refreshBoardsButton");
+const jobBoardsList = document.querySelector("#jobBoardsList");
 const template = document.querySelector("#jobRowTemplate");
 const routePlanStatus = document.querySelector("#routePlanStatus");
 const routePlanOutput = document.querySelector("#routePlanOutput");
@@ -25,9 +27,15 @@ const transitOnestopId = document.querySelector("#transitOnestopId");
 const originLat = document.querySelector("#originLat");
 const originLon = document.querySelector("#originLon");
 const useLocationButton = document.querySelector("#useLocationButton");
+const placeOpenJobsButton = document.querySelector("#placeOpenJobsButton");
 const importTransitButton = document.querySelector("#importTransitButton");
 const importCtsZipButton = document.querySelector("#importCtsZipButton");
 const planTransitButton = document.querySelector("#planTransitButton");
+const planOptionSelect = document.querySelector("#planOptionSelect");
+const corridorSelect = document.querySelector("#corridorSelect");
+const routeSectionSelect = document.querySelector("#routeSectionSelect");
+const allStopsSelectedButton = document.querySelector("#allStopsSelectedButton");
+const transitPickerSummary = document.querySelector("#transitPickerSummary");
 const routeMapElement = document.querySelector("#routeMap");
 const routeModal = document.querySelector("#routeModal");
 const routeModalMapElement = document.querySelector("#routeModalMap");
@@ -40,8 +48,14 @@ const storageKeys = {
   onestopId: "route_planner_transit_onestop_id",
 };
 
+const DEFAULT_TRANSIT_ONESTOP_ID = "o-clarksville~tn~us";
+const LEGACY_TRANSIT_ONESTOP_IDS = new Map([
+  ["f-clarksville~tn~us", DEFAULT_TRANSIT_ONESTOP_ID],
+]);
+
 let allJobs = [];
 let filteredJobs = [];
+let jobBoards = [];
 let expandedJobs = new Set();
 let activeTab = "active";
 let routeMap = null;
@@ -49,7 +63,21 @@ let routeLayer = null;
 let routeModalMap = null;
 let routeModalLayer = null;
 let planRefreshTimer = null;
+let liveJobsEventSource = null;
 let lastPlan = null;
+let transitPickerData = null;
+let transitEligibleJobIds = null;
+let transitPickerRequestVersion = 0;
+let transitSelection = {
+  plan_id: "",
+  corridor_ids: ["all-accessible-routes"],
+  section_id: "all-selected-route-sections",
+  stop_id: "all-stops-selected",
+};
+
+const ALL_ACCESSIBLE_ROUTES = "all-accessible-routes";
+const ALL_SELECTED_ROUTE_SECTIONS = "all-selected-route-sections";
+const ALL_STOPS_SELECTED = "all-stops-selected";
 
 function setConnection(text) {
   connectionState.textContent = text;
@@ -99,18 +127,38 @@ function isCompletedJob(job) {
 function normalizedWorkflowStatus(job) {
   const status = String(job.workflow_status || job.status || "").toLowerCase();
   if (status.includes("awaiting")) return "awaiting_payment";
+  if (status.includes("submitted")) return "awaiting_payment";
   if (status.includes("completed") || status.includes("paid") || isCompletedJob(job)) return "completed";
+  if (status.includes("planned")) return "planned";
+  if (status.includes("available")) return "available";
   return "active";
+}
+
+function isOpenAvailableJob(job) {
+  const status = normalizedWorkflowStatus(job);
+  return status === "active" || status === "available";
 }
 
 function getSelectedJobs() {
   return filteredJobs.filter((job) => job.selected && !isCompletedJob(job));
 }
 
+function isTransitEligible(job) {
+  return !transitEligibleJobIds || transitEligibleJobIds.has(String(job.id));
+}
+
 function getPlanningJobs() {
   const selected = getSelectedJobs();
-  if (selected.length) return selected;
-  return allJobs.filter((job) => normalizedWorkflowStatus(job) !== "completed");
+  const candidates = selected.length
+    ? selected
+    : allJobs.filter(isOpenAvailableJob);
+  return candidates.filter(isTransitEligible);
+}
+
+function normalizeStoredOnestopId(value) {
+  const onestopId = String(value || "").trim();
+  if (!onestopId) return DEFAULT_TRANSIT_ONESTOP_ID;
+  return LEGACY_TRANSIT_ONESTOP_IDS.get(onestopId) || onestopId;
 }
 
 function loadStoredOrigin() {
@@ -118,7 +166,7 @@ function loadStoredOrigin() {
   const lon = Number.parseFloat(localStorage.getItem(storageKeys.originLon) || "");
   if (originLat && Number.isFinite(lat)) originLat.value = String(lat);
   if (originLon && Number.isFinite(lon)) originLon.value = String(lon);
-  const onestop = localStorage.getItem(storageKeys.onestopId) || "o-clarksville~tn~us";
+  const onestop = normalizeStoredOnestopId(localStorage.getItem(storageKeys.onestopId));
   if (transitOnestopId) transitOnestopId.value = onestop;
   localStorage.setItem(storageKeys.onestopId, onestop);
 }
@@ -147,6 +195,7 @@ async function refreshLiveOrigin() {
         const lon = Number(position.coords.longitude);
         saveOrigin(lat, lon);
         setRoutePlanStatus("Current location saved");
+        scheduleAutoPlanRoute();
         resolve({ lat, lon });
       },
       (error) => {
@@ -167,6 +216,230 @@ function currentOrigin() {
   const lon = Number.parseFloat(originLon?.value || "");
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return { lat, lon };
+}
+
+function selectOption(value, label, selected = false) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  option.selected = selected;
+  return option;
+}
+
+function selectedValues(select) {
+  return Array.from(select?.selectedOptions || []).map((option) => option.value);
+}
+
+function setTransitPickerSummary(text) {
+  if (transitPickerSummary) {
+    transitPickerSummary.textContent = text;
+  }
+}
+
+function sectionPickerLabel(section) {
+  return [section.label, section.corridor_name || section.route_label, section.direction]
+    .filter(Boolean)
+    .join(" | ");
+}
+
+function stopPickerLabel(stop) {
+  return stop.location ? `${stop.stop_name} - ${stop.location}` : stop.stop_name;
+}
+
+function renderJobBoards() {
+  if (!jobBoardsList) return;
+  if (!jobBoards.length) {
+    jobBoardsList.innerHTML = `<div class="job-board-card muted">No linked board status loaded yet.</div>`;
+    return;
+  }
+
+  jobBoardsList.innerHTML = jobBoards
+    .map((board) => {
+      const canOpen = board.board_url || board.login_url;
+      const status = board.status === "linked" ? "Linked" : "Needs phone connection";
+      const synced = board.last_synced_at ? new Date(board.last_synced_at).toLocaleString() : "Not synced yet";
+      return `
+        <article class="job-board-card ${escapeHtml(board.status || "")}">
+          <div>
+            <span class="job-board-status">${escapeHtml(status)} | ${escapeHtml(board.connection_state || "unknown")}</span>
+            <strong>${escapeHtml(board.display_name || "Job board")}</strong>
+            <p>${escapeHtml(board.last_message || board.source_label || "")}</p>
+          </div>
+          <div class="job-board-counts">
+            <span><strong>${escapeHtml(String(board.open_available_count || 0))}</strong> open</span>
+            <span><strong>${escapeHtml(String(board.mapped_available_count || 0))}</strong> mapped</span>
+            <span><strong>${escapeHtml(String(board.total_seen_count || 0))}</strong> seen</span>
+          </div>
+          <div class="job-board-footer">
+            <span>Last sync: ${escapeHtml(synced)}</span>
+            ${canOpen ? `<a href="${escapeHtml(board.board_url || board.login_url)}" target="_blank" rel="noreferrer">Open board</a>` : ""}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+async function loadJobBoards() {
+  if (!jobBoardsList) return;
+  const response = await fetch("/api/job-boards", { credentials: "include" });
+  if (response.status === 401) return;
+  const payload = await response.json().catch(() => ({}));
+  jobBoards = Array.isArray(payload.boards) ? payload.boards : [];
+  renderJobBoards();
+}
+
+function renderTransitPicker(picker) {
+  transitPickerData = picker;
+  const plans = Array.isArray(picker?.plan_options) ? picker.plan_options : [];
+  const corridors = Array.isArray(picker?.corridors) ? picker.corridors : [];
+  const sections = Array.isArray(picker?.sections) ? picker.sections : [];
+  const stops = Array.isArray(picker?.stops) ? picker.stops : [];
+
+  if (!transitSelection.plan_id || !plans.some((plan) => plan.id === transitSelection.plan_id)) {
+    transitSelection.plan_id = picker?.selection?.plan_id || plans[0]?.id || "";
+  }
+  if (!Array.isArray(transitSelection.corridor_ids) || !transitSelection.corridor_ids.length) {
+    transitSelection.corridor_ids = [ALL_ACCESSIBLE_ROUTES];
+  }
+
+  if (planOptionSelect) {
+    planOptionSelect.replaceChildren(
+      ...plans.map((plan) => selectOption(plan.id, plan.label, plan.id === transitSelection.plan_id)),
+    );
+    planOptionSelect.disabled = !plans.length;
+  }
+
+  if (corridorSelect) {
+    const selectedCorridorIds = transitSelection.corridor_ids;
+    const knownCorridorIds = new Set(corridors.map((corridor) => corridor.route_id));
+    if (
+      !selectedCorridorIds.includes(ALL_ACCESSIBLE_ROUTES) &&
+      !selectedCorridorIds.some((id) => knownCorridorIds.has(id))
+    ) {
+      transitSelection.corridor_ids = [ALL_ACCESSIBLE_ROUTES];
+    }
+
+    corridorSelect.replaceChildren(
+      selectOption(
+        ALL_ACCESSIBLE_ROUTES,
+        "All accessible routes in this plan",
+        transitSelection.corridor_ids.includes(ALL_ACCESSIBLE_ROUTES),
+      ),
+      ...corridors.map((corridor) =>
+        selectOption(
+          corridor.route_id,
+          corridor.label,
+          transitSelection.corridor_ids.includes(corridor.route_id),
+        ),
+      ),
+    );
+    corridorSelect.disabled = !picker?.verified_schedule || !corridors.length;
+  }
+
+  if (routeSectionSelect) {
+    const allSectionsOption = selectOption(
+      ALL_SELECTED_ROUTE_SECTIONS,
+      "All selected route sections",
+      transitSelection.section_id === ALL_SELECTED_ROUTE_SECTIONS && transitSelection.stop_id === ALL_STOPS_SELECTED,
+    );
+    routeSectionSelect.replaceChildren(allSectionsOption);
+
+    if (sections.length) {
+      const sectionGroup = document.createElement("optgroup");
+      sectionGroup.label = "Verified route sections";
+      sections.forEach((section) => {
+        sectionGroup.appendChild(
+          selectOption(
+            `section:${section.id}`,
+            sectionPickerLabel(section),
+            transitSelection.section_id === section.id,
+          ),
+        );
+      });
+      routeSectionSelect.appendChild(sectionGroup);
+    }
+
+    if (stops.length) {
+      const stopGroup = document.createElement("optgroup");
+      stopGroup.label = "Individual verified stops";
+      stops.forEach((stop) => {
+        stopGroup.appendChild(
+          selectOption(
+            `stop:${stop.stop_id}`,
+            stopPickerLabel(stop),
+            transitSelection.stop_id === stop.stop_id,
+          ),
+        );
+      });
+      routeSectionSelect.appendChild(stopGroup);
+    }
+
+    const chosenValue =
+      transitSelection.stop_id && transitSelection.stop_id !== ALL_STOPS_SELECTED
+        ? `stop:${transitSelection.stop_id}`
+        : transitSelection.section_id && transitSelection.section_id !== ALL_SELECTED_ROUTE_SECTIONS
+        ? `section:${transitSelection.section_id}`
+        : ALL_SELECTED_ROUTE_SECTIONS;
+    if (!Array.from(routeSectionSelect.options).some((option) => option.value === chosenValue)) {
+      transitSelection.section_id = ALL_SELECTED_ROUTE_SECTIONS;
+      transitSelection.stop_id = ALL_STOPS_SELECTED;
+      routeSectionSelect.value = ALL_SELECTED_ROUTE_SECTIONS;
+    }
+    routeSectionSelect.disabled = !picker?.verified_schedule || (!sections.length && !stops.length);
+  }
+
+  if (allStopsSelectedButton) {
+    allStopsSelectedButton.disabled = !picker?.verified_schedule || !stops.length;
+    allStopsSelectedButton.classList.toggle("is-active", transitSelection.stop_id === ALL_STOPS_SELECTED);
+  }
+
+  transitEligibleJobIds = new Set((picker?.job_ids || []).map((jobId) => String(jobId)));
+  if (!picker?.imported) {
+    setTransitPickerSummary("No cached GTFS schedule is loaded for this feed. Import a verified feed before choosing a route or stop.");
+  } else if (!picker?.verified_schedule) {
+    setTransitPickerSummary("This feed has no verified routes, trips, and stop times together, so the planner will not create route sections.");
+  } else if (!corridors.length) {
+    setTransitPickerSummary("Verified schedule loaded, but this plan has no jobs with verified route, section, or stop access.");
+  } else {
+    const sourceLabel = picker.source_label || "Scheduled estimate";
+    setTransitPickerSummary(
+      `${sourceLabel}: ${corridors.length} accessible corridors, ${sections.length} selected sections, ${stops.length} verified stops, ${picker.counts?.accessible_jobs || 0} matching jobs.`,
+    );
+  }
+}
+
+async function loadTransitPicker() {
+  const onestopId = String(transitOnestopId?.value || "").trim();
+  if (!onestopId) {
+    setTransitPickerSummary("Enter a Transitland feed ID to load verified route and stop choices.");
+    return;
+  }
+
+  const requestVersion = ++transitPickerRequestVersion;
+
+  const params = new URLSearchParams({
+    onestop_id: onestopId,
+    plan_id: transitSelection.plan_id,
+    section_id: transitSelection.section_id,
+    stop_id: transitSelection.stop_id,
+  });
+  transitSelection.corridor_ids.forEach((corridorId) => params.append("corridor_id", corridorId));
+  const response = await fetch(`/api/transit-picker?${params.toString()}`, { credentials: "include" });
+  if (response.status === 401) return;
+  const payload = await response.json().catch(() => ({}));
+  if (requestVersion !== transitPickerRequestVersion) return;
+  if (!response.ok) {
+    setTransitPickerSummary(payload.error || "Could not load verified transit choices.");
+    return;
+  }
+  renderTransitPicker(payload);
+}
+
+function resetTransitRouteScope() {
+  transitSelection.corridor_ids = [ALL_ACCESSIBLE_ROUTES];
+  transitSelection.section_id = ALL_SELECTED_ROUTE_SECTIONS;
+  transitSelection.stop_id = ALL_STOPS_SELECTED;
 }
 
 function routeJobPayload(job) {
@@ -190,11 +463,16 @@ function routeJobPayload(job) {
     is_completed: job.is_completed,
     details: job.details,
     detail_fields: job.detail_fields,
+    plan_ids: job.plan_ids || job.planIds,
+    transit_access: job.transit_access || job.transitAccess,
+    accessible_route_ids: job.accessible_route_ids || job.accessibleRouteIds,
+    accessible_section_ids: job.accessible_section_ids || job.accessibleSectionIds,
+    accessible_stop_ids: job.accessible_stop_ids || job.accessibleStopIds,
   };
 }
 
 function selectedJobIdsForPlan() {
-  const selected = getSelectedJobs();
+  const selected = getSelectedJobs().filter(isTransitEligible);
   if (selected.length) {
     return selected.map((job) => job.id);
   }
@@ -204,6 +482,52 @@ function selectedJobIdsForPlan() {
 function formatKm(value) {
   if (!Number.isFinite(value)) return "-";
   return `${value.toFixed(value >= 10 ? 0 : 1)} km`;
+}
+
+function formatMinutes(value) {
+  const minutes = Number(value);
+  return Number.isFinite(minutes) ? `${Math.round(minutes)} min` : "Not provided";
+}
+
+function formatMoneyCents(value) {
+  const cents = Number(value);
+  if (!Number.isFinite(cents) || cents <= 0) return "-";
+  return `$${(Math.round(cents) / 100).toFixed(2)}`;
+}
+
+function transitDetailsHtml(step) {
+  const details = step?.transit_details;
+  if (!details) {
+    return `
+      <section class="route-transit-details route-transit-details-empty">
+        <strong>No verified scheduled transit leg</strong>
+        <span>Walking or fallback status is shown because the selected GTFS data did not verify a route connection.</span>
+      </section>
+    `;
+  }
+
+  const routeNumber = details.route_number || details.route_short_name || "";
+  const location = (value) => value || "Not provided in GTFS";
+  return `
+    <section class="route-transit-details">
+      <div class="route-transit-details-head">
+        <strong>${escapeHtml(routeNumber ? `Route ${routeNumber}` : "Verified transit")}</strong>
+        <span>${escapeHtml(details.source_label || "Scheduled estimate")}</span>
+      </div>
+      <dl class="route-transit-details-grid">
+        <div><dt>Direction</dt><dd>${escapeHtml(location(details.direction))}</dd></div>
+        <div><dt>Boarding stop</dt><dd>${escapeHtml(location(details.boarding_stop_name))}</dd></div>
+        <div><dt>Boarding location</dt><dd>${escapeHtml(location(details.boarding_stop_location))}</dd></div>
+        <div><dt>Scheduled pickup</dt><dd>${escapeHtml(location(details.scheduled_pickup_time))}</dd></div>
+        <div><dt>Exit stop</dt><dd>${escapeHtml(location(details.exit_stop_name))}</dd></div>
+        <div><dt>Exit location</dt><dd>${escapeHtml(location(details.exit_stop_location))}</dd></div>
+        <div><dt>Walk to job</dt><dd>${escapeHtml(formatMinutes(details.walk_time_minutes))}</dd></div>
+        <div><dt>Job work time</dt><dd>${escapeHtml(formatMinutes(details.job_work_time_minutes))}</dd></div>
+        <div><dt>Buffer / risk</dt><dd>${escapeHtml(location(details.buffer_risk_label))}</dd></div>
+        <div><dt>Source</dt><dd>${escapeHtml(details.source_label || "Scheduled estimate")}</dd></div>
+      </dl>
+    </section>
+  `;
 }
 
 function formatMetersFromKm(value) {
@@ -246,6 +570,33 @@ function mapPointFromJob(job) {
   const lon = Number(job?.lng);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return { lat, lon, label: job.title || "Job" };
+}
+
+function providerLabel(job) {
+  return job.provider_id || job.source || "linked board";
+}
+
+function addAvailableJobMarkers(layer, bounds, plannedJobIds = new Set()) {
+  allJobs
+    .filter((job) => isOpenAvailableJob(job) && !plannedJobIds.has(String(job.id)))
+    .forEach((job) => {
+      const point = mapPointFromJob(job);
+      if (!point) return;
+      const marker = L.circleMarker([point.lat, point.lon], {
+        radius: 9,
+        color: "#052e16",
+        weight: 2,
+        fillColor: "#39ff14",
+        fillOpacity: 0.92,
+      }).addTo(layer);
+      marker.bindPopup(
+        `<strong>${escapeHtml(job.title || "Available job")}</strong><br/>` +
+          `${escapeHtml(providerLabel(job))}<br/>` +
+          `${escapeHtml([job.address, job.city, job.state].filter(Boolean).join(", "))}<br/>` +
+          `${escapeHtml([job.due, job.pay].filter(Boolean).join(" | "))}`
+      );
+      bounds.push([point.lat, point.lon]);
+    });
 }
 
 function duePriorityClass(step) {
@@ -342,6 +693,7 @@ function renderRouteModal(plan) {
   routeModalSummary.innerHTML = `
     <div class="route-modal-summary-card">
       <strong>${escapeHtml(String(summary.jobs || 0))} planned jobs</strong>
+      <span>Estimated route pay: ${escapeHtml(formatMoneyCents(summary.estimated_pay_cents))}</span>
       <span>${escapeHtml(String(summary.transit_enabled || 0))} transit legs | ${escapeHtml(String(summary.walk_only || 0))} walk-only | ${escapeHtml(String(summary.no_route || 0))} no-route</span>
     </div>
   `;
@@ -364,7 +716,7 @@ function renderRouteModal(plan) {
         <article class="route-modal-stop ${escapeHtml(dueClass)}">
           <div class="route-modal-stop-head">
             <div>
-              <span class="route-card-index">Stop ${index + 1}</span>
+              <span class="route-card-index">Itinerary job ${index + 1}</span>
               <strong>${escapeHtml(step.title || "Job")}</strong>
               <div class="route-modal-stop-meta">
                 <span class="route-modal-chip ${escapeHtml(dueClass)}">${escapeHtml(priorityLabel(step))}</span>
@@ -374,8 +726,10 @@ function renderRouteModal(plan) {
           </div>
           <div>${escapeHtml(step.summary || "No summary")}</div>
           <div class="route-card-address">${escapeHtml([step.address, step.city, step.state, step.postcode].filter(Boolean).join(", "))}</div>
+          ${transitDetailsHtml(step)}
           <div class="route-modal-stop-meta">
             <span class="route-modal-chip">${escapeHtml(step.estimated_minutes ? `${step.estimated_minutes} min` : "-")}</span>
+            <span class="route-modal-chip">${escapeHtml(`Pay: ${formatMoneyCents(step.estimated_pay_cents)}`)}</span>
             <span class="route-modal-chip">${escapeHtml(step.due_date ? new Date(step.due_date).toLocaleDateString() : step.due || "-")}</span>
             <span class="route-modal-chip">${escapeHtml(`Origin stop: ${originStop}`)}</span>
             <span class="route-modal-chip">${escapeHtml(`Job stop: ${destinationStop}`)}</span>
@@ -437,6 +791,9 @@ function renderRouteMap(plan) {
   }
 
   const route = Array.isArray(plan?.route) ? plan.route : [];
+  const plannedJobIds = new Set(route.map((step) => String(step.id || step.job_id || "")).filter(Boolean));
+  addAvailableJobMarkers(routeLayer, bounds, plannedJobIds);
+
   route.forEach((step, index) => {
     const point = mapPointFromJob(step.to || step.destination || step);
     if (!point) return;
@@ -533,8 +890,11 @@ function renderRoutePlan(plan) {
   routePlanOutput.innerHTML = `
     <div class="route-summary-card">
       <strong>${escapeHtml(String(summary.jobs || 0))} jobs planned</strong>
+      <span>Estimated route pay: ${escapeHtml(formatMoneyCents(summary.estimated_pay_cents))}</span>
       <span>Transit legs: ${escapeHtml(String(summary.transit_enabled || 0))} | Walk-only: ${escapeHtml(String(summary.walk_only || 0))} | No-route: ${escapeHtml(String(summary.no_route || 0))}</span>
+      <span>Transit source: ${escapeHtml(summary.source_label || "No verified schedule loaded")}</span>
       <span>Origin: ${escapeHtml(Number.isFinite(origin.lat) && Number.isFinite(origin.lon) ? `${origin.lat.toFixed(5)}, ${origin.lon.toFixed(5)}` : "-")}</span>
+      ${summary.selection_message ? `<span>${escapeHtml(summary.selection_message)}</span>` : ""}
     </div>
     <div class="route-list">
       ${route
@@ -560,7 +920,7 @@ function renderRoutePlan(plan) {
             <article class="route-card ${escapeHtml(step.mode || "walk_only")} ${escapeHtml(duePriorityClass(step))}">
               <div class="route-card-head">
                 <div>
-                  <span class="route-card-index">Stop ${index + 1}</span>
+                  <span class="route-card-index">Itinerary job ${index + 1}</span>
                   <strong>${escapeHtml(step.title || "Job")}</strong>
                   <span class="route-priority-badge">${escapeHtml(priorityLabel(step))}</span>
                 </div>
@@ -570,11 +930,13 @@ function renderRoutePlan(plan) {
                 <span>Mode: ${escapeHtml(step.mode || "walk_only")}</span>
                 <span>Direct: ${escapeHtml(formatKm(step.direct_distance_km))}</span>
                 <span>Time: ${escapeHtml(step.estimated_minutes ? `${step.estimated_minutes} min` : "-")}</span>
+                <span>Pay: ${escapeHtml(formatMoneyCents(step.estimated_pay_cents))}</span>
                 <span>Due: ${escapeHtml(step.due_date ? new Date(step.due_date).toLocaleDateString() : step.due || "-")}</span>
-                <span>Origin stop: ${escapeHtml(originStop)}</span>
-                <span>Job stop: ${escapeHtml(destinationStop)}</span>
+                <span>Board: ${escapeHtml(originStop)}</span>
+                <span>Exit: ${escapeHtml(destinationStop)}</span>
               </div>
               <div class="route-card-address">${escapeHtml([step.address, step.city, step.state, step.postcode].filter(Boolean).join(", "))}</div>
+              ${transitDetailsHtml(step)}
               <div class="route-card-legs">
                 <strong>Legs</strong>
                 <ul>${legItems || "<li><span>Notice</span><strong>No practical walk/transit legs were found for this job.</strong><em>Use rideshare later if needed.</em></li>"}</ul>
@@ -626,6 +988,38 @@ async function loadJobs() {
   expandedJobs = new Set([...expandedJobs].filter((id) => allJobs.some((job) => job.id === id)));
   setConnection("Ready");
   render();
+  renderRouteMap(lastPlan);
+  await loadJobBoards().catch(() => {
+    renderJobBoards();
+  });
+  await loadTransitPicker().catch(() => {
+    setTransitPickerSummary("Could not refresh verified transit choices after loading jobs.");
+  });
+  scheduleAutoPlanRoute();
+}
+
+function scheduleAutoPlanRoute() {
+  window.clearTimeout(planRefreshTimer);
+  planRefreshTimer = window.setTimeout(() => {
+    autoPlanRoute().catch(() => {});
+  }, 250);
+}
+
+function connectLiveJobEvents() {
+  if (!window.EventSource || liveJobsEventSource) return;
+  liveJobsEventSource = new EventSource("/api/events");
+  liveJobsEventSource.addEventListener("jobs", () => {
+    loadJobs().catch(() => {
+      setConnection("Sync error");
+    });
+  });
+  liveJobsEventSource.addEventListener("status", () => {
+    loadSourceStatus().catch(() => {});
+  });
+  liveJobsEventSource.onerror = () => {
+    setConnection("Reconnecting");
+  };
+  setConnection("Live sync");
 }
 
 async function loadSourceConfig() {
@@ -684,7 +1078,7 @@ function render() {
   jobTabs.forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === activeTab);
   });
-  if (sourcePanel) sourcePanel.hidden = activeTab === "source";
+  if (sourcePanel) sourcePanel.hidden = activeTab !== "source";
 
   filteredJobs.forEach((job) => {
     const fragment = template.content.cloneNode(true);
@@ -839,7 +1233,10 @@ async function importTransitFeed() {
     setRoutePlanStatus(payload.error || "Import failed");
     return;
   }
-  setRoutePlanStatus(`Imported ${payload.result?.stopsCount || 0} stops`);
+  setRoutePlanStatus(
+    `Imported ${payload.result?.routesCount || 0} verified routes and ${payload.result?.stopsCount || 0} stops`,
+  );
+  await loadTransitPicker();
 }
 
 async function importCtsZip() {
@@ -858,7 +1255,40 @@ async function importCtsZip() {
     setRoutePlanStatus(payload.error || "CTS zip import failed");
     return;
   }
-  setRoutePlanStatus(`Loaded CTS zip: ${payload.result?.stopsCount || 0} stops`);
+  setRoutePlanStatus(
+    `Loaded CTS zip: ${payload.result?.routesCount || 0} verified routes and ${payload.result?.stopsCount || 0} stops`,
+  );
+  await loadTransitPicker();
+}
+
+async function placeOpenJobsOnMap() {
+  if (!placeOpenJobsButton) return;
+  const originalText = placeOpenJobsButton.textContent;
+  placeOpenJobsButton.disabled = true;
+  placeOpenJobsButton.textContent = "Placing jobs";
+  setRoutePlanStatus("Placing open jobs on map");
+
+  const response = await fetch("/api/jobs/geocode-open", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ limit: 25 }),
+  });
+  if (response.status === 401) return;
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    setRoutePlanStatus(payload.error || "Could not place open jobs");
+    placeOpenJobsButton.disabled = false;
+    placeOpenJobsButton.textContent = originalText;
+    return;
+  }
+
+  setRoutePlanStatus(`Mapped ${payload.updated || 0} open jobs`);
+  await loadJobs();
+  placeOpenJobsButton.disabled = false;
+  placeOpenJobsButton.textContent = originalText;
 }
 
 async function planTransitRoute() {
@@ -875,7 +1305,11 @@ async function planTransitRoute() {
     return;
   }
   if (!jobs.length) {
-    setRoutePlanStatus("No jobs available to route");
+    setRoutePlanStatus(
+      transitPickerData?.verified_schedule
+        ? "No jobs have verified access to the selected route, section, or stop"
+        : "No jobs available to route",
+    );
     return;
   }
 
@@ -893,6 +1327,7 @@ async function planTransitRoute() {
       onestop_id: onestopId,
       origin,
       selected_job_ids: selectedJobIdsForPlan(),
+      transit_selection: transitSelection,
     }),
   });
 
@@ -907,7 +1342,7 @@ async function planTransitRoute() {
     return;
   }
 
-  setRoutePlanStatus(`Planned ${payload.summary?.jobs || 0} jobs`);
+  setRoutePlanStatus(payload.summary?.selection_message || `Planned ${payload.summary?.jobs || 0} jobs`);
   renderRoutePlan(payload);
   renderRouteModal(payload);
 }
@@ -995,6 +1430,15 @@ if (sourcePanel) {
 if (reloadSourceButton) {
   reloadSourceButton.addEventListener("click", () => {
     loadSourceConfig();
+    loadJobBoards().catch(() => {});
+  });
+}
+
+if (refreshBoardsButton) {
+  refreshBoardsButton.addEventListener("click", () => {
+    loadJobBoards().catch(() => {
+      renderJobBoards();
+    });
   });
 }
 
@@ -1020,11 +1464,92 @@ if (scrapeNowButton) {
     if (response.status === 401) return;
     await loadJobs();
     await loadSourceStatus();
+    await loadJobBoards().catch(() => {});
   });
 }
 
 if (useLocationButton) {
   useLocationButton.addEventListener("click", useLiveLocation);
+}
+
+if (placeOpenJobsButton) {
+  placeOpenJobsButton.addEventListener("click", placeOpenJobsOnMap);
+}
+
+if (transitOnestopId) {
+  transitOnestopId.addEventListener("change", () => {
+    const onestopId = normalizeStoredOnestopId(transitOnestopId.value);
+    transitOnestopId.value = onestopId;
+    if (onestopId) localStorage.setItem(storageKeys.onestopId, onestopId);
+    resetTransitRouteScope();
+    transitEligibleJobIds = null;
+    loadTransitPicker().catch(() => {
+      setTransitPickerSummary("Could not load verified transit choices for this feed.");
+    }).finally(scheduleAutoPlanRoute);
+  });
+}
+
+if (planOptionSelect) {
+  planOptionSelect.addEventListener("change", () => {
+    transitSelection.plan_id = planOptionSelect.value;
+    resetTransitRouteScope();
+    loadTransitPicker().catch(() => {
+      setTransitPickerSummary("Could not update the selected planning option.");
+    }).finally(scheduleAutoPlanRoute);
+  });
+}
+
+if (corridorSelect) {
+  corridorSelect.addEventListener("change", () => {
+    const previous = transitSelection.corridor_ids;
+    const values = selectedValues(corridorSelect);
+    if (values.includes(ALL_ACCESSIBLE_ROUTES) && values.length > 1) {
+      transitSelection.corridor_ids = previous.includes(ALL_ACCESSIBLE_ROUTES)
+        ? values.filter((value) => value !== ALL_ACCESSIBLE_ROUTES)
+        : [ALL_ACCESSIBLE_ROUTES];
+    } else {
+      transitSelection.corridor_ids = values.length ? values : [ALL_ACCESSIBLE_ROUTES];
+    }
+    transitSelection.section_id = ALL_SELECTED_ROUTE_SECTIONS;
+    transitSelection.stop_id = ALL_STOPS_SELECTED;
+    loadTransitPicker().catch(() => {
+      setTransitPickerSummary("Could not update the selected route corridors.");
+    }).finally(scheduleAutoPlanRoute);
+  });
+}
+
+if (routeSectionSelect) {
+  routeSectionSelect.addEventListener("change", () => {
+    const value = routeSectionSelect.value;
+    if (value.startsWith("section:")) {
+      transitSelection.section_id = value.slice("section:".length);
+      transitSelection.stop_id = ALL_STOPS_SELECTED;
+    } else if (value.startsWith("stop:")) {
+      transitSelection.section_id = ALL_SELECTED_ROUTE_SECTIONS;
+      transitSelection.stop_id = value.slice("stop:".length);
+    } else {
+      transitSelection.section_id = ALL_SELECTED_ROUTE_SECTIONS;
+      transitSelection.stop_id = ALL_STOPS_SELECTED;
+    }
+    loadTransitPicker().catch(() => {
+      setTransitPickerSummary("Could not update the selected route section or stop.");
+    }).finally(scheduleAutoPlanRoute);
+  });
+}
+
+if (allStopsSelectedButton) {
+  allStopsSelectedButton.addEventListener("click", () => {
+    transitSelection.stop_id = ALL_STOPS_SELECTED;
+    if (routeSectionSelect) {
+      routeSectionSelect.value =
+        transitSelection.section_id === ALL_SELECTED_ROUTE_SECTIONS
+          ? ALL_SELECTED_ROUTE_SECTIONS
+          : `section:${transitSelection.section_id}`;
+    }
+    loadTransitPicker().catch(() => {
+      setTransitPickerSummary("Could not clear the individual stop selection.");
+    }).finally(scheduleAutoPlanRoute);
+  });
 }
 
 if (importTransitButton) {
@@ -1054,11 +1579,19 @@ if (routeModal) {
   });
 }
 
-loadStoredOrigin();
-renderRoutePlan(null);
-loadJobs();
-loadSourceConfig();
-loadSourceStatus();
-importCtsZip().catch(() => {});
-refreshLiveOrigin().catch(() => {});
-ensureRouteMap();
+async function initializeApp() {
+  loadStoredOrigin();
+  renderRoutePlan(null);
+  ensureRouteMap();
+  connectLiveJobEvents();
+  await Promise.allSettled([
+    loadJobs(),
+    loadSourceConfig(),
+    loadSourceStatus(),
+    importCtsZip(),
+    refreshLiveOrigin(),
+  ]);
+  scheduleAutoPlanRoute();
+}
+
+initializeApp();

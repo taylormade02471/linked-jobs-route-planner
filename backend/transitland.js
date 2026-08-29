@@ -3,6 +3,19 @@ const fs = require("fs");
 const path = require("path");
 const unzipper = require("unzipper");
 const { parse } = require("csv-parse/sync");
+const {
+  buildTransitRouteSections,
+  findScheduledTransitLeg,
+  formatRouteLegDisplay,
+} = require("../shared/domain/transitRouteSections");
+const {
+  ALL_ACCESSIBLE_ROUTES,
+  ALL_SELECTED_ROUTE_SECTIONS,
+  ALL_STOPS_SELECTED,
+  buildTransitFilterState,
+  transitAccessForJob,
+} = require("../shared/domain/transitFilters");
+const { normalizeMoneyToCents } = require("../shared/domain/jobSchema");
 
 const DATA_DIR = path.join(__dirname, "data");
 const CACHE_DIR = path.join(DATA_DIR, "transitland");
@@ -138,18 +151,44 @@ async function parseCsvFromZip(zipFile, targetName) {
 }
 
 async function extractGtfsArtifacts(zipFile) {
-  const [stopsRows, stopTimesRows] = await Promise.all([
+  const [routesRows, tripsRows, stopsRows, stopTimesRows, shapesRows] = await Promise.all([
+    parseCsvFromZip(zipFile, "routes\\.txt"),
+    parseCsvFromZip(zipFile, "trips\\.txt"),
     parseCsvFromZip(zipFile, "stops\\.txt"),
     parseCsvFromZip(zipFile, "stop_times\\.txt"),
+    parseCsvFromZip(zipFile, "shapes\\.txt"),
   ]);
+
+  const routes = routesRows.map((row) => ({
+    route_id: row.route_id || "",
+    route_short_name: row.route_short_name || "",
+    route_long_name: row.route_long_name || "",
+    route_desc: row.route_desc || "",
+    route_type: row.route_type || "",
+  }));
+
+  const trips = tripsRows.map((row) => ({
+    route_id: row.route_id || "",
+    service_id: row.service_id || "",
+    trip_id: row.trip_id || "",
+    trip_headsign: row.trip_headsign || "",
+    direction_id: row.direction_id || "",
+    block_id: row.block_id || "",
+    shape_id: row.shape_id || "",
+  }));
 
   const stops = stopsRows.map((row) => ({
     stop_id: row.stop_id || "",
     name: row.stop_name || "",
+    stop_name: row.stop_name || "",
     lat: Number.parseFloat(row.stop_lat),
     lon: Number.parseFloat(row.stop_lon),
+    stop_lat: row.stop_lat || "",
+    stop_lon: row.stop_lon || "",
     desc: row.stop_desc || "",
+    stop_desc: row.stop_desc || "",
     code: row.stop_code || "",
+    stop_code: row.stop_code || "",
     zone_id: row.zone_id || "",
   }));
 
@@ -163,7 +202,15 @@ async function extractGtfsArtifacts(zipFile) {
     departure_s: toSeconds(row.departure_time),
   }));
 
-  return { stops, stop_times };
+  const shapes = shapesRows.map((row) => ({
+    shape_id: row.shape_id || "",
+    shape_pt_lat: Number.parseFloat(row.shape_pt_lat),
+    shape_pt_lon: Number.parseFloat(row.shape_pt_lon),
+    shape_pt_sequence: Number.parseInt(row.shape_pt_sequence || "0", 10),
+    shape_dist_traveled: row.shape_dist_traveled || "",
+  }));
+
+  return { routes, trips, stops, stop_times, shapes };
 }
 
 async function importGtfsForOperator(onestopId) {
@@ -179,15 +226,23 @@ async function importGtfsForOperator(onestopId) {
 
   const outZip = zipPathFor(onestopId);
   await downloadGtfs(zipUrl, outZip);
-  const { stops, stop_times } = await extractGtfsArtifacts(outZip);
+  const { routes, trips, stops, stop_times, shapes } = await extractGtfsArtifacts(outZip);
 
   const payload = {
     importedAt: new Date().toISOString(),
     onestopId,
     feed,
     feedUrl: zipUrl,
+    source: {
+      type: "static_gtfs",
+      verified: true,
+      source_label: "Scheduled estimate",
+    },
+    routes,
+    trips,
     stops,
     stop_times,
+    shapes,
   };
 
   fs.writeFileSync(cachePathFor(onestopId), JSON.stringify(payload, null, 2), "utf8");
@@ -195,6 +250,8 @@ async function importGtfsForOperator(onestopId) {
     ok: true,
     onestopId,
     feedUrl: zipUrl,
+    routesCount: routes.length,
+    tripsCount: trips.length,
     stopsCount: stops.length,
     stopTimesCount: stop_times.length,
   };
@@ -217,7 +274,18 @@ function resolveLocalGtfsZipPath(filePath) {
 }
 
 function hasGtfsCache(onestopId) {
-  return fs.existsSync(cachePathFor(onestopId));
+  return Boolean(loadGtfsCache(onestopId));
+}
+
+function hasVerifiedGtfsSchedule(onestopId) {
+  const cache = loadGtfsCache(onestopId);
+  return Boolean(
+    cache &&
+      Array.isArray(cache.routes) &&
+      Array.isArray(cache.trips) &&
+      Array.isArray(cache.stops) &&
+      Array.isArray(cache.stop_times),
+  );
 }
 
 async function importGtfsFromLocalZip({ filePath, onestopId = CTS_DEFAULT_ONESTOP_ID, feedUrl = "local-zip" } = {}) {
@@ -225,7 +293,7 @@ async function importGtfsFromLocalZip({ filePath, onestopId = CTS_DEFAULT_ONESTO
   if (!zipFile) {
     throw new Error("No local CTS GTFS zip file was found");
   }
-  const { stops, stop_times } = await extractGtfsArtifacts(zipFile);
+  const { routes, trips, stops, stop_times, shapes } = await extractGtfsArtifacts(zipFile);
   const payload = {
     importedAt: new Date().toISOString(),
     onestopId,
@@ -238,8 +306,16 @@ async function importGtfsFromLocalZip({ filePath, onestopId = CTS_DEFAULT_ONESTO
         static_current: feedUrl,
       },
     },
+    source: {
+      type: "static_gtfs",
+      verified: true,
+      source_label: "Scheduled estimate",
+    },
+    routes,
+    trips,
     stops,
     stop_times,
+    shapes,
   };
   fs.writeFileSync(cachePathFor(onestopId), JSON.stringify(payload, null, 2), "utf8");
   return {
@@ -247,6 +323,8 @@ async function importGtfsFromLocalZip({ filePath, onestopId = CTS_DEFAULT_ONESTO
     onestopId,
     feedUrl,
     zipFile,
+    routesCount: routes.length,
+    tripsCount: trips.length,
     stopsCount: stops.length,
     stopTimesCount: stop_times.length,
   };
@@ -257,6 +335,50 @@ function loadGtfsCache(onestopId) {
   const cache = loadJson(filePath, null);
   if (!cache) return null;
   return cache;
+}
+
+function scheduleInputFromCache(cache) {
+  return {
+    routes: Array.isArray(cache?.routes) ? cache.routes : [],
+    trips: Array.isArray(cache?.trips) ? cache.trips : [],
+    stops: Array.isArray(cache?.stops) ? cache.stops : [],
+    stop_times: Array.isArray(cache?.stop_times) ? cache.stop_times : [],
+    source: cache?.source || {
+      type: "static_gtfs",
+      source_label: "Scheduled estimate",
+    },
+  };
+}
+
+function getTransitPickerData({ onestopId, jobs = [], plans = [], selection = {} } = {}) {
+  const cache = loadGtfsCache(onestopId);
+  const scheduleInput = scheduleInputFromCache(cache);
+  const sections = cache ? buildTransitRouteSections(scheduleInput) : [];
+  const state = buildTransitFilterState({
+    jobs,
+    plans,
+    sections,
+    selection,
+  });
+
+  return {
+    ok: true,
+    onestopId,
+    imported: Boolean(cache),
+    verified_schedule: sections.length > 0,
+    source_label: sections[0]?.source_label || (cache ? "Scheduled estimate" : ""),
+    plan_options: state.plan_options,
+    corridors: state.corridors,
+    sections: state.sections,
+    stops: state.stops,
+    job_ids: state.jobs.map((job) => job.id).filter(Boolean),
+    selection: state.selection,
+    counts: {
+      routes: sections.length ? new Set(sections.map((section) => section.route_id)).size : 0,
+      sections: sections.length,
+      accessible_jobs: state.jobs.length,
+    },
+  };
 }
 
 function haversineKm(a, b) {
@@ -443,6 +565,16 @@ function estimateCompletionMinutes(job, plan) {
   return 55;
 }
 
+function jobPayCents(job = {}) {
+  return normalizeMoneyToCents(
+    job.pay_cents ??
+      job.payCents ??
+      job.pay ??
+      job.detail_fields?.shop_pay ??
+      job.detail_fields?.pay
+  );
+}
+
 function getDuePriority(job) {
   const dueDate = job?.due_date instanceof Date ? job.due_date : parseDueDateText(job);
   if (!dueDate) {
@@ -461,14 +593,16 @@ function getDuePriority(job) {
 
 function routeScore(job, plan, directKm, fromCursorKm) {
   const duePriority = getDuePriority(job);
+  const payCents = jobPayCents(job);
   const transitBonus = plan?.mode === "transit_walk" ? 18 : plan?.mode === "walk_only" ? 8 : -8;
   const walkPenalty = Number.isFinite(plan?.legs?.[0]?.distance_km) ? plan.legs[0].distance_km * 12 : 0;
   const visitPenalty = Number.isFinite(job?.estimated_minutes) ? job.estimated_minutes / 3 : 0;
+  const moneyBoost = Math.min(45, payCents / 100);
   const urgencyBoost = [120, 100, 82, 62, 35][duePriority.rank] || 20;
   const proximityBoost = Number.isFinite(directKm) ? Math.max(0, 40 - directKm * 10) : 0;
   const cursorClusterBoost = Number.isFinite(fromCursorKm) ? Math.max(0, 24 - fromCursorKm * 8) : 0;
   const daysPenalty = Number.isFinite(duePriority.days) ? Math.max(0, duePriority.days) * 6 : 20;
-  return urgencyBoost + transitBonus + proximityBoost + cursorClusterBoost - walkPenalty - visitPenalty - daysPenalty;
+  return urgencyBoost + moneyBoost + transitBonus + proximityBoost + cursorClusterBoost - walkPenalty - visitPenalty - daysPenalty;
 }
 
 function stopLabel(stop) {
@@ -476,52 +610,143 @@ function stopLabel(stop) {
   return stop.name || stop.stop_name || stop.stop_id || "";
 }
 
-function buildTransitLegs(origin, destination, originStop, destinationStop, directKm) {
-  const originWalkKm = originStop ? haversineKm(origin, originStop) : null;
-  const destinationWalkKm = destinationStop ? haversineKm(destination, destinationStop) : null;
-  const transitKm =
-    originStop && destinationStop ? haversineKm(originStop, destinationStop) : null;
-  const transitViable =
-    originStop &&
-    destinationStop &&
-    Number.isFinite(originWalkKm) &&
-    Number.isFinite(destinationWalkKm) &&
-    originWalkKm <= 1.75 &&
-    destinationWalkKm <= 1.75;
-  const walkOnlyViable = Number.isFinite(directKm) && directKm <= 2.5;
+function stopArray(value) {
+  return (Array.isArray(value) ? value : [value]).filter(
+    (stop) => stop && stop.stop_id && Number.isFinite(stop.lat) && Number.isFinite(stop.lon),
+  );
+}
 
-  if (transitViable) {
-    return {
-      mode: "transit_walk",
-      rideShareSuggested: false,
-      score: Math.max(0, 100 - originWalkKm * 18 - destinationWalkKm * 18 - directKm * 2),
-      summary: "Walk to transit, ride, then walk to the job",
-      legs: [
-        {
-          mode: "walk",
-          from: { ...origin, label: "Start" },
-          to: { ...originStop, label: stopLabel(originStop) },
-          distance_km: originWalkKm,
-          maps_url: directionsUrl(origin, originStop, "walking"),
+function selectedRouteIds(selection = {}) {
+  const values = Array.isArray(selection.corridor_ids)
+    ? selection.corridor_ids
+    : Array.isArray(selection.corridorIds)
+    ? selection.corridorIds
+    : [];
+  return values
+    .map((value) => String(value || "").trim())
+    .filter((value) => value && value !== ALL_ACCESSIBLE_ROUTES);
+}
+
+function selectedSectionIds(selection = {}) {
+  const sectionId = String(selection.section_id || selection.sectionId || "").trim();
+  return sectionId && sectionId !== ALL_SELECTED_ROUTE_SECTIONS ? [sectionId] : [];
+}
+
+function selectedStopId(selection = {}) {
+  const stopId = String(selection.stop_id || selection.stopId || "").trim();
+  return stopId && stopId !== ALL_STOPS_SELECTED ? stopId : "";
+}
+
+function estimatedWalkMinutes(distanceKm) {
+  if (!Number.isFinite(distanceKm)) return null;
+  return Math.max(1, Math.ceil((distanceKm / 4.8) * 60));
+}
+
+function buildTransitLegs(
+  origin,
+  destination,
+  originStops,
+  destinationStops,
+  directKm,
+  cache,
+  transitSelection = {},
+  job = {},
+) {
+  const originCandidates = stopArray(originStops);
+  const destinationCandidates = stopArray(destinationStops);
+  const scheduledLeg = cache
+    ? findScheduledTransitLeg({
+        ...scheduleInputFromCache(cache),
+        origin_stop_ids: originCandidates.map((stop) => stop.stop_id),
+        destination_stop_ids: destinationCandidates.map((stop) => stop.stop_id),
+        route_ids: selectedRouteIds(transitSelection),
+        section_ids: selectedSectionIds(transitSelection),
+        stop_id: selectedStopId(transitSelection),
+      })
+    : null;
+
+  if (scheduledLeg) {
+    const boardStop = scheduledLeg.start_stop;
+    const exitStop = scheduledLeg.end_stop;
+    const originWalkKm = haversineKm(origin, boardStop);
+    const destinationWalkKm = haversineKm(destination, exitStop);
+    const transitKm = haversineKm(boardStop, exitStop);
+    const transitViable =
+      Number.isFinite(originWalkKm) &&
+      Number.isFinite(destinationWalkKm) &&
+      originWalkKm <= 1.75 &&
+      destinationWalkKm <= 1.75;
+
+    if (transitViable) {
+      const access = transitAccessForJob(job);
+      const transitDetails = {
+        ...scheduledLeg,
+        board_stop: boardStop,
+        exit_stop: exitStop,
+        walk_time_minutes: access.walk_time_minutes ?? estimatedWalkMinutes(destinationWalkKm),
+        job_work_time_minutes:
+          access.job_work_time_minutes ?? estimateCompletionMinutes(job, { mode: "transit_walk" }),
+        buffer_risk_label:
+          access.buffer_risk_label ||
+          (scheduledLeg.source_label === "Live verified"
+            ? "Live timing verified"
+            : "Scheduled estimate - allow timing buffer"),
+      };
+      const transitDisplay = formatRouteLegDisplay(transitDetails);
+      const rideSeconds = Math.max(
+        0,
+        (toSeconds(scheduledLeg.scheduled_dropoff_time) || 0) -
+          (toSeconds(scheduledLeg.scheduled_pickup_time) || 0),
+      );
+      const directionText = scheduledLeg.direction ? ` toward ${scheduledLeg.direction}` : "";
+
+      return {
+        mode: "transit_walk",
+        rideShareSuggested: false,
+        score: Math.max(0, 100 - originWalkKm * 18 - destinationWalkKm * 18 - directKm * 2),
+        summary: `Route ${scheduledLeg.route_short_name}${directionText}: scheduled transit to the job`,
+        transit_details: {
+          ...transitDetails,
+          ...transitDisplay,
+          scheduled_ride_minutes: rideSeconds ? Math.ceil(rideSeconds / 60) : null,
+          origin_walk_time_minutes: estimatedWalkMinutes(originWalkKm),
         },
-        {
-          mode: "transit",
-          from: { ...originStop, label: stopLabel(originStop) },
-          to: { ...destinationStop, label: stopLabel(destinationStop) },
-          distance_km: transitKm,
-          maps_url: directionsUrl(originStop, destinationStop, "transit"),
-        },
-        {
-          mode: "walk",
-          from: { ...destinationStop, label: stopLabel(destinationStop) },
-          to: { ...destination, label: "Job" },
-          distance_km: destinationWalkKm,
-          maps_url: directionsUrl(destinationStop, destination, "walking"),
-        },
-      ],
-    };
+        legs: [
+          {
+            mode: "walk",
+            from: { ...origin, label: "Start" },
+            to: { ...boardStop, label: stopLabel(boardStop) },
+            distance_km: originWalkKm,
+            maps_url: directionsUrl(origin, boardStop, "walking"),
+          },
+          {
+            mode: "transit",
+            from: { ...boardStop, label: stopLabel(boardStop) },
+            to: { ...exitStop, label: stopLabel(exitStop) },
+            distance_km: transitKm,
+            route_id: scheduledLeg.route_id,
+            route_short_name: scheduledLeg.route_short_name,
+            route_long_name: scheduledLeg.route_long_name,
+            direction: scheduledLeg.direction,
+            trip_id: scheduledLeg.trip_id,
+            scheduled_pickup_time: scheduledLeg.scheduled_pickup_time,
+            scheduled_dropoff_time: scheduledLeg.scheduled_dropoff_time,
+            source_label: scheduledLeg.source_label,
+            maps_url: directionsUrl(boardStop, exitStop, "transit"),
+          },
+          {
+            mode: "walk",
+            from: { ...exitStop, label: stopLabel(exitStop) },
+            to: { ...destination, label: "Job" },
+            distance_km: destinationWalkKm,
+            maps_url: directionsUrl(exitStop, destination, "walking"),
+          },
+        ],
+      };
+    }
   }
 
+  const walkOnlyViable = Number.isFinite(directKm) && directKm <= 2.5;
   if (walkOnlyViable) {
     return {
       mode: "walk_only",
@@ -544,7 +769,7 @@ function buildTransitLegs(origin, destination, originStop, destinationStop, dire
     mode: "no_route",
     rideShareSuggested: true,
     score: Math.max(0, 20 - directKm * 3),
-    summary: "No practical walk/transit option found",
+    summary: "No verified scheduled transit connection was found for this job",
     legs: [],
   };
 }
@@ -564,9 +789,20 @@ async function resolveJobCoordinate(job = {}) {
   return { lat: geo.lat, lon: geo.lon, source: "geocode", query: geo.query, display_name: geo.display_name };
 }
 
-async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
+async function buildTransitRoutePlan({ onestopId, origin, jobs = [], plans = [], transitSelection = {} }) {
   const cache = loadGtfsCache(onestopId);
-  const transitEnabled = Boolean(cache);
+  const picker = getTransitPickerData({
+    onestopId,
+    jobs,
+    plans,
+    selection: transitSelection,
+  });
+  const transitEnabled = picker.verified_schedule;
+  const selectionProvided = Object.keys(transitSelection || {}).length > 0;
+  const accessibleJobIds = new Set(picker.job_ids.map((jobId) => String(jobId)));
+  const scopedJobs = selectionProvided
+    ? jobs.filter((job) => accessibleJobIds.has(String(job.id)))
+    : jobs;
 
   const originCoordinate = coordinateFromJob(origin) ||
     (origin && origin.address ? await geocodeAddress(origin.address).catch(() => null) : null);
@@ -576,7 +812,7 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
   }
 
   const candidateJobs = [];
-  for (const job of jobs) {
+  for (const job of scopedJobs) {
     const resolved = await resolveJobCoordinate(job);
     if (!resolved) continue;
     const originStops = transitEnabled
@@ -588,13 +824,17 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
     const plan = buildTransitLegs(
       { lat: originCoordinate.lat, lon: originCoordinate.lon },
       { lat: resolved.lat, lon: resolved.lon },
-      originStops[0],
-      jobStops[0],
+      originStops,
+      jobStops,
       haversineKm(
         { lat: originCoordinate.lat, lon: originCoordinate.lon },
         { lat: resolved.lat, lon: resolved.lon }
-      )
+      ),
+      cache,
+      picker.selection,
+      job,
     );
+    const estimatedPayCents = jobPayCents(job);
 
     candidateJobs.push({
       jobId: job.id,
@@ -605,14 +845,25 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       state: job.state || "",
       postcode: job.postcode || "",
       source_url: job.source_url || "",
+      pay: job.pay || job.detail_fields?.shop_pay || "",
+      estimated_pay_cents: estimatedPayCents,
+      transit_access: job.transit_access || job.transitAccess || null,
+      accessible_route_ids: job.accessible_route_ids || job.accessibleRouteIds || [],
+      accessible_section_ids: job.accessible_section_ids || job.accessibleSectionIds || [],
+      accessible_stop_ids: job.accessible_stop_ids || job.accessibleStopIds || [],
+      detail_fields: job.detail_fields || {},
       destination: resolved,
-      origin_stop: originStops[0] || null,
-      destination_stop: jobStops[0] || null,
-      origin_stop_candidates: originStops.slice(0, 3),
-      destination_stop_candidates: jobStops.slice(0, 3),
+      origin_stop: plan.transit_details?.board_stop || null,
+      destination_stop: plan.transit_details?.exit_stop || null,
+      origin_stop_candidates: plan.transit_details?.board_stop ? [plan.transit_details.board_stop] : [],
+      destination_stop_candidates: plan.transit_details?.exit_stop ? [plan.transit_details.exit_stop] : [],
       due_date: parseDueDateText(job),
       estimated_minutes: estimateCompletionMinutes(job, plan),
       due_priority: getDuePriority(job),
+      route_value_score: routeScore(job, plan, haversineKm(
+        { lat: originCoordinate.lat, lon: originCoordinate.lon },
+        { lat: resolved.lat, lon: resolved.lon }
+      )),
       ...plan,
     });
   }
@@ -652,14 +903,23 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       const plan = buildTransitLegs(
         cursor,
         item.destination,
-        originStops[0],
-        jobStops[0],
-        directKm
+        originStops,
+        jobStops,
+        directKm,
+        cache,
+        picker.selection,
+        item,
       );
+      const payCents = jobPayCents(item);
       const clusterBoost = Number.isFinite(directKm) ? Math.max(0, 20 - directKm * 7) : 0;
       const transitClusterBoost = plan.mode === "transit_walk" ? 12 : plan.mode === "walk_only" ? 4 : 0;
+      const moneyBoost = Math.min(55, payCents / 100);
+      const minutes = Math.max(15, Number(item.estimated_minutes) || 45);
+      const efficiencyBoost = Math.min(35, (payCents / 100) / (minutes / 60 || 1) / 2);
       const dynamicScore =
         plan.score +
+        moneyBoost +
+        efficiencyBoost +
         clusterBoost +
         transitClusterBoost -
         route.length * 1.5 -
@@ -683,9 +943,12 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
     const plan = buildTransitLegs(
       cursor,
       chosen.destination,
-      originStops[0],
-      jobStops[0],
-      directKm
+      originStops,
+      jobStops,
+      directKm,
+      cache,
+      picker.selection,
+      chosen,
     );
 
     route.push({
@@ -695,11 +958,13 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       to: chosen.destination,
       direct_distance_km: directKm,
       estimated_minutes: chosen.estimated_minutes || null,
-      origin_stop_candidates: chosen.origin_stop_candidates || [],
-      destination_stop_candidates: chosen.destination_stop_candidates || [],
-      origin_walk_km: chosen.legs[0]?.distance_km || null,
-      destination_walk_km: chosen.legs[2]?.distance_km || chosen.legs[0]?.distance_km || null,
-      transit_distance_km: chosen.legs[1]?.distance_km || null,
+      origin_stop: plan.transit_details?.board_stop || null,
+      destination_stop: plan.transit_details?.exit_stop || null,
+      origin_stop_candidates: plan.transit_details?.board_stop ? [plan.transit_details.board_stop] : [],
+      destination_stop_candidates: plan.transit_details?.exit_stop ? [plan.transit_details.exit_stop] : [],
+      origin_walk_km: plan.legs[0]?.distance_km || null,
+      destination_walk_km: plan.legs[2]?.distance_km || plan.legs[0]?.distance_km || null,
+      transit_distance_km: plan.legs[1]?.distance_km || null,
       route_url: directionsUrl(cursor, chosen.destination, plan.mode === "walk_only" ? "walking" : "transit"),
     });
 
@@ -717,6 +982,13 @@ async function buildTransitRoutePlan({ onestopId, origin, jobs = [] }) {
       walk_only: route.filter((item) => item.mode === "walk_only").length,
       no_route: route.filter((item) => item.mode === "no_route").length,
       transit_data_loaded: transitEnabled,
+      source_label: picker.source_label || "",
+      accessible_jobs: scopedJobs.length,
+      estimated_pay_cents: route.reduce((total, item) => total + (Number(item.estimated_pay_cents) || 0), 0),
+      selection_message:
+        transitEnabled && !scopedJobs.length
+          ? "No jobs have verified route, section, or stop access for this selection."
+          : "",
     },
   };
 }
@@ -726,8 +998,10 @@ module.exports = {
   importGtfsFromLocalZip,
   loadGtfsCache,
   hasGtfsCache,
+  hasVerifiedGtfsSchedule,
   nearestStops,
   geocodeAddress,
+  getTransitPickerData,
   buildTransitRoutePlan,
   CTS_DEFAULT_ONESTOP_ID,
 };
