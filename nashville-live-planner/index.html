@@ -19,6 +19,13 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 .providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.jobtabs,.routeActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.jobtabs button{font-size:13px;min-height:38px;padding:8px 10px}.jobtabs button.active{background:#17324d;color:#fff}.routeActions span{font-size:12px;color:var(--muted)}.jobSelect{display:flex;align-items:center;gap:6px;min-width:auto;color:#17324d;font-weight:bold;margin-top:8px}.jobSelect input{width:auto;min-height:auto}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin,.redpin,.graypin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.redpin{background:#d71920;border-color:#7a1114}.graypin{background:#a7b0b8;border-color:#4d5964}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.reviewQueue{display:grid;gap:8px;margin-top:8px}.reviewItem{border:1px solid #c9e5cc;border-radius:9px;background:#f7fff7;padding:8px;font-size:13px}.reviewItem.blocked{border-color:#f0b7b2;background:#fff7f6}.reviewItem b{display:block;color:#17324d}.reviewItem span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
+.priorityPanel{position:sticky;top:10px;z-index:6;margin:10px 0;padding:10px;border:1px solid #c9e5cc;border-radius:14px;background:rgba(247,255,247,.96);box-shadow:0 16px 40px rgba(23,50,77,.14);backdrop-filter:blur(8px)}
+.priorityPanelHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-weight:800;color:#17324d}
+.priorityPanelHead small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+.priorityPanelTag{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#17324d;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+.priorityJobsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;margin-top:10px}
+.priorityJobCard{border-color:#92c89c;background:#fff}
+.priorityJobCard.needs{border-color:#f0b7b2;background:#fff7f6}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
 main{display:flex;flex-direction:column}
 main>.notice,main>.metrics,main>.card,main>.siteFooter{order:3}
@@ -28,9 +35,8 @@ main>#mainMap{order:1}
 .jobBoardSummary::-webkit-details-marker{display:none}
 .jobBoardSummary small{display:block;color:var(--muted);font-weight:400;margin-top:4px}
 #workApps[open]>.jobBoardSummary{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
-#appRecommendations{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,32%);overflow-x:auto;overflow-y:hidden;gap:8px;padding-bottom:8px;scroll-snap-type:x proximity}
-#appRecommendations .workjob{scroll-snap-align:start}
-@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-auto-columns:minmax(260px,82%)}}
+#appRecommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));overflow:visible;gap:8px;padding-bottom:8px}
+@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-template-columns:1fr}.priorityPanel{position:static}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
 @media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
@@ -158,7 +164,18 @@ main>#mainMap{order:1}
   </div>
   <div id="importReviewQueue" class="reviewQueue wide"></div>
  </div>
- <div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
+<div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
+ <div id="priorityJobsPanel" class="priorityPanel">
+  <div class="priorityPanelHead">
+   <div>
+    Needed Jobs to Complete
+    <small>Priority overlay: needs completion first, then the best paying route cards. WeGo GTFS stays loaded for route planning.</small>
+   </div>
+   <span class="priorityPanelTag">Floating priority window</span>
+  </div>
+  <div id="priorityJobsStatus" class="jobStatus">Priority jobs will appear here above the rest of the board.</div>
+  <div id="priorityJobs" class="priorityJobsGrid"></div>
+ </div>
  <div class="sectionTitle">Best open work near your location</div>
  <div id="appRecommendations" class="recommendations"></div>
  <div class="connectionPanel emailPanel">
@@ -1152,10 +1169,36 @@ function renderImportReview(){
   return `<div class="reviewItem ${blocked?'blocked':''}"><b>${index+1}. ${escapeHtml(item.title)}</b><span>${escapeHtml(providerLabel(item.provider_id))} · ${escapeHtml(item.status)} · ${escapeHtml(W.centsLabel(item.pay_cents))} · ${escapeHtml(workTimeLabel(item))}</span><span>${escapeHtml(item.address||'Address not listed')}</span><span>${escapeHtml(status)}</span></div>`;
  }).join('');
 }
+function priorityJobsForDisplay(){
+ const origin=originForRecommendations();
+ const ranked=W.recommendRouteJobs(workJobs,D,origin,{provider_id:'all',status:'all'});
+ const needs=ranked.filter(job=>job.status==='needs_completion');
+ return (needs.length?needs:ranked).slice(0,6);
+}
+function renderPriorityJobs(){
+ const target=document.getElementById('priorityJobs');
+ const status=document.getElementById('priorityJobsStatus');
+ if(!target||!status)return;
+ const jobs=priorityJobsForDisplay();
+ if(!jobs.length){
+  target.innerHTML='<div class="workjob priorityJobCard needs"><b>No needed jobs yet</b><span>When a job is marked needs completion, it appears here as the top priority window.</span></div>';
+  status.textContent='No needs-completion jobs are saved right now. GTFS and live WeGo data remain available for route planning.';
+  return;
+ }
+ const needsCount=jobs.filter(job=>job.status==='needs_completion').length;
+ const title=needsCount?`${needsCount} needs-completion job(s) pinned to the top.`:'No needs-completion jobs are saved yet, so the overlay is showing the best paying route cards.';
+ status.textContent=`${title} The board stays visible below this floating window.`;
+ target.innerHTML=jobs.map((job,index)=>{
+  const isNeeds=job.status==='needs_completion';
+  const label=isNeeds?'Needs completion first':'Best paying route';
+  return `<div class="workjob priorityJobCard ${isNeeds?'needs':''}"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(workTimeLabel(job))} · ${escapeHtml(job.status)}</span><span><b>Priority:</b> ${escapeHtml(label)}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Route score:</b> ${escapeHtml(String(job.recommendation_score||0))}</span>${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
+ }).join('');
+}
 function renderWorkJobs(){
  renderProviderStats();
  renderPayments();
  renderImportReview();
+ renderPriorityJobs();
  const target=document.getElementById('appRecommendations');
  const status=document.getElementById('appJobStatus');
  if(!target)return;

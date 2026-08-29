@@ -902,9 +902,9 @@
   }
 
   function routeStatusPriority(job) {
-    if (isNeedsCompletionJob(job)) return 65;
-    if (isAssignedJob(job)) return 35;
-    if (isOpenAvailableJob(job)) return 10;
+    if (isNeedsCompletionJob(job)) return 10000;
+    if (isAssignedJob(job)) return 5000;
+    if (isOpenAvailableJob(job)) return 1000;
     return 0;
   }
 

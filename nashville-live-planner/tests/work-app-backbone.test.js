@@ -259,6 +259,20 @@ test("email sync settings preserve allowlist but reject credential fields", () =
   assert.equal(JSON.stringify(safe).includes("do-not-store"), false);
 });
 
+test("needs-completion work stays ahead of assigned and open jobs in route recommendations", () => {
+  const jobs = [
+    { id: "open", title: "Open job", status: "available", address: "100 Main St, Nashville, TN", pay_cents: 1000 },
+    { id: "assigned", title: "Assigned job", status: "assigned", address: "100 Main St, Nashville, TN", pay_cents: 1000 },
+    { id: "needs", title: "Needs completion job", status: "needs_completion", address: "100 Main St, Nashville, TN", pay_cents: 1000 },
+  ];
+
+  const ranked = backbone.recommendRouteJobs(jobs, routeFixture, { lat: 36.1666, lon: -86.78177 }, { provider_id: "all", status: "all" });
+
+  assert.equal(ranked[0].id, "needs");
+  assert.equal(ranked[0].status, "needs_completion");
+  assert.ok(ranked[0].route_status_priority > ranked[1].route_status_priority);
+});
+
 test("api settings sanitize stored registration metadata without secrets", () => {
   const safe = backbone.sanitizeApiSettings({
     api_id: "gmail_readonly_api",
