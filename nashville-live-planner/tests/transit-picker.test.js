@@ -38,19 +38,16 @@ const data = {
   },
 };
 
-test("production Nashville planner keeps old posted jobs empty while exposing submitted video jobs", () => {
-  assert.deepEqual(Object.keys(productionData.jobs || {}), []);
+test("production Nashville planner exposes the current safe video-imported jobs", () => {
+  assert.equal(Object.keys(productionData.jobs || {}).length, 74);
+  assert.match(productionData.source, /Screen_Recording_20260827_233541\.mp4/);
   assert.deepEqual(picker.planSectionKeys(productionData, "No posted jobs"), []);
-  assert.equal(productionData.submittedJobs.length, 15);
-  assert.ok(productionData.submittedJobs.every((job) => job.provider_id === "survey_merchandiser"));
-  assert.equal(productionData.submittedJobs.filter((job) => job.status === "needs_completion").length, 5);
-  assert.equal(productionData.submittedJobs.filter((job) => job.status === "assigned").length, 10);
   assert.ok(
-    productionData.submittedJobs.every((job) =>
+    Object.values(productionData.jobs).every((job) =>
       Object.keys(job).every((field) => !/(password|token|secret|cookie|session|source_text)/i.test(field)),
     ),
   );
-  assert.ok(productionData.submittedJobs.some((job) => job.location_name === "Dollar General #2360"));
+  assert.equal(productionData.jobs["DG-2360"].name, "Dollar General Store #2360");
 });
 
 test("all accessible routes includes every verified section in the selected plan", () => {

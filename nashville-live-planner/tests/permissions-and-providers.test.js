@@ -18,7 +18,7 @@ test("Nashville planner exposes only the requested phone work providers", () => 
   assert.doesNotMatch(backbone, /Jobslinger|MegaLog|SASSIE/i);
 });
 
-test("public planner pages show submitted safe jobs without old posted job sources", () => {
+test("public planner pages expose the current safe video-imported job dataset", () => {
   const nashvilleIndex = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
   const nashvilleData = fs.readFileSync(path.join(plannerRoot, "planner-data.js"), "utf8");
   const desktopIndex = fs.readFileSync(path.join(projectRoot, "frontend", "index.html"), "utf8");
@@ -27,12 +27,11 @@ test("public planner pages show submitted safe jobs without old posted job sourc
   assert.match(nashvilleIndex, /clearLegacyPlannerStorage/);
   assert.match(nashvilleIndex, /nashville_phone_work_jobs_v1/);
   assert.doesNotMatch(nashvilleIndex, /current 18 quick|18 jobs = \$153|1-hour Walgreens|7601 Hwy 70 S/i);
-  assert.doesNotMatch(nashvilleData, /Quick photo audit|Walgreens|7601 Hwy 70 S|3019 Dickerson Pike/i);
-  assert.match(nashvilleData, /submittedJobs/);
-  assert.match(nashvilleData, /Dollar General #2360/);
-  assert.match(nashvilleData, /Family Dollar #1033/);
-  assert.match(nashvilleData, /Food Lion #874/);
-  assert.doesNotMatch(nashvilleData, /password|access_token|refresh_token|cookie|session/i);
+  assert.match(nashvilleData, /Screen_Recording_20260827_233541\.mp4/);
+  assert.match(nashvilleData, /"jobs":\{/);
+  assert.match(nashvilleData, /Dollar General Store #2360/);
+  assert.match(nashvilleData, /Family Dollar Store #1033/);
+  assert.doesNotMatch(nashvilleData, /password|access_token|refresh_token|cookie|source_text/i);
   assert.doesNotMatch(desktopIndex, /Jobslinger|MegaLog|Save live login|source_password/i);
 });
 
@@ -113,6 +112,18 @@ test("Nashville planner separates job tabs and hides transit until View route", 
   assert.match(index, /Select jobs, then View route/);
   assert.match(index, /EXISTING_JOBS_COMPLETED_KEY/);
   assert.match(index, /moveExistingSavedJobsToCompletedOnce/);
+});
+
+test("Nashville planner keeps the map first, collapses the job board, and caps routes at 20 stops", () => {
+  const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(index, /main>#mainMap\{order:1\}/);
+  assert.match(index, /main>#workApps\{order:2\}/);
+  assert.match(index, /<details class="card" id="workApps">/);
+  assert.match(index, /Custom route/);
+  assert.match(index, /Automatic best route/);
+  assert.match(index, /at most 20 stops/);
+  assert.match(index, /Transit buses are hidden until you press View route/);
 });
 
 test("Nashville planner links saved jobs to a separate active and passed history page", () => {

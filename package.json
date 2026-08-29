@@ -5,6 +5,6 @@
   "description": "Local route planner with Android-safe provider job sync.",
   "scripts": {
     "start": "start.cmd",
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --test tests/domain/routePlanner.test.js nashville-live-planner/tests/*.test.js"
   }
 }

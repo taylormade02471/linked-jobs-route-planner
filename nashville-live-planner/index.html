@@ -20,7 +20,16 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 .providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.jobtabs,.routeActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.jobtabs button{font-size:13px;min-height:38px;padding:8px 10px}.jobtabs button.active{background:#17324d;color:#fff}.routeActions span{font-size:12px;color:var(--muted)}.jobSelect{display:flex;align-items:center;gap:6px;min-width:auto;color:#17324d;font-weight:bold;margin-top:8px}.jobSelect input{width:auto;min-height:auto}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin,.redpin,.graypin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.redpin{background:#d71920;border-color:#7a1114}.graypin{background:#a7b0b8;border-color:#4d5964}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.reviewQueue{display:grid;gap:8px;margin-top:8px}.reviewItem{border:1px solid #c9e5cc;border-radius:9px;background:#f7fff7;padding:8px;font-size:13px}.reviewItem.blocked{border-color:#f0b7b2;background:#fff7f6}.reviewItem b{display:block;color:#17324d}.reviewItem span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
-@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
+main{display:flex;flex-direction:column}
+main>.notice,main>.metrics,main>.card,main>.siteFooter{order:3}
+main>#workApps{order:2}
+main>#mainMap{order:1}
+.jobBoardSummary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:4px 2px;font-weight:800;color:#17324d}
+.jobBoardSummary::-webkit-details-marker{display:none}
+.jobBoardSummary small{display:block;color:var(--muted);font-weight:400;margin-top:4px}
+#workApps[open]>.jobBoardSummary{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
+#appRecommendations{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,32%);overflow-x:auto;gap:8px;padding-bottom:5px}
+@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-auto-columns:minmax(260px,82%)}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
 @media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
@@ -38,7 +47,8 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
  <div class="metric">Transit plan<strong>Hidden</strong><span>Select jobs, then View route</span></div>
 </div>
 
-<div class="card" id="workApps">
+<details class="card" id="workApps">
+ <summary class="jobBoardSummary"><span><span class="greenpin"></span>Phone work app jobs<small>Open the drawer to review available, accepted, and completed work.</small></span><span>Open jobs +</span></summary>
  <div class="sectionTitle"><span class="greenpin"></span>Phone work app jobs</div>
  <div class="jobStatus"><a href="./jobs.html" target="_blank" rel="noopener">Open saved jobs and completed / passed history</a> · The homepage stays focused on current route work.</div>
  <div id="providerStats" class="providergrid"></div>
@@ -198,6 +208,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
   <div id="paymentRows"></div>
  </div>
 </div>
+</details>
 
 <div class="card">
  <div class="controls">
@@ -245,7 +256,7 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card" id="mainMap"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 <footer class="siteFooter"><b>Privacy-first field planner:</b> <a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a></footer>
@@ -421,6 +432,7 @@ const planLabels={
  'Plan D — West + South + Downtown':'West, South & Downtown jobs'
 };
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=planLabels[n]||n;planSel.appendChild(o)});
+['Custom route','Automatic best route'].forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
 
 let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
 
@@ -453,7 +465,24 @@ function selectedCorridors(){
  const selected=Array.from(corridorSel.selectedOptions).map(o=>o.value);
  return selected.length?selected:['all-accessible-routes'];
 }
-function selectedSectionIds(){return P.selectedSectionKeys(D,planSel.value,selectedCorridors())}
+function customJobIds(){
+ const selected=Array.from(selectedRouteJobIds);
+ if(selected.length)return new Set(selected);
+ if(planSel.value==='Automatic best route')return new Set(visibleJobsForActiveTab().slice(0,20).map(job=>String(job.id)));
+ return new Set();
+}
+function customSectionIds(){
+ const ids=customJobIds();
+ return Object.entries(D.sections||{}).filter(([,section])=>(section.legs||[]).some(leg=>ids.has(String(leg.job||''))||ids.has(String(leg.extra_job||'')))).map(([id])=>id);
+}
+function selectedSectionIds(){
+ if(planSel.value==='Custom route'||planSel.value==='Automatic best route'){
+  const available=customSectionIds();
+  const selected=Array.from(corridorSel.selectedOptions).map(o=>o.value);
+  return selected.includes('all-accessible-routes')||!selected.length?available:available.filter(id=>selected.includes(id));
+ }
+ return P.selectedSectionKeys(D,planSel.value,selectedCorridors());
+}
 function updateLocationStatus(msg){const el=document.getElementById('locationStatus');if(el)el.innerHTML=msg;}
 function drawMyLocation(lat,lon,accuracy){
  myPosition=[lat,lon];myAccuracy=accuracy;
@@ -499,7 +528,10 @@ function centerOnMe(){if(myPosition){map.setView(myPosition,16);if(myLocationMar
 function fillCorridors(){
  corridorSel.innerHTML='';
  let all=document.createElement('option');all.value='all-accessible-routes';all.textContent='All accessible routes in this plan';all.selected=true;corridorSel.appendChild(all);
- P.corridorOptions(D,planSel.value).forEach(corridor=>{
+ const options=(planSel.value==='Custom route'||planSel.value==='Automatic best route')
+  ? customSectionIds().map(id=>{const routes=P.routeNumbersForSection(D,id);return {id,label:(routes.length===1?'Route '+routes[0]:'Routes '+routes.join(' & '))+' - '+D.sections[id].title};})
+  : P.corridorOptions(D,planSel.value);
+ options.forEach(corridor=>{
   let o=document.createElement('option');o.value=corridor.id;o.textContent=corridor.label;corridorSel.appendChild(o);
  });
  fillViews();
@@ -521,6 +553,10 @@ function fillViews(){
 }
 
 function selectedLegs(){
+ if(planSel.value==='Custom route'||planSel.value==='Automatic best route'){
+  const customData={...D,plans:{...D.plans,[planSel.value]:customSectionIds()}};
+  return P.legsForSelection(customData,planSel.value,selectedCorridors(),viewSel.value);
+ }
  return P.legsForSelection(D,planSel.value,selectedCorridors(),viewSel.value);
 }
 
@@ -690,6 +726,7 @@ function setActiveJobTab(tab){
 function toggleRouteJobSelection(jobId,checked){
  const id=String(jobId||'');
  if(!id)return;
+ if(checked&&!selectedRouteJobIds.has(id)&&selectedRouteJobIds.size>=20){setJobSelectionStatus('A route can contain at most 20 stops. Unselect one before adding another.');syncRenderedJobSelections();return;}
  if(checked)selectedRouteJobIds.add(id);
  else selectedRouteJobIds.delete(id);
  setJobSelectionStatus(`${selectedRouteJobIds.size} selected job(s).`);
