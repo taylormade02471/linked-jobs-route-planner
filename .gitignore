@@ -14,7 +14,10 @@ android/.idea/
 android/build/
 android/app/build/
 *.sqlite
+*.sqlite3
 *.db
+runtime-cache/
+cache/
 token-cache/*
 exports/
 .DS_Store

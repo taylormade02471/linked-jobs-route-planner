@@ -11,7 +11,7 @@
 header{background:var(--navy);color:#fff;padding:14px}header h1{font-size:20px;margin:0 0 5px}header p{margin:0;font-size:12px}
 main{max-width:1150px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
 .notice{background:#eef6fb}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:end}label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:240px;flex:1}
-select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}select[multiple]{min-height:126px}button{cursor:pointer;flex:0 0 auto}.pickerChip{background:#e6f2f8;color:#17324d;border-color:#b8d5e2;font-weight:bold;white-space:nowrap}
+select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}select{width:100%;max-width:100%;min-width:0}select[multiple]{min-height:126px}button{cursor:pointer;flex:0 0 auto}.pickerChip{background:#e6f2f8;color:#17324d;border-color:#b8d5e2;font-weight:bold;white-space:nowrap}
 #map{height:620px;border-radius:12px;border:1px solid #cbd5df;box-shadow:0 3px 12px rgba(23,50,77,.10)}.status{font-size:12px;padding:8px;border-radius:8px;background:#f5f7f9;margin-top:8px}
 .sectionTitle{font-weight:bold;font-size:16px;margin:12px 0 6px}.leg{border-top:1px solid #e2e7eb;padding:10px 0}.leg:first-child{border-top:0}.change{background:var(--amber);border-radius:9px;padding:10px;margin-top:8px}
 .row{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:13px;margin:4px 0}.row b{color:var(--navy)}
@@ -46,6 +46,7 @@ main>#mainMap{order:1}
 <header><h1>Nashville Live Audit Transit Planner</h1><p>Submitted job list loaded. Provider credentials stay off this public planner.</p></header>
 <main>
 <div class="notice"><b>Updated submitted job list:</b> old seeded route jobs are not published here. The latest reviewed Survey Merchandiser jobs load as safe app records with no passwords, sessions, or raw screen text.</div>
+<div id="offlineStatus" class="status" aria-live="polite">Checking the offline planner shell and saved job snapshot...</div>
 
 <div class="card metrics">
  <div class="metric">Public posted jobs<strong>0</strong><span>No seeded audit list</span></div>
@@ -165,6 +166,10 @@ main>#mainMap{order:1}
   <div id="importReviewQueue" class="reviewQueue wide"></div>
  </div>
 <div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
+ <div class="actions">
+  <button id="saveOfflineSnapshot" type="button">Save offline job copy</button>
+  <button id="loadOfflineSnapshot" type="button">Use last offline copy</button>
+ </div>
  <div id="priorityJobsPanel" class="priorityPanel">
   <div class="priorityPanelHead">
    <div>
@@ -281,6 +286,7 @@ main>#mainMap{order:1}
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./offline-cache.js"></script>
 <script src="./planner-data.js"></script>
 <script src="./transit-picker.js"></script>
 <script src="./work-app-backbone.js"></script>
@@ -292,8 +298,9 @@ const P=window.TransitPicker;
 const W=window.WorkAppBackbone;
 const C=window.ProviderConnectors;
 const A=window.AndroidAppBackbone;
+const O=window.OfflineCache;
 const map=L.map('map').setView([36.16,-86.78],11);
-const cleanTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:20,attribution:'© OpenStreetMap © CARTO'});
+const cleanTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'});
 const streetTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
 cleanTiles.addTo(map);
 let currentBounds=null;
@@ -339,6 +346,93 @@ let emailSyncTimer=null;
 let googleTokenClient=null,gmailBearer='',gmailTokenExpiresAt=0;
 let activeJobTab='open';
 let selectedRouteJobIds=new Set();
+let offlineSnapshot=null;
+let offlineSnapshotSource={provider_id:'local_planner',provider_label:'Planner local data',mode:'local_snapshot',source_status:'cached'};
+let offlineSnapshotRetrievedAt=0;
+
+function updateOfflineStatus(message){
+ const el=document.getElementById('offlineStatus');
+ if(el)el.textContent=message;
+}
+function saveOfflineSnapshot(source=offlineSnapshotSource){
+ if(!O||!Array.isArray(workJobs))return false;
+ offlineSnapshot=O.createSnapshot({
+  source,
+  jobs:workJobs,
+  retrieved_at_utc_ms:offlineSnapshotRetrievedAt||Date.now(),
+  saved_at_utc_ms:Date.now(),
+ });
+ O.saveSnapshot(localStorage,offlineSnapshot);
+ const age=new Date(offlineSnapshot.saved_at_utc_ms).toLocaleString();
+ updateOfflineStatus(`${O.freshnessLabel(offlineSnapshot,{online:false}).toUpperCase()} job copy saved ${age}. It is available without a provider tab or network connection.`);
+ return true;
+}
+function loadOfflineSnapshot(){
+ const snapshot=O?.loadSnapshot(localStorage);
+ if(!snapshot){
+  updateOfflineStatus('No offline job copy is saved yet. Connect a provider bridge or approve imported jobs while online.');
+  return false;
+ }
+ const existingIds=new Set(workJobs.map(job=>String(job.id||'')));
+ const additions=snapshot.jobs.filter(job=>!existingIds.has(String(job.id||'')));
+ workJobs=[...workJobs,...additions];
+ offlineSnapshot=snapshot;
+ offlineSnapshotSource=snapshot.source||offlineSnapshotSource;
+ offlineSnapshotRetrievedAt=snapshot.retrieved_at_utc_ms||snapshot.saved_at_utc_ms||Date.now();
+ saveWorkJobs({saveSnapshot:false});
+ renderWorkJobs();
+ render();
+ updateOfflineStatus(`CACHED job copy loaded: ${snapshot.jobs.length} job(s), saved ${new Date(snapshot.saved_at_utc_ms).toLocaleString()}.`);
+ return true;
+}
+function refreshOfflineStatus(){
+ const snapshot=O?.loadSnapshot(localStorage);
+ if(!navigator.onLine){
+  updateOfflineStatus(snapshot?`OFFLINE mode: using ${snapshot.jobs.length} cached job(s) saved ${new Date(snapshot.saved_at_utc_ms).toLocaleString()}.`:'OFFLINE mode: no cached job copy is available yet.');
+  return;
+ }
+ updateOfflineStatus(snapshot?`Online. Last offline copy: ${snapshot.jobs.length} job(s), saved ${new Date(snapshot.saved_at_utc_ms).toLocaleString()}.`:'Online. No offline job copy saved yet.');
+}
+function registerOfflineShell(){
+ if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./service-worker.js').catch(()=>updateOfflineStatus('Online. Offline shell registration is unavailable in this browser.'));
+ }
+ window.addEventListener('online',refreshOfflineStatus);
+ window.addEventListener('offline',refreshOfflineStatus);
+ refreshOfflineStatus();
+}
+function providerBridgeJobs(payload){
+ let incoming=payload;
+ try{if(typeof incoming==='string')incoming=JSON.parse(incoming);}catch{incoming=null;}
+ if(!incoming||!Array.isArray(incoming.jobs)||!incoming.jobs.length){
+  updateOfflineStatus('Provider bridge payload rejected: no safe job array was supplied.');
+  return false;
+ }
+ const safeSnapshot=O.createSnapshot({
+  source:{...(incoming.source||{}),mode:'local_provider_bridge',source_status:incoming.source?.source_status||'live'},
+  jobs:incoming.jobs,
+  retrieved_at_utc_ms:incoming.retrieved_at_utc_ms||Date.now(),
+ });
+ const review=safeSnapshot.jobs.map((job,index)=>({
+  ...job,
+  review_id:`provider-bridge:${job.id||index}`,
+  source:'provider-bridge-review-pending',
+  approvable:W.isRouteVisibleJob(job),
+  blocked_reason:W.isRouteVisibleJob(job)?'':'Only open, assigned, or needs-completion jobs can be approved into the route planner.',
+ }));
+ importReviewItems=[...review,...importReviewItems].filter((job,index,all)=>all.findIndex(item=>item.review_id===job.review_id)===index);
+ saveImportReviewItems();
+ offlineSnapshotSource=safeSnapshot.source;
+ offlineSnapshotRetrievedAt=safeSnapshot.retrieved_at_utc_ms;
+ renderImportReview();
+ document.getElementById('appJobStatus').textContent=`Provider bridge received ${review.length} safe job record(s). Review and approve them before they enter routing. No credentials were accepted.`;
+ document.getElementById('workApps')?.setAttribute('open','');
+ return true;
+}
+window.LinkedJobsReceiveProviderSnapshot=providerBridgeJobs;
+window.addEventListener('message',(event)=>{
+ if(event.data?.type==='job-transit-provider-snapshot')providerBridgeJobs(event.data.payload);
+});
 let showTransitRoute=false;
 let showAllLiveBuses=true;
 
@@ -585,9 +679,19 @@ function originForRecommendations(){
 }
 function loadWorkJobs(){
  try{workJobs=JSON.parse(localStorage.getItem(WORK_JOBS_KEY)||'[]');if(!Array.isArray(workJobs))workJobs=[];}catch{workJobs=[];}
+ if(!workJobs.length){
+  const snapshot=O?.loadSnapshot(localStorage);
+  if(snapshot?.jobs?.length){
+   workJobs=snapshot.jobs;
+   offlineSnapshot=snapshot;
+   offlineSnapshotSource=snapshot.source||offlineSnapshotSource;
+   offlineSnapshotRetrievedAt=snapshot.retrieved_at_utc_ms||snapshot.saved_at_utc_ms||Date.now();
+  }
+ }
 }
-function saveWorkJobs(){
+function saveWorkJobs(options={}){
  localStorage.setItem(WORK_JOBS_KEY,JSON.stringify(workJobs));
+ if(options.saveSnapshot!==false)saveOfflineSnapshot();
 }
 function loadProviderConnections(){
  try{providerConnections=JSON.parse(localStorage.getItem(PROVIDER_CONNECTIONS_KEY)||'{}');if(!providerConnections||Array.isArray(providerConnections))providerConnections={};}catch{providerConnections={};}
@@ -1078,6 +1182,9 @@ async function syncSafeProviderJobsToBackend(){
   const response=await fetch('/api/provider-jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   if(!response.ok)throw new Error('HTTP '+response.status);
   const result=await response.json();
+  offlineSnapshotSource={provider_id:'multiple',provider_label:'Safe provider bridge',mode:'local_provider_bridge',source_status:'safe provider records'};
+  offlineSnapshotRetrievedAt=Date.now();
+  saveOfflineSnapshot(offlineSnapshotSource);
   if(status)status.textContent=`Synced ${payload.jobs.length} safe job record(s). Backend now has ${result.jobs?.length||0} synced provider job(s). No credentials were sent.`;
  }catch(error){
   if(status)status.textContent=`Safe job sync is available on the planner backend after sign-in or local access. Nothing credential-related was sent. ${error.message}`;
@@ -1091,6 +1198,9 @@ async function loadSyncedProviderJobsFromBackend(){
   if(!response.ok)throw new Error('HTTP '+response.status);
   const result=await response.json();
   mergeWorkJobs(result.jobs||[]);
+  offlineSnapshotSource={provider_id:'multiple',provider_label:'Planner backend',mode:'local_provider_bridge',source_status:'safe provider records'};
+  offlineSnapshotRetrievedAt=Date.now();
+  saveOfflineSnapshot(offlineSnapshotSource);
   renderWorkJobs();render();
   if(status)status.textContent=`Loaded ${result.jobs?.length||0} synced safe provider job(s) from the planner backend.`;
  }catch(error){
@@ -1295,6 +1405,7 @@ function seedPlannerJobs(){
  if(additions.length){workJobs=[...additions,...workJobs];saveWorkJobs();}
 }
 function initWorkApps(){
+ registerOfflineShell();
  seedPlannerJobs();
  const provider=document.getElementById('appProvider');
  const providerFilter=document.getElementById('jobProviderFilter');
@@ -1346,6 +1457,8 @@ function initWorkApps(){
  });
  document.getElementById('saveProviderBackground')?.addEventListener('click',saveProviderBackgroundSettings);
  document.getElementById('checkProviderNow')?.addEventListener('click',checkProviderNow);
+ document.getElementById('saveOfflineSnapshot')?.addEventListener('click',()=>saveOfflineSnapshot());
+ document.getElementById('loadOfflineSnapshot')?.addEventListener('click',loadOfflineSnapshot);
  document.getElementById('syncSafeProviderJobs')?.addEventListener('click',syncSafeProviderJobsToBackend);
  document.getElementById('loadSyncedProviderJobs')?.addEventListener('click',loadSyncedProviderJobsFromBackend);
  document.getElementById('saveEmailSync')?.addEventListener('click',()=>setEmailSyncSettings({sync_status:'Email permission settings saved locally.'}));
