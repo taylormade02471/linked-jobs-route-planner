@@ -64,13 +64,15 @@ The Jobslinger login page includes a square-click challenge, so the reliable flo
 3. Save the board in the planner after local login
 4. Keep the route planner running and the extension will stream visible rows into it
 
-## Save live login
+## Save linked board info
 
-Use the dashboard’s Live Source panel to store the Jobslinger site login locally.
+Use the dashboard’s **Link job boards and auto-feed work** section after local login.
 
+- Choose the supported boards you want linked
+- Save each board’s login URL, username, optional local password, and notes
 - The data is written only to the ignored backend data folder
-- The password is never shown back in the UI
-- If the site is offline, the dashboard still shows the last successful scrape from disk
+- Passwords are stored encrypted at rest and never shown back in the UI
+- Use the share/parse intake when a board is easier to copy or share than to leave open in a browser tab
 
 ## Install the browser extension
 
@@ -78,7 +80,7 @@ Use the dashboard’s Live Source panel to store the Jobslinger site login local
 2. Turn on `Developer mode`
 3. Click `Load unpacked`
 4. Select the [`browser-extension`](browser-extension) folder from this repository
-5. Open the main Jobslinger page in the browser and keep the dashboard running at `http://localhost:3300/`
+5. Open one of the supported signed-in board pages in the browser and keep the dashboard running at `http://localhost:3300/`
 
 If the page layout changes, the extension may need selector tweaks, but it will stay live as long as the page is open and the local route planner is running.
 

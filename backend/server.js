@@ -504,8 +504,7 @@ function parseSharedJobs(text, sourceLabel = "Shared intake") {
   } catch {}
 
   return raw
-    .split(/?
-+/)
+    .split(/\r?\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
