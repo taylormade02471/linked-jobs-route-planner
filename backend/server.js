@@ -11,6 +11,7 @@ const jobsPath = path.join(dataDir, "jobs.json");
 const sourceConfigPath = path.join(dataDir, "source-config.json");
 const credentialsPath = path.join(dataDir, "credentials.json");
 const credentialKeyPath = path.join(dataDir, "credentials.key");
+const linkedBoardsPath = path.join(dataDir, "linked-boards.json");
 
 const PORT = Number(process.env.PORT || 3300);
 const USERNAME = process.env.APP_USER || process.env.BASIC_AUTH_USER || "kyle";
@@ -24,10 +25,64 @@ const SESSION_SECRET =
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "route_planner_session";
 
+const SUPPORTED_BOARDS = [
+  {
+    id: "jobslinger",
+    label: "Jobslinger MegaLog",
+    board_url: "https://www.jobslingerplus.com/MegaLog",
+    login_url: "https://www.jobslingerplus.com/MegaLog",
+    sync_mode: "browser_extension",
+    description: "Keep the signed-in MegaLog tab open and the extension will stream visible jobs into the planner.",
+    connection_help: "Best for continuous auto-feed from the main MegaLog page after you sign in manually.",
+    match_hosts: ["jobslingerplus.com"],
+  },
+  {
+    id: "survey_merchandiser",
+    label: "Survey Merchandiser",
+    board_url: "https://survey.com/",
+    login_url: "https://survey.com/",
+    sync_mode: "browser_extension_or_share",
+    description: "Save the board details here, then use the extension on visible job pages or paste shared rows below.",
+    connection_help: "Use the official sign-in page first, then let the planner collect only visible job data.",
+    match_hosts: ["survey.com"],
+  },
+  {
+    id: "clickworker",
+    label: "Clickworker",
+    board_url: "https://workplace.clickworker.com/",
+    login_url: "https://workplace.clickworker.com/",
+    sync_mode: "browser_extension_or_share",
+    description: "Works with the Workplace board after you sign in and leave the jobs page open.",
+    connection_help: "If the board layout changes, you can still paste shared job rows into the planner.",
+    match_hosts: ["workplace.clickworker.com", "clickworker.com"],
+  },
+  {
+    id: "field_nation",
+    label: "Field Nation",
+    board_url: "https://fieldnation.com/",
+    login_url: "https://fieldnation.com/",
+    sync_mode: "browser_extension_or_share",
+    description: "Link the board and keep visible work orders flowing into the planner from the signed-in page.",
+    connection_help: "Use share intake as a fallback for copied work order text.",
+    match_hosts: ["fieldnation.com"],
+  },
+  {
+    id: "field_agent",
+    label: "Field Agent",
+    board_url: "https://app.fieldagent.net/",
+    login_url: "https://app.fieldagent.net/",
+    sync_mode: "share_first",
+    description: "Save the board details and paste or share text when work appears in the mobile/web app.",
+    connection_help: "This board is best supported through the in-app share/paste intake in this local planner.",
+    match_hosts: ["fieldagent.net", "app.fieldagent.net"],
+  },
+];
+
 let jobs = loadJobs();
 let sourceConfig = loadSourceConfig();
-let credentials = loadCredentials();
 let credentialsKey = loadCredentialsKey();
+let credentials = loadCredentials();
+let linkedBoards = loadLinkedBoards();
 let clients = new Set();
 let scrapeRunning = false;
 
@@ -63,6 +118,49 @@ function saveSourceConfig(nextConfig) {
     ...nextConfig,
   };
   fs.writeFileSync(sourceConfigPath, JSON.stringify(sourceConfig, null, 2), "utf8");
+}
+
+function getSupportedBoard(boardId) {
+  return SUPPORTED_BOARDS.find((board) => board.id === boardId) || null;
+}
+
+function normalizeLinkedBoard(entry = {}) {
+  const supported = getSupportedBoard(String(entry.id || "").trim());
+  if (!supported) return null;
+  return {
+    id: supported.id,
+    enabled: Boolean(entry.enabled),
+    username: String(entry.username || "").trim(),
+    password: String(entry.password || ""),
+    login_url: String(entry.login_url || entry.loginUrl || supported.login_url || "").trim(),
+    notes: String(entry.notes || "").trim(),
+    updated_at: String(entry.updated_at || new Date().toISOString()),
+  };
+}
+
+function loadLinkedBoards() {
+  try {
+    const raw = fs.readFileSync(linkedBoardsPath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const normalized = parsed.map((entry) => normalizeLinkedBoard(entry)).filter(Boolean);
+      linkedBoards = normalized;
+      saveLinkedBoards();
+      return normalized;
+    }
+    if (!parsed || typeof parsed !== "object" || !parsed.encrypted) return [];
+    return decryptCredentials(parsed.payload)
+      .map((entry) => normalizeLinkedBoard(entry))
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function saveLinkedBoards() {
+  fs.mkdirSync(dataDir, { recursive: true });
+  const payload = encryptCredentials(linkedBoards);
+  fs.writeFileSync(linkedBoardsPath, JSON.stringify({ encrypted: true, payload }, null, 2), "utf8");
 }
 
 function loadCredentialsKey() {
@@ -311,6 +409,7 @@ function normalizeJob(job, index = 0) {
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
     source: String(job.source || "browser-extension"),
+    provider_id: String(job.provider_id || job.providerId || ""),
     source_url: String(job.source_url || job.sourceUrl || ""),
     notes: String(job.notes || ""),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
@@ -359,6 +458,150 @@ function publicCredentials() {
   }));
 }
 
+function publicLinkedBoards() {
+  return SUPPORTED_BOARDS.map((supported) => {
+    const saved = linkedBoards.find((board) => board.id === supported.id) || {};
+    return {
+      id: supported.id,
+      label: supported.label,
+      board_url: supported.board_url,
+      login_url: saved.login_url || supported.login_url,
+      sync_mode: supported.sync_mode,
+      description: supported.description,
+      connection_help: supported.connection_help,
+      match_hosts: supported.match_hosts,
+      enabled: Boolean(saved.enabled),
+      username: String(saved.username || ""),
+      notes: String(saved.notes || ""),
+      updated_at: String(saved.updated_at || ""),
+      has_password: Boolean(saved.password),
+    };
+  });
+}
+
+function splitSharedLine(line) {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) return [];
+  if (trimmed.includes("	")) return trimmed.split("	").map((part) => part.trim()).filter(Boolean);
+  if (trimmed.includes("|")) return trimmed.split("|").map((part) => part.trim()).filter(Boolean);
+  return [trimmed];
+}
+
+function normalizeSharedStatus(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\b(paid|complete|completed|done|passed)\b/.test(text)) return "completed";
+  if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
+  if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
+  if (text.includes("available") || text.includes("open")) return "available";
+  return text || "available";
+}
+
+function sharedProviderId(providerId, sourceLabel) {
+  const normalizedProviderId = String(providerId || "").trim();
+  if (normalizedProviderId) return normalizedProviderId;
+  const label = String(sourceLabel || "").toLowerCase();
+  const supported = SUPPORTED_BOARDS.find(
+    (board) => label.includes(board.id.replaceAll("_", " ")) || label.includes(board.label.toLowerCase()),
+  );
+  return supported?.id || "manual_share";
+}
+
+function parseSharedBlocks(text, sourceLabel, providerId) {
+  const streetPattern = /\d{1,6}\s+[^\n,]+(?:street|st|road|rd|avenue|ave|boulevard|blvd|drive|dr|lane|ln|way|parkway|pkwy|highway|hwy|pike|court|ct)\b[^\n]*/i;
+  return String(text || "")
+    .split(/\n\s*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, index) => {
+      const lines = block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const address = (block.match(streetPattern) || [])[0] || "";
+      const pay = (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
+      const due = lines.find((line) => /\b(due|deadline|date|starts?|arrival|window|today|tomorrow)\b/i.test(line)) || "";
+      const statusLine =
+        lines.find((line) => /\bstatus\b/i.test(line)) ||
+        lines.find((line) => /\b(available|open|assigned|claimed|accepted|reserved|planned|applied|requested)\b/i.test(line)) ||
+        "available";
+      const title =
+        lines.find(
+          (line) =>
+            line !== address &&
+            line !== pay &&
+            line !== due &&
+            line !== statusLine &&
+            !/^status\s*:/i.test(line),
+        ) ||
+        lines[0] ||
+        `${sourceLabel} job`;
+      return {
+        id: `${sourceLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}-${index}`,
+        title,
+        address,
+        pay,
+        due,
+        status: normalizeSharedStatus(statusLine),
+        source: sourceLabel,
+        provider_id: providerId,
+        source_url: "manual-share",
+        notes: block,
+        order: index + 1,
+      };
+    })
+    .filter((job) => job.title || job.address || job.pay || job.due);
+}
+
+function parseSharedJobs(text, sourceLabel = "Shared intake", providerId = "manual_share") {
+  const raw = String(text || "").trim();
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    const jsonJobs = Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" ? [parsed] : [];
+    if (jsonJobs.length) {
+      return jsonJobs.map((job, index) => ({
+        ...job,
+        source: job.source || sourceLabel,
+        provider_id: job.provider_id || providerId,
+        order: job.order || index + 1,
+        status: normalizeSharedStatus(job.status || job.Status || "available"),
+      }));
+    }
+  } catch {}
+
+  const resolvedProviderId = sharedProviderId(providerId, sourceLabel);
+  if (resolvedProviderId === "survey_merchandiser" || /\n\s*\n+/.test(raw)) {
+    const parsedBlocks = parseSharedBlocks(raw, sourceLabel, resolvedProviderId);
+    if (resolvedProviderId === "survey_merchandiser") {
+      return parsedBlocks.filter((job) => {
+        const status = normalizeSharedStatus(job.status);
+        return status === "available" || status === "assigned";
+      });
+    }
+    return parsedBlocks;
+  }
+
+  return raw
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const parts = splitSharedLine(line);
+      const [title = "Job", address = "", city = "", state = "", pay = "", status = ""] = parts;
+      return {
+        id: `${sourceLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}-${index}`,
+        title,
+        address,
+        city,
+        state,
+        pay,
+        status: normalizeSharedStatus(status),
+        source: sourceLabel,
+        provider_id: resolvedProviderId,
+        source_url: "manual-share",
+        order: index + 1,
+      };
+    });
+}
+
 function serveStatic(filePath, res) {
   try {
     const ext = path.extname(filePath).toLowerCase();
@@ -381,7 +624,14 @@ function serveStatic(filePath, res) {
 }
 
 function renderLoginPage(message = "") {
-  return readFile(path.join(frontendDir, "login.html")).replace("%%MESSAGE%%", message);
+  const safeMessage = String(message || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+  const messageMarkup = safeMessage
+    ? `<p class="helper" role="status" aria-live="polite">${safeMessage}</p>`
+    : "";
+  return readFile(path.join(frontendDir, "login.html")).replace("%%MESSAGE%%", messageMarkup);
 }
 
 function authHeader(responseHeaders = {}) {
@@ -481,6 +731,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "GET" && url.pathname === "/api/linked-boards") {
+    if (!requireAuth(req, res)) return;
+    json(res, 200, { boards: publicLinkedBoards() });
+    return;
+  }
+
   if (method === "POST" && url.pathname === "/api/credentials") {
     if (!requireAuth(req, res)) return;
     const body = await parseBody(req).catch((error) => {
@@ -535,6 +791,60 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "POST" && url.pathname === "/api/linked-boards") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const incomingBoards = Array.isArray(body.boards) ? body.boards : [];
+    if (incomingBoards.length && incomingBoards.length !== SUPPORTED_BOARDS.length) {
+      json(res, 400, {
+        ok: false,
+        error: "Expected a full linked board payload for all supported boards.",
+      });
+      return;
+    }
+    linkedBoards = incomingBoards
+      .map((entry) => {
+        const normalized = normalizeLinkedBoard(entry);
+        if (!normalized) return null;
+        const existing = linkedBoards.find((board) => board.id === normalized.id);
+        const clearPassword = Boolean(entry.clear_password || entry.clearPassword);
+        return {
+          ...normalized,
+          password: clearPassword ? "" : normalized.password ? normalized.password : existing?.password || "",
+        };
+      })
+      .filter(Boolean);
+    saveLinkedBoards();
+    json(res, 200, { ok: true, boards: publicLinkedBoards() });
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/shared-jobs") {
+    if (!requireAuth(req, res)) return;
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const source = String(body.source || body.source_name || "Shared intake").trim() || "Shared intake";
+    const providerId = String(body.provider_id || body.providerId || "").trim();
+    const parsedJobs = parseSharedJobs(body.text || body.rows || "", source, providerId);
+    if (!parsedJobs.length) {
+      json(res, 400, { ok: false, error: "Paste at least one job row or JSON payload to import." });
+      return;
+    }
+
+    upsertJobs(parsedJobs);
+    json(res, 200, { ok: true, imported: parsedJobs.length, jobs });
+    return;
+  }
+
   if (method === "POST" && url.pathname === "/api/jobs") {
     const body = await parseBody(req).catch((error) => {
       json(res, 400, { ok: false, error: error.message });
@@ -550,7 +860,15 @@ const server = http.createServer(async (req, res) => {
       ? [body.job]
       : [];
 
-    if (!incoming.length) {
+    const source = String(body.source || body.source_name || body.provider_label || body.provider || "").trim();
+    const providerId = String(body.provider_id || body.providerId || "").trim();
+    const jobsWithContext = incoming.map((job) => ({
+      ...job,
+      source: String(job.source || source || "browser-extension"),
+      provider_id: String(job.provider_id || job.providerId || providerId || ""),
+    }));
+
+    if (!jobsWithContext.length) {
       json(res, 400, {
         ok: false,
         error: "Expected a jobs array, job object, or array payload.",
@@ -558,7 +876,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    upsertJobs(incoming);
+    upsertJobs(jobsWithContext);
     json(res, 200, { ok: true, count: jobs.length });
     return;
   }
