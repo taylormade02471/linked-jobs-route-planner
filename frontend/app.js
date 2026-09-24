@@ -227,6 +227,7 @@ function boardCard(board) {
         </label>
       </div>
       <input type="hidden" data-field="id" value="${escapeHtml(board.id)}" />
+      <input type="hidden" data-field="has_password" value="${board.has_password ? "true" : "false"}" />
       <div class="board-card-grid">
         <label>Login URL<input data-field="login_url" value="${escapeHtml(board.login_url || "")}" placeholder="https://example.com/login" /></label>
         <label>Username / email<input data-field="username" value="${escapeHtml(board.username || "")}" autocomplete="username" /></label>
@@ -237,6 +238,10 @@ function boardCard(board) {
         <span class="pill small">Sync: ${escapeHtml(board.sync_mode.replaceAll("_", " "))}</span>
         <a href="${escapeHtml(board.board_url)}" target="_blank" rel="noreferrer noopener">Open board</a>
       </div>
+      <label class="inline">
+        <input type="checkbox" data-field="clear_password" />
+        Clear saved password for this board
+      </label>
       <p class="helper board-helper">${escapeHtml(board.connection_help)}</p>
     </article>
   `;
@@ -270,6 +275,9 @@ function serializeLinkedBoards() {
     username: card.querySelector('[data-field="username"]').value.trim(),
     password: card.querySelector('[data-field="password"]').value,
     notes: card.querySelector('[data-field="notes"]').value.trim(),
+    clear_password:
+      card.querySelector('[data-field="has_password"]').value === "true" &&
+      card.querySelector('[data-field="clear_password"]').checked,
   }));
 }
 

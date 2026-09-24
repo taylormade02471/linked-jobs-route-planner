@@ -9,6 +9,12 @@ const PROVIDERS = [
   { id: "field_agent", label: "Field Agent", hosts: ["fieldagent.net", "app.fieldagent.net"] },
 ];
 
+const CARD_SELECTORS_BY_PROVIDER = {
+  survey_merchandiser: ["[data-job-id]", "[data-job-card]", ".job-card", ".job-listing"],
+  clickworker: ["[data-job-id]", "[data-job-card]", ".job-card", ".job-listing"],
+  field_nation: ["[data-job-id]", "[data-job-card]", ".job-card", ".work-order-card"],
+};
+
 function detectProvider(hostname) {
   return PROVIDERS.find((provider) => provider.hosts.some((host) => hostname === host || hostname.endsWith(`.${host}`))) || null;
 }
@@ -59,22 +65,25 @@ function parseTableJobs(provider) {
 }
 
 function parseCardJobs(provider) {
-  const pathHint = /job|jobs|work|order|task|gig/i.test(window.location.pathname);
-  if (!pathHint) return [];
-
-  const selectors = ["[data-job-id]", "[data-job-card]", ".job-card", ".job-listing", ".job-row", ".work-order-card"];
+  const selectors = CARD_SELECTORS_BY_PROVIDER[provider.id] || [];
   for (const selector of selectors) {
     const cards = Array.from(document.querySelectorAll(selector)).filter((node) => node.querySelectorAll("a, button, div, span, p").length >= 3);
     if (cards.length < 2) continue;
     const jobs = cards
       .map((card, index) => {
-        const lines = uniqueTextValues(card.querySelectorAll("h1, h2, h3, strong, a, p, span, div"));
-        if (lines.length < 2) return null;
-        const [title, address, city = "", state = "", pay = "", status = ""] = lines;
+        const title =
+          card.querySelector("h1, h2, h3, [data-job-title], .job-title, .title")?.textContent?.trim() || "";
+        const address =
+          card.querySelector("[data-address], .job-address, .address")?.textContent?.trim() || "";
+        const city = card.querySelector("[data-city], .city")?.textContent?.trim() || "";
+        const state = card.querySelector("[data-state], .state")?.textContent?.trim() || "";
+        const pay = card.querySelector("[data-pay], .pay, .rate")?.textContent?.trim() || "";
+        const status = card.querySelector("[data-status], .status, .badge")?.textContent?.trim() || "";
+        if (!title || !address) return null;
         return {
           id: `${provider.id}-${slug(title)}-${slug(address)}-${index}`,
-          title: title || "Job",
-          address: address || "",
+          title,
+          address,
           city,
           state,
           pay,

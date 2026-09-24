@@ -549,7 +549,14 @@ function serveStatic(filePath, res) {
 }
 
 function renderLoginPage(message = "") {
-  return readFile(path.join(frontendDir, "login.html")).replace("%%MESSAGE%%", message);
+  const safeMessage = String(message || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+  const messageMarkup = safeMessage
+    ? `<p class="helper" role="status" aria-live="polite">${safeMessage}</p>`
+    : "";
+  return readFile(path.join(frontendDir, "login.html")).replace("%%MESSAGE%%", messageMarkup);
 }
 
 function authHeader(responseHeaders = {}) {
@@ -718,18 +725,18 @@ const server = http.createServer(async (req, res) => {
     if (body === null) return;
 
     const incomingBoards = Array.isArray(body.boards) ? body.boards : [];
-    const mergedBoards = new Map(linkedBoards.map((board) => [board.id, board]));
-    incomingBoards.forEach((entry) => {
-      const normalized = normalizeLinkedBoard(entry);
-      if (!normalized) return;
-      const existing = mergedBoards.get(normalized.id);
-      mergedBoards.set(normalized.id, {
-        ...existing,
-        ...normalized,
-        password: normalized.password ? normalized.password : existing?.password || "",
-      });
-    });
-    linkedBoards = Array.from(mergedBoards.values());
+    linkedBoards = incomingBoards
+      .map((entry) => {
+        const normalized = normalizeLinkedBoard(entry);
+        if (!normalized) return null;
+        const existing = linkedBoards.find((board) => board.id === normalized.id);
+        const clearPassword = Boolean(entry.clear_password || entry.clearPassword);
+        return {
+          ...normalized,
+          password: clearPassword ? "" : normalized.password ? normalized.password : existing?.password || "",
+        };
+      })
+      .filter(Boolean);
     saveLinkedBoards();
     json(res, 200, { ok: true, boards: publicLinkedBoards() });
     return;
