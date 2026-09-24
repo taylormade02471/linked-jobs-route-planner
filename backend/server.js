@@ -517,9 +517,20 @@ function parseSharedBlocks(text, sourceLabel, providerId) {
       const address = (block.match(streetPattern) || [])[0] || "";
       const pay = (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
       const due = lines.find((line) => /\b(due|deadline|date|starts?|arrival|window|today|tomorrow)\b/i.test(line)) || "";
-      const statusLine = lines.find((line) => /\b(status|available|open|assigned|claimed|accepted|reserved|planned|applied|requested)\b/i.test(line)) || "available";
+      const statusLine =
+        lines.find((line) => /\bstatus\b/i.test(line)) ||
+        lines.find((line) => /\b(available|open|assigned|claimed|accepted|reserved|planned|applied|requested)\b/i.test(line)) ||
+        "available";
       const title =
-        lines.find((line) => line !== address && line !== pay && line !== due && line !== statusLine) ||
+        lines.find(
+          (line) =>
+            line !== address &&
+            line !== pay &&
+            line !== due &&
+            line !== statusLine &&
+            !/^status\s*:/i.test(line),
+        ) ||
+        lines[0] ||
         `${sourceLabel} job`;
       return {
         id: `${sourceLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}-${index}`,
