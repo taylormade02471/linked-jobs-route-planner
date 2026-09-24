@@ -434,3 +434,18 @@ textarea {
   background: rgba(255, 255, 255, 0.85);
   resize: vertical;
 }
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  width: min(420px, 100%);
+}
+
+.login-title {
+  font-size: 2rem;
+}

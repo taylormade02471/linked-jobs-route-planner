@@ -144,6 +144,7 @@ function loadLinkedBoards() {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       const normalized = parsed.map((entry) => normalizeLinkedBoard(entry)).filter(Boolean);
+      linkedBoards = normalized;
       saveLinkedBoards();
       return normalized;
     }
@@ -717,18 +718,18 @@ const server = http.createServer(async (req, res) => {
     if (body === null) return;
 
     const incomingBoards = Array.isArray(body.boards) ? body.boards : [];
-    linkedBoards = incomingBoards
-      .map((entry) => {
-        const normalized = normalizeLinkedBoard(entry);
-        if (!normalized) return null;
-        const existing = linkedBoards.find((board) => board.id === normalized.id);
-        return {
-          ...existing,
-          ...normalized,
-          password: normalized.password ? normalized.password : existing?.password || "",
-        };
-      })
-      .filter(Boolean);
+    const mergedBoards = new Map(linkedBoards.map((board) => [board.id, board]));
+    incomingBoards.forEach((entry) => {
+      const normalized = normalizeLinkedBoard(entry);
+      if (!normalized) return;
+      const existing = mergedBoards.get(normalized.id);
+      mergedBoards.set(normalized.id, {
+        ...existing,
+        ...normalized,
+        password: normalized.password ? normalized.password : existing?.password || "",
+      });
+    });
+    linkedBoards = Array.from(mergedBoards.values());
     saveLinkedBoards();
     json(res, 200, { ok: true, boards: publicLinkedBoards() });
     return;

@@ -89,7 +89,8 @@ function parseCardJobs(provider) {
 }
 
 function readVisibleJobs(provider) {
-  return parseTableJobs(provider).length ? parseTableJobs(provider) : parseCardJobs(provider);
+  const tableJobs = parseTableJobs(provider);
+  return tableJobs.length ? tableJobs : parseCardJobs(provider);
 }
 
 async function syncJobs() {
