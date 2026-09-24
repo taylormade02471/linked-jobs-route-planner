@@ -27,15 +27,54 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 </style>
 </head>
 <body>
-<header><h1>Nashville Live Audit Transit Planner</h1><p>No public jobs loaded. The planner starts empty until you import, approve, or sync safe job records.</p></header>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>Survey Merchandiser · 24 jobs loaded · $268.20 total · 🟢 19 green · 🟡 3 yellow · 🔴 2 red · Aug 28–29, 2026 · WeGo + CTS transit optimized</p></header>
 <main>
-<div class="notice"><b>Empty public planner:</b> no job cards, provider-board rows, or old route jobs are published on this website right now. Add work later through Android share/import review or safe backend sync.</div>
+<div class="notice"><b>Today's priority:</b> 13 jobs due by 6 PM on WeGo Routes 22/23 (Dickerson Pike cluster), 56/76 (Madison cluster), and Route 6 (Lebanon Pike/Hermitage). Three Clarksville Body Butter audits due 7:30 PM on CTS. One red-pin job (Old Hickory) requires a vehicle.</div>
+<script>
+// Auto-load today's Survey Merchandiser jobs into localStorage on first visit.
+// Only injects if the board is empty — never overwrites existing saved jobs.
+(function(){
+  const KEY='nashville_phone_work_jobs_v1';
+  try{
+    const existing=JSON.parse(localStorage.getItem(KEY)||'[]');
+    if(Array.isArray(existing)&&existing.length>0)return; // already has jobs
+  }catch(e){}
+  const now=Date.now();
+  const jobs=[
+    {id:"sm_job_001",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Body Butter Product Audit & Sampling — DG #325",address:"2105 Trenton Rd, Clarksville, TN 37040",pay_cents:1090,due:"Fri Aug 28 7:30 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 CTS Route 7 < 0.8 mi walk",created_at:now},
+    {id:"sm_job_002",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Body Butter Product Audit & Sampling — DG #9805",address:"1945 Madison St, Clarksville, TN 37043",pay_cents:1090,due:"Fri Aug 28 7:30 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 CTS Route 6 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_003",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Body Butter Product Audit & Sampling — DG #6159",address:"3855 Trenton Rd, Clarksville, TN 37040",pay_cents:1090,due:"Fri Aug 28 7:30 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟡 North Trenton Rd ~1.5 mi walk from CTS loop",created_at:now},
+    {id:"sm_job_004",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #4400",address:"3721 Clarksville Hwy, Nashville, TN 37218",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 22 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_005",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #2443",address:"3852 Dickerson Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 23 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_006",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — Family Dollar #6742",address:"2434 Whites Creek Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 11:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 14/22 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_007",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — Family Dollar #2627",address:"3049 Dickerson Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 11:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 23 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_008",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9232",address:"3019 Dickerson Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 23 adjacent cluster",created_at:now},
+    {id:"sm_job_009",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #8347",address:"601 Gallatin Pike N, Madison, TN 37115",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 56/26 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_010",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #2392",address:"808 Madison Sq, Madison, TN 37115",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 56/76 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_011",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #7914",address:"459 Myatt Dr, Madison, TN 37115",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 76 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_012",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9821",address:"301 E Thompson Ln, Nashville, TN 37211",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 77/52 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_013",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #2360",address:"3926 Lebanon Pike, Hermitage, TN 37076",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 6 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_014",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9822",address:"4491 Lebanon Pike, Hermitage, TN 37076",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 6 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_015",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #1901 ⚠ VEHICLE NEEDED",address:"13820 Lebanon Rd, Old Hickory, TN 37138",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🔴 Remote > 2.5 mi from Rt 6 terminus — vehicle required",created_at:now},
+    {id:"sm_job_016",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9802",address:"5445 Nolensville Rd, Nashville, TN 37211",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 52 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_017",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #1990",address:"2275 Murfreesboro Pike, Nashville, TN 37217",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 55 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_018",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — Family Dollar #1033",address:"1015 Jefferson St, Nashville, TN 37208",pay_cents:650,due:"Sat Aug 29 11:45 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 19/22 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_019",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Audit & Shelf Dangler Placement — Walmart #673",address:"3050 Wilma Rudolph Blvd, Clarksville, TN 37040",pay_cents:1000,due:"Awaiting Shipment",minutes:20,status:"assigned",payment_status:"Awaiting Shipment",source:"auto-load",recommendation_reason:"🟢 CTS Route 7 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_020",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Audit & Shelf Dangler Placement Part 2 — Walmart #673",address:"3050 Wilma Rudolph Blvd, Clarksville, TN 37040",pay_cents:1000,due:"Awaiting Shipment",minutes:20,status:"assigned",payment_status:"Awaiting Shipment",source:"auto-load",recommendation_reason:"🟢 CTS Route 7 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_021",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Cosmetics Reset & Promotional Tagging — Walgreens",address:"2109 Madison St, Clarksville, TN 37043",pay_cents:3850,due:"Today by 6:00 PM",minutes:60,status:"assigned",payment_status:"Claimed / Active Assignment",source:"auto-load",recommendation_reason:"🟢 CTS Route 6 < 0.3 mi walk — HIGH PRIORITY $38.50",created_at:now},
+    {id:"sm_job_022",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Snack Food Planogram & Out-of-Stock Audit",address:"1489 Madison St, Clarksville, TN 37040",pay_cents:1500,due:"Tomorrow by 12:00 PM",minutes:20,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟡 1.0–2.5 mi walk / transfer required",created_at:now},
+    {id:"sm_job_023",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Battery & Checkout Queue Merchandising",address:"2088 Tiny Town Rd, Clarksville, TN 37042",pay_cents:1200,due:"Tomorrow by 5:00 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟡 1.0–2.5 mi walk / transfer required",created_at:now},
+    {id:"sm_job_024",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Rural Retail Inventory Check — Dover ⚠ VEHICLE NEEDED",address:"1200 Donelson Pkwy, Dover, TN 37058",pay_cents:2800,due:"Within 48 hours",minutes:35,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🔴 Rural / > 2.5 mi from any transit route — vehicle required",created_at:now}
+  ];
+  try{localStorage.setItem(KEY,JSON.stringify(jobs));}catch(e){console.warn('Job auto-load failed',e);}
+})();
+</script>
 
 <div class="card metrics">
- <div class="metric">Public posted jobs<strong>0</strong><span>No seeded audit list</span></div>
- <div class="metric">Imported jobs<strong>0</strong><span>Approve in Import Review first</span></div>
- <div class="metric">Provider map pins<strong>0</strong><span>Green, yellow, red after import</span></div>
- <div class="metric">Transit plan<strong>Empty</strong><span>Select or import work later</span></div>
+ <div class="metric">Today's jobs<strong id="metricJobCount">24</strong><span id="metricJobSub">Survey Merchandiser · $268.20 total</span></div>
+ <div class="metric">Due by 6 PM today<strong>13</strong><span>Tobacco audits · $8.25 each · 5 min</span></div>
+ <div class="metric">Transit accessible<strong>🟢 19 green</strong><span>🟡 3 yellow · 🔴 2 red (vehicle)</span></div>
+ <div class="metric">Priority job<strong>$38.50</strong><span>Cosmetics Reset — Walgreens Clarksville</span></div>
 </div>
 
 <div class="card" id="workApps">

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Linked Jobs Route Planner</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Live route planner</p>
+        <h1>Linked Jobs Route Planner</h1>
+      </div>
+      <div class="topbar-actions">
+        <a class="secondary-link" href="/credentials">Open Credentials Manager</a>
+        <form id="logoutForm" method="post" action="/logout">
+          <button type="submit" class="secondary">Log out</button>
+        </form>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="lead">
+            Live jobs come in from the signed-in browser tab or extension. This dashboard keeps
+            its own 7-day login session so you do not have to leave the browser session open.
+          </p>
+          <div class="actions">
+            <button id="refreshButton" class="primary">Refresh jobs</button>
+            <button id="routeButton" class="secondary">Open selected route</button>
+            <button id="exportButton" class="secondary">Export CSV</button>
+          </div>
+        </div>
+        <div class="panel stats">
+          <div>
+            <span class="stat-label">Jobs</span>
+            <strong id="jobCount">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">Selected</span>
+            <strong id="selectedCount">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">Live</span>
+            <strong id="connectionState">Idle</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel controls">
+        <label for="searchInput" class="sr-only">Search jobs</label>
+        <input id="searchInput" type="search" placeholder="Filter jobs by title, city, state, or address" />
+        <label class="inline">
+          <input id="selectAll" type="checkbox" />
+          Select all visible
+        </label>
+      </section>
+
+      <section class="panel settings">
+        <div class="settings-head">
+          <div>
+            <p class="eyebrow">Live source</p>
+            <h2>Save your Jobslinger login safely</h2>
+          </div>
+          <span id="sourceStatus" class="pill">Not loaded</span>
+        </div>
+        <form id="sourceConfigForm" class="settings-form">
+          <label>
+            Source name
+            <input name="source_name" placeholder="Jobslinger MegaLog" />
+          </label>
+          <label>
+            Source URL
+            <input name="source_url" placeholder="https://www.jobslingerplus.com/MegaLog" />
+          </label>
+          <label>
+            Username
+            <input name="source_username" autocomplete="username" />
+          </label>
+          <label>
+            Password
+            <input name="source_password" type="password" autocomplete="current-password" />
+          </label>
+          <div class="actions">
+            <button type="submit" class="primary">Save live login</button>
+            <button type="button" id="reloadSourceButton" class="secondary">Reload saved login</button>
+          </div>
+        </form>
+        <p class="helper">
+          Saved settings stay on your machine in the ignored backend data folder. If the site is
+          offline, the route planner keeps showing the last successful scrape.
+        </p>
+      </section>
+
+      <section class="panel">
+        <table class="jobs-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Title</th>
+              <th>Address</th>
+              <th>Location</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="jobsTableBody"></tbody>
+        </table>
+      </section>
+
+    </main>
+
+    <template id="jobRowTemplate">
+      <tr>
+        <td><input type="checkbox" class="job-check" /></td>
+        <td class="job-title"></td>
+        <td class="job-address"></td>
+        <td class="job-location"></td>
+        <td class="job-source"></td>
+      </tr>
+    </template>
+
+    <script src="/frontend/app.js" type="module"></script>
+  </body>
+</html>
