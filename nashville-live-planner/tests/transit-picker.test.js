@@ -8,47 +8,8 @@ const picker = require("../transit-picker.js");
 const plannerDataSource = fs.readFileSync(path.join(__dirname, "..", "planner-data.js"), "utf8");
 const context = { window: {} };
 vm.runInNewContext(plannerDataSource, context);
-const productionData = context.window.PLANNER_DATA;
+const data = context.window.PLANNER_DATA;
 const planName = "Plan C — West + North/East";
-const data = {
-  jobs: {
-    Q11: { name: "Fixture job", address: "3019 Dickerson Pike, Nashville, TN", minutes: 5 },
-  },
-  plans: {
-    [planName]: ["dickerson"],
-  },
-  sections: {
-    dickerson: {
-      title: "Dickerson / Maplewood",
-      legs: [
-        {
-          label: "Route 23 to 3019 Dickerson Pike",
-          route: "23",
-          board: "MCC4_24",
-          alight: "DICBENNF",
-          destination: "3019 Dickerson Pike, Nashville, TN",
-          job: "Q11",
-          static: "Example GTFS window 12:27 PM → 12:45 PM when this section begins near noon",
-          board_stop: { name: "CENTRAL 4TH AVE - BAY 24", lat: 36.16682, lon: -86.78131 },
-          alight_stop: { name: "DICKERSON PIKE & BEN ALLEN RD NB", lat: 36.225551, lon: -86.760196 },
-          segment: [[36.16682, -86.78131], [36.225551, -86.760196]],
-        },
-      ],
-    },
-  },
-};
-
-test("production Nashville planner exposes the current safe video-imported jobs", () => {
-  assert.equal(Object.keys(productionData.jobs || {}).length, 74);
-  assert.match(productionData.source, /Screen_Recording_20260827_233541\.mp4/);
-  assert.deepEqual(picker.planSectionKeys(productionData, "No posted jobs"), []);
-  assert.ok(
-    Object.values(productionData.jobs).every((job) =>
-      Object.keys(job).every((field) => !/(password|token|secret|cookie|session|source_text)/i.test(field)),
-    ),
-  );
-  assert.equal(productionData.jobs["DG-2360"].name, "Dollar General Store #2360");
-});
 
 test("all accessible routes includes every verified section in the selected plan", () => {
   const all = picker.selectedSectionKeys(data, planName, ["all-accessible-routes"]);

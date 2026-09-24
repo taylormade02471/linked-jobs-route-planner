@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -19,45 +19,68 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .bus,.alert{padding:8px;border:1px solid #dce3e8;border-radius:8px;margin:5px 0;font-size:13px}.alert{border-color:#ead18b;background:#fff9e8}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.locationStatus{font-size:12px;padding:8px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:8px}.mePulse{animation:mePulse 1.6s ease-out infinite}@keyframes mePulse{0%{stroke-width:3;stroke-opacity:1}100%{stroke-width:14;stroke-opacity:0}}.maptoolbar{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 9px}.maptoolbar button{font-size:13px;min-height:36px;padding:7px 10px}.maptoolbar button.active{background:#17324d;color:#fff}.leaflet-tooltip.stepnum{background:#fff;border:2px solid #17324d;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#17324d;box-shadow:none}.leaflet-tooltip.stepnum:before{display:none}.metric{padding:9px;background:#f8fafb;border-radius:8px}.metric strong{display:block;font-size:19px}
 .providergrid,.recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.provider,.workjob{border:1px solid #dce3e8;border-radius:10px;padding:10px;background:#f8fbfd}.provider b,.workjob b{display:block;color:#17324d}.provider span,.workjob span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.jobtabs,.routeActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.jobtabs button{font-size:13px;min-height:38px;padding:8px 10px}.jobtabs button.active{background:#17324d;color:#fff}.routeActions span{font-size:12px;color:var(--muted)}.jobSelect{display:flex;align-items:center;gap:6px;min-width:auto;color:#17324d;font-weight:bold;margin-top:8px}.jobSelect input{width:auto;min-height:auto}.connectionPanel{border:1px solid #cfe3d2;background:#f4fff4;border-radius:12px;padding:10px;margin-top:10px}.emailPanel{border-color:#d9c48e;background:#fffaf0}.connectionPanel h3{margin:0 0 8px;font-size:15px;color:#17324d}.connectionPanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.connectionPanel .actions button,.connectionPanel .actions a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:#17324d;text-decoration:none;padding:8px 10px;font-size:13px}.connectionPanel input,.connectionPanel textarea{width:100%;font-size:15px;padding:9px;border:1px solid #cbd5dd;border-radius:8px;background:#fff}.connectionPanel textarea{min-height:60px;resize:vertical}.workform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.workform label{min-width:0}.wide{grid-column:1/-1}.workform input,.workform textarea{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}.workform textarea{min-height:92px;resize:vertical}.greenpin,.yellowpin,.redpin,.graypin{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #052e16;margin-right:6px;vertical-align:-1px}.greenpin{background:#39ff14}.yellowpin{background:#ffd400;border-color:#5d4700}.redpin{background:#d71920;border-color:#7a1114}.graypin{background:#a7b0b8;border-color:#4d5964}.jobStatus{font-size:12px;background:#eef8ef;border:1px solid #c9e5cc;border-radius:8px;padding:8px;margin-top:8px}.danger{background:#fff1f0;border-color:#f0b7b2;color:#8a1f14}.cameraPanel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:8px}.cameraPanel video,.cameraPanel img{width:100%;max-height:220px;object-fit:cover;border:1px solid #cbd5dd;border-radius:10px;background:#eef2f5}.cameraActions{display:grid;gap:8px}.cameraActions button{font-size:13px;min-height:38px;padding:8px 10px}.photoBadge{display:inline-block;margin-top:4px;color:#174d28;font-weight:800;font-size:12px}.reviewQueue{display:grid;gap:8px;margin-top:8px}.reviewItem{border:1px solid #c9e5cc;border-radius:9px;background:#f7fff7;padding:8px;font-size:13px}.reviewItem.blocked{border-color:#f0b7b2;background:#fff7f6}.reviewItem b{display:block;color:#17324d}.reviewItem span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.paymentPanel{margin-top:12px;border-top:1px solid #dce3e8;padding-top:10px}.paymentTotal{font-weight:800;color:#17324d;margin:8px 0}.paymentRow{border:1px solid #dce3e8;border-radius:9px;background:#fff;padding:8px;margin-top:6px;font-size:13px}
-.priorityPanel{position:sticky;top:10px;z-index:6;margin:10px 0;padding:10px;border:1px solid #c9e5cc;border-radius:14px;background:rgba(247,255,247,.96);box-shadow:0 16px 40px rgba(23,50,77,.14);backdrop-filter:blur(8px)}
-.priorityPanelHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-weight:800;color:#17324d}
-.priorityPanelHead small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
-.priorityPanelTag{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#17324d;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
-.priorityJobsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;margin-top:10px}
-.priorityJobCard{border-color:#92c89c;background:#fff}
-.priorityJobCard.needs{border-color:#f0b7b2;background:#fff7f6}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
-main{display:flex;flex-direction:column}
-main>.notice,main>.metrics,main>.card,main>.siteFooter{order:3}
-main>#workApps{order:2}
-main>#mainMap{order:1}
-.jobBoardSummary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:4px 2px;font-weight:800;color:#17324d}
-.jobBoardSummary::-webkit-details-marker{display:none}
-.jobBoardSummary small{display:block;color:var(--muted);font-weight:400;margin-top:4px}
-#workApps[open]>.jobBoardSummary{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
-#appRecommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));overflow:visible;gap:8px;padding-bottom:8px}
-@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-template-columns:1fr}.priorityPanel{position:static}}
+@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
 @media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>Nashville Live Audit Transit Planner</h1><p>Submitted job list loaded. Provider credentials stay off this public planner.</p></header>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>Survey Merchandiser · 24 jobs loaded · $268.20 total · 🟢 19 green · 🟡 3 yellow · 🔴 2 red · Aug 28–29, 2026 · WeGo + CTS transit optimized</p></header>
 <main>
-<div class="notice"><b>Updated submitted job list:</b> old seeded route jobs are not published here. The latest reviewed Survey Merchandiser jobs load as safe app records with no passwords, sessions, or raw screen text.</div>
+<div class="notice"><b>Today's priority:</b> 13 jobs due by 6 PM on WeGo Routes 22/23 (Dickerson Pike cluster), 56/76 (Madison cluster), and Route 6 (Lebanon Pike/Hermitage). Three Clarksville Body Butter audits due 7:30 PM on CTS. One red-pin job (Old Hickory) requires a vehicle.</div>
+<script>
+// Auto-load today's Survey Merchandiser jobs into localStorage on first visit.
+// Only injects if the board is empty — never overwrites existing saved jobs.
+(function(){
+  const KEY='nashville_phone_work_jobs_v1';
+  try{
+    const existing=JSON.parse(localStorage.getItem(KEY)||'[]');
+    if(Array.isArray(existing)&&existing.length>0)return; // already has jobs
+  }catch(e){}
+  const now=Date.now();
+  const jobs=[
+    {id:"sm_job_001",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Body Butter Product Audit & Sampling — DG #325",address:"2105 Trenton Rd, Clarksville, TN 37040",pay_cents:1090,due:"Fri Aug 28 7:30 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 CTS Route 7 < 0.8 mi walk",created_at:now},
+    {id:"sm_job_002",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Body Butter Product Audit & Sampling — DG #9805",address:"1945 Madison St, Clarksville, TN 37043",pay_cents:1090,due:"Fri Aug 28 7:30 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 CTS Route 6 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_003",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Body Butter Product Audit & Sampling — DG #6159",address:"3855 Trenton Rd, Clarksville, TN 37040",pay_cents:1090,due:"Fri Aug 28 7:30 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟡 North Trenton Rd ~1.5 mi walk from CTS loop",created_at:now},
+    {id:"sm_job_004",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #4400",address:"3721 Clarksville Hwy, Nashville, TN 37218",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 22 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_005",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #2443",address:"3852 Dickerson Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 23 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_006",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — Family Dollar #6742",address:"2434 Whites Creek Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 11:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 14/22 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_007",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — Family Dollar #2627",address:"3049 Dickerson Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 11:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 23 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_008",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9232",address:"3019 Dickerson Pike, Nashville, TN 37207",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 23 adjacent cluster",created_at:now},
+    {id:"sm_job_009",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #8347",address:"601 Gallatin Pike N, Madison, TN 37115",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 56/26 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_010",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #2392",address:"808 Madison Sq, Madison, TN 37115",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 56/76 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_011",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #7914",address:"459 Myatt Dr, Madison, TN 37115",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 76 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_012",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9821",address:"301 E Thompson Ln, Nashville, TN 37211",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 77/52 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_013",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #2360",address:"3926 Lebanon Pike, Hermitage, TN 37076",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 6 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_014",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9822",address:"4491 Lebanon Pike, Hermitage, TN 37076",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 6 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_015",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #1901 ⚠ VEHICLE NEEDED",address:"13820 Lebanon Rd, Old Hickory, TN 37138",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🔴 Remote > 2.5 mi from Rt 6 terminus — vehicle required",created_at:now},
+    {id:"sm_job_016",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #9802",address:"5445 Nolensville Rd, Nashville, TN 37211",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 52 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_017",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — DG #1990",address:"2275 Murfreesboro Pike, Nashville, TN 37217",pay_cents:825,due:"Fri Aug 28 6:00 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 55 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_018",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Tobacco Products Photo Audit — Family Dollar #1033",address:"1015 Jefferson St, Nashville, TN 37208",pay_cents:650,due:"Sat Aug 29 11:45 PM",minutes:5,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟢 WeGo Rt 19/22 < 0.1 mi walk",created_at:now},
+    {id:"sm_job_019",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Audit & Shelf Dangler Placement — Walmart #673",address:"3050 Wilma Rudolph Blvd, Clarksville, TN 37040",pay_cents:1000,due:"Awaiting Shipment",minutes:20,status:"assigned",payment_status:"Awaiting Shipment",source:"auto-load",recommendation_reason:"🟢 CTS Route 7 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_020",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Audit & Shelf Dangler Placement Part 2 — Walmart #673",address:"3050 Wilma Rudolph Blvd, Clarksville, TN 37040",pay_cents:1000,due:"Awaiting Shipment",minutes:20,status:"assigned",payment_status:"Awaiting Shipment",source:"auto-load",recommendation_reason:"🟢 CTS Route 7 < 0.2 mi walk",created_at:now},
+    {id:"sm_job_021",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Cosmetics Reset & Promotional Tagging — Walgreens",address:"2109 Madison St, Clarksville, TN 37043",pay_cents:3850,due:"Today by 6:00 PM",minutes:60,status:"assigned",payment_status:"Claimed / Active Assignment",source:"auto-load",recommendation_reason:"🟢 CTS Route 6 < 0.3 mi walk — HIGH PRIORITY $38.50",created_at:now},
+    {id:"sm_job_022",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Snack Food Planogram & Out-of-Stock Audit",address:"1489 Madison St, Clarksville, TN 37040",pay_cents:1500,due:"Tomorrow by 12:00 PM",minutes:20,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟡 1.0–2.5 mi walk / transfer required",created_at:now},
+    {id:"sm_job_023",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Battery & Checkout Queue Merchandising",address:"2088 Tiny Town Rd, Clarksville, TN 37042",pay_cents:1200,due:"Tomorrow by 5:00 PM",minutes:15,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🟡 1.0–2.5 mi walk / transfer required",created_at:now},
+    {id:"sm_job_024",provider_id:"survey_merchandiser",provider_label:"Survey Merchandiser",title:"Rural Retail Inventory Check — Dover ⚠ VEHICLE NEEDED",address:"1200 Donelson Pkwy, Dover, TN 37058",pay_cents:2800,due:"Within 48 hours",minutes:35,status:"available",payment_status:"Pending completion",source:"auto-load",recommendation_reason:"🔴 Rural / > 2.5 mi from any transit route — vehicle required",created_at:now}
+  ];
+  try{localStorage.setItem(KEY,JSON.stringify(jobs));}catch(e){console.warn('Job auto-load failed',e);}
+})();
+</script>
 
 <div class="card metrics">
- <div class="metric">Public posted jobs<strong>0</strong><span>No seeded audit list</span></div>
- <div class="metric">Submitted jobs<strong>15</strong><span>Reviewed from latest video</span></div>
- <div class="metric">Provider map pins<strong>Needs coords</strong><span>Addresses and app distances saved</span></div>
- <div class="metric">Transit plan<strong>Hidden</strong><span>Select jobs, then View route</span></div>
+ <div class="metric">Today's jobs<strong id="metricJobCount">24</strong><span id="metricJobSub">Survey Merchandiser · $268.20 total</span></div>
+ <div class="metric">Due by 6 PM today<strong>13</strong><span>Tobacco audits · $8.25 each · 5 min</span></div>
+ <div class="metric">Transit accessible<strong>🟢 19 green</strong><span>🟡 3 yellow · 🔴 2 red (vehicle)</span></div>
+ <div class="metric">Priority job<strong>$38.50</strong><span>Cosmetics Reset — Walgreens Clarksville</span></div>
 </div>
 
-<details class="card" id="workApps">
- <summary class="jobBoardSummary"><span><span class="greenpin"></span>Phone work app jobs<small>Open the drawer to review available, accepted, and completed work.</small></span><span>Open jobs +</span></summary>
+<div class="card" id="workApps">
  <div class="sectionTitle"><span class="greenpin"></span>Phone work app jobs</div>
  <div class="jobStatus"><a href="./jobs.html" target="_blank" rel="noopener">Open saved jobs and completed / passed history</a> · The homepage stays focused on current route work.</div>
+ <div class="jobStatus">Four provider apps are available below: Survey Merchandiser, Clickworker, Field Nation, and Field Agent. Imported planner jobs are shown as active work until you move or complete them.</div>
  <div id="providerStats" class="providergrid"></div>
  <div class="controls">
   <label>Show provider
@@ -164,18 +187,7 @@ main>#mainMap{order:1}
   </div>
   <div id="importReviewQueue" class="reviewQueue wide"></div>
  </div>
-<div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
- <div id="priorityJobsPanel" class="priorityPanel">
-  <div class="priorityPanelHead">
-   <div>
-    Needed Jobs to Complete
-    <small>Priority overlay: needs completion first, then the best paying route cards. WeGo GTFS stays loaded for route planning.</small>
-   </div>
-   <span class="priorityPanelTag">Floating priority window</span>
-  </div>
-  <div id="priorityJobsStatus" class="jobStatus">Priority jobs will appear here above the rest of the board.</div>
-  <div id="priorityJobs" class="priorityJobsGrid"></div>
- </div>
+ <div id="appJobStatus" class="jobStatus">Phone app jobs stay in this browser on this device. No provider password is sent to Vercel.</div>
  <div class="sectionTitle">Best open work near your location</div>
  <div id="appRecommendations" class="recommendations"></div>
  <div class="connectionPanel emailPanel">
@@ -226,7 +238,6 @@ main>#mainMap{order:1}
   <div id="paymentRows"></div>
  </div>
 </div>
-</details>
 
 <div class="card">
  <div class="controls">
@@ -243,6 +254,7 @@ main>#mainMap{order:1}
   <button id="refresh">Refresh live now</button>
  </div>
  <div id="liveStatus" class="status">Waiting for live feed…</div>
+<div id="gtfsStatus" class="status" style="margin-top:6px;background:#f0f7ff;border:1px solid #c5d9ef">GTFS static data: loading… <button onclick="reloadGtfs(true)" style="font-size:12px;min-height:28px;padding:3px 10px;margin-left:8px">Force reload now</button></div>
 </div>
 
 <div class="card">
@@ -274,7 +286,7 @@ main>#mainMap{order:1}
 </div>
 
 <div class="card"><div id="details"></div></div>
-<div class="card" id="mainMap"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 <footer class="siteFooter"><b>Privacy-first field planner:</b> <a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a></footer>
@@ -300,8 +312,6 @@ let currentBounds=null;
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
-document.getElementById('navigateNextJob').onclick=navigateNextJob;
-document.getElementById('openGoogleRoute').onclick=openGoogleRoute;
 document.getElementById('toggleAllBuses').onclick=()=>{
  showAllLiveBuses=!showAllLiveBuses;
  const button=document.getElementById('toggleAllBuses');
@@ -367,53 +377,6 @@ function jobsFromPlannerData(){
   order:Number(job.order)||index+1,
  }));
 }
-function submittedJobsFromPlannerData(){
- return (Array.isArray(D.submittedJobs)?D.submittedJobs:[]).map((job,index)=>{
-  const minutes=Number(job.minutes);
-  const timerMinutes=Number(job.timer_minutes);
-  const distanceMiles=Number(job.distance_miles);
-  const payCents=Number(job.pay_cents)||W.moneyToCents(job.pay||job.fee||job.reward);
-  return {
-   id:String(job.id||job.external_id||['submitted',job.provider_id,job.location_name,job.address,index+1].join(':')),
-   provider_id:job.provider_id||'survey_merchandiser',
-   provider_label:job.provider_label||providerLabel(job.provider_id||'survey_merchandiser'),
-   connector_id:job.connector_id||'submitted-screen-recording-review',
-   external_id:job.external_id||'',
-   title:job.title||job.name||job.address||'Submitted provider job',
-   location_name:job.location_name||job.locationName||'',
-   address:job.address||job.location||'',
-   pay_cents:payCents,
-   due:job.due||job.deadline||job.window||'',
-   accepted_at:job.accepted_at||'',
-   minutes:Number.isFinite(minutes)&&minutes>0?Math.round(minutes):undefined,
-   duration_text:job.duration_text||'Work time not listed',
-   timer_minutes:Number.isFinite(timerMinutes)&&timerMinutes>0?Math.round(timerMinutes):undefined,
-   photos_required:job.photos_required==null?undefined:job.photos_required,
-   purchase_required:job.purchase_required==null?undefined:job.purchase_required,
-   requirements:job.requirements||'Verify full job instructions in the provider app before beginning.',
-   ready_state:job.ready_state||'',
-   status:W.normalizeStatus(job.status||'assigned'),
-   payment_status:job.payment_status||'',
-   distance_miles:Number.isFinite(distanceMiles)&&distanceMiles>0?distanceMiles:undefined,
-   source:job.source||'submitted-screen-recording-review',
-   source_video:job.source_video||'',
-   submitted_at:job.submitted_at||'',
-   review_note:job.review_note||'',
-   order:Number(job.order)||index+1,
-   imported_at:Date.now(),
-   updated_at:Date.now(),
-  };
- }).filter(job=>W.isRouteVisibleJob(job)||W.isCompletedJob(job));
-}
-function mergeSubmittedJobsFromPlannerData(){
- const submitted=submittedJobsFromPlannerData();
- if(!submitted.length)return;
- const savedIds=new Set(workJobs.map(job=>String(job?.id||'')));
- const fresh=submitted.filter(job=>!savedIds.has(String(job.id)));
- if(!fresh.length)return;
- workJobs=[...fresh,...workJobs];
- saveWorkJobs();
-}
 function moveExistingSavedJobsToCompletedOnce(){
  if(localStorage.getItem(EXISTING_JOBS_COMPLETED_KEY)){
   clearLegacyPlannerStorage();
@@ -450,9 +413,59 @@ const planLabels={
  'Plan D — West + South + Downtown':'West, South & Downtown jobs'
 };
 Object.keys(D.plans).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=planLabels[n]||n;planSel.appendChild(o)});
-['Custom route','Automatic best route'].forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;planSel.appendChild(o)});
 
-let live={vehicles:[],trips:[],alerts:[],updatedAt:null,ok:false};
+let live={vehicles:[],trips:[],alerts:[],stopArrivals:{},tripUpdateCount:0,updatedAt:null,ok:false};
+// GTFS static data state
+let gtfsData={wegoRoutes:{},routeColors:{},routeIdToShort:{},fetchedAt:null,loading:false};
+const GTFS_CACHE_KEY='nashville_gtfs_cache_v1';
+const GTFS_MAX_AGE_MS=12*60*60*1000; // 12 hours
+
+function loadCachedGtfs(){
+ try{
+  const raw=localStorage.getItem(GTFS_CACHE_KEY);
+  if(!raw) return false;
+  const d=JSON.parse(raw);
+  if(!d.fetchedAt||Date.now()-new Date(d.fetchedAt).getTime()>GTFS_MAX_AGE_MS) return false;
+  gtfsData=d;
+  applyGtfsToPlanner();
+  return true;
+ }catch{return false;}
+}
+
+function applyGtfsToPlanner(){
+ // Merge fresh routeColors + routeIdToShort into PLANNER_DATA so map colours update
+ if(!window.PLANNER_DATA) return;
+ if(Object.keys(gtfsData.routeColors).length){
+  window.PLANNER_DATA.routeColors=Object.assign({},window.PLANNER_DATA.routeColors,gtfsData.routeColors);
+ }
+ if(Object.keys(gtfsData.routeIdToShort).length){
+  window.PLANNER_DATA.routeIdToShort=Object.assign({},window.PLANNER_DATA.routeIdToShort,gtfsData.routeIdToShort);
+ }
+ if(Object.keys(gtfsData.wegoRoutes).length){
+  window.PLANNER_DATA.wegoRoutes=gtfsData.wegoRoutes;
+ }
+}
+
+async function reloadGtfs(force){
+ if(gtfsData.loading) return;
+ if(!force && loadCachedGtfs()) return;
+ const el=document.getElementById('gtfsStatus');
+ if(el) el.textContent='Reloading live WeGo GTFS schedule data…';
+ gtfsData.loading=true;
+ try{
+  const r=await fetch('/api/gtfs-reload?ts='+Date.now(),{cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  gtfsData={wegoRoutes:j.wegoRoutes||{},routeColors:j.routeColors||{},routeIdToShort:j.routeIdToShort||{},fetchedAt:j.fetchedAt,loading:false};
+  localStorage.setItem(GTFS_CACHE_KEY,JSON.stringify(gtfsData));
+  applyGtfsToPlanner();
+  render();
+  if(el) el.textContent=`GTFS LIVE — ${j.routeCount} routes / ${j.stopCount} stops — reloaded ${new Date(j.fetchedAt).toLocaleTimeString()} — next reload in 12 h`;
+ }catch(e){
+  gtfsData.loading=false;
+  if(el) el.innerHTML=`GTFS reload failed (${e.message}). <a href="#" onclick="reloadGtfs(true);return false">Retry</a>`;
+ }
+}
 
 function readVarint(u8,s){let val=0,shift=0;while(s.i<u8.length){const b=u8[s.i++];val+=(b&127)*Math.pow(2,shift);if(!(b&128))return val;shift+=7}return val}
 function fields(u8){let s={i:0},o=[];while(s.i<u8.length){let key=readVarint(u8,s),n=Math.floor(key/8),w=key&7,v;if(w===0)v=readVarint(u8,s);else if(w===1){v=u8.slice(s.i,s.i+8);s.i+=8}else if(w===2){let l=readVarint(u8,s);v=u8.slice(s.i,s.i+l);s.i+=l}else if(w===5){v=u8.slice(s.i,s.i+4);s.i+=4}else break;o.push([n,w,v])}return o}
@@ -472,8 +485,8 @@ async function refreshLive(){
  const el=document.getElementById('liveStatus');el.textContent='Refreshing official WeGo realtime feeds…';
  try{
   const r=await fetch('/api/wego-live?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
-  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.updatedAt=j.fetchedAt;live.ok=true;
-  el.textContent=`LIVE — ${live.vehicles.length} vehicles / ${live.alerts.length} alerts — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto refresh 30 sec`;
+  const j=await r.json();live.vehicles=parseFeed(j.vehiclePositions,'vehicle');live.alerts=parseFeed(j.alerts,'alert');live.stopArrivals=j.stopArrivals||{};live.tripUpdateCount=j.tripUpdateCount||0;live.updatedAt=j.fetchedAt;live.ok=true;
+  el.textContent=`LIVE — ${live.vehicles.length} buses / ${live.alerts.length} alerts / ${live.tripUpdateCount} trip updates — refreshed ${new Date(j.fetchedAt).toLocaleTimeString()} — auto 30s`;
  }catch(e){live.ok=false;el.innerHTML=`Live backend unavailable (${e.message}). Static GTFS plan remains usable. <a target="_blank" href="https://www.wegotransit.com/routes/">Open WeGo live arrivals</a>`}
  render();
 }
@@ -483,24 +496,7 @@ function selectedCorridors(){
  const selected=Array.from(corridorSel.selectedOptions).map(o=>o.value);
  return selected.length?selected:['all-accessible-routes'];
 }
-function customJobIds(){
- const selected=Array.from(selectedRouteJobIds);
- if(selected.length)return new Set(selected);
- if(planSel.value==='Automatic best route')return new Set(visibleJobsForActiveTab().slice(0,20).map(job=>String(job.id)));
- return new Set();
-}
-function customSectionIds(){
- const ids=customJobIds();
- return Object.entries(D.sections||{}).filter(([,section])=>(section.legs||[]).some(leg=>ids.has(String(leg.job||''))||ids.has(String(leg.extra_job||'')))).map(([id])=>id);
-}
-function selectedSectionIds(){
- if(planSel.value==='Custom route'||planSel.value==='Automatic best route'){
-  const available=customSectionIds();
-  const selected=Array.from(corridorSel.selectedOptions).map(o=>o.value);
-  return selected.includes('all-accessible-routes')||!selected.length?available:available.filter(id=>selected.includes(id));
- }
- return P.selectedSectionKeys(D,planSel.value,selectedCorridors());
-}
+function selectedSectionIds(){return P.selectedSectionKeys(D,planSel.value,selectedCorridors())}
 function updateLocationStatus(msg){const el=document.getElementById('locationStatus');if(el)el.innerHTML=msg;}
 function drawMyLocation(lat,lon,accuracy){
  myPosition=[lat,lon];myAccuracy=accuracy;
@@ -508,28 +504,6 @@ function drawMyLocation(lat,lon,accuracy){
  myAccuracyCircle=L.circle(myPosition,{radius:Math.max(accuracy||0,8),color:'#1976d2',weight:1,fillColor:'#64b5f6',fillOpacity:.13}).addTo(locationLayer);
  myLocationMarker=L.circleMarker(myPosition,{radius:10,color:'#0d47a1',weight:3,fillColor:'#42a5f5',fillOpacity:1,className:'mePulse'}).bindPopup(`<b>YOU ARE HERE</b><br>Accuracy: about ${Math.round(accuracy||0)} m<br>Updated: ${new Date().toLocaleTimeString()}`).addTo(locationLayer);
  updateLocationStatus(`<b>Location LIVE</b> — accuracy about ${Math.round(accuracy||0)} m — updated ${new Date().toLocaleTimeString()}`);
-}
-function navigationJobs(){
- return visibleJobsForActiveTab().filter(job=>job&&job.address).slice(0,20);
-}
-function googleMapsRouteUrl(jobs){
- const list=(jobs||[]).filter(job=>job&&job.address);if(!list.length)return '';
- const origin=myPosition?myPosition.join(','):'Elizabeth Duff Transit Center at WeGo Central, Nashville, TN';
- const destination=encodeURIComponent(list[list.length-1].address);
- const waypoints=list.slice(0,-1).map(job=>encodeURIComponent(job.address)).join('|');
- return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin)+'&destination='+destination+(waypoints?'&waypoints='+waypoints:'')+'&travelmode=transit';
-}
-function updateNavigationStatus(message,error=false){const el=document.getElementById('navigationStatus');if(el){el.textContent=message;el.classList.toggle('danger',Boolean(error));}}
-function navigateNextJob(){
- const jobs=navigationJobs();if(!jobs.length){updateNavigationStatus('No active jobs with addresses are available.',true);return;}
- const job=jobs[0];updateNavigationStatus('Next job: '+(job.name||job.title||'Job')+' — '+job.address+(myPosition?' · live location origin':' · WeGo Central origin'));
- window.open(googleMapsRouteUrl([job]),'_blank','noopener');
-}
-function openGoogleRoute(){
- const jobs=selectedRouteJobIds.size?navigationJobs().filter(job=>selectedRouteJobIds.has(String(job.id))):navigationJobs().slice(0,20);
- if(!jobs.length){updateNavigationStatus('Select jobs or add active jobs with addresses first.',true);return;}
- updateNavigationStatus('Opened Google Maps with '+jobs.length+' stop(s) for live transit and voice guidance.');
- window.open(googleMapsRouteUrl(jobs),'_blank','noopener');
 }
 function startLocation(){
  if(!navigator.geolocation){updateLocationStatus('<b>Location unavailable:</b> this browser does not support geolocation.');return;}
@@ -546,10 +520,7 @@ function centerOnMe(){if(myPosition){map.setView(myPosition,16);if(myLocationMar
 function fillCorridors(){
  corridorSel.innerHTML='';
  let all=document.createElement('option');all.value='all-accessible-routes';all.textContent='All accessible routes in this plan';all.selected=true;corridorSel.appendChild(all);
- const options=(planSel.value==='Custom route'||planSel.value==='Automatic best route')
-  ? customSectionIds().map(id=>{const routes=P.routeNumbersForSection(D,id);return {id,label:(routes.length===1?'Route '+routes[0]:'Routes '+routes.join(' & '))+' - '+D.sections[id].title};})
-  : P.corridorOptions(D,planSel.value);
- options.forEach(corridor=>{
+ P.corridorOptions(D,planSel.value).forEach(corridor=>{
   let o=document.createElement('option');o.value=corridor.id;o.textContent=corridor.label;corridorSel.appendChild(o);
  });
  fillViews();
@@ -571,10 +542,6 @@ function fillViews(){
 }
 
 function selectedLegs(){
- if(planSel.value==='Custom route'||planSel.value==='Automatic best route'){
-  const customData={...D,plans:{...D.plans,[planSel.value]:customSectionIds()}};
-  return P.legsForSelection(customData,planSel.value,selectedCorridors(),viewSel.value);
- }
  return P.legsForSelection(D,planSel.value,selectedCorridors(),viewSel.value);
 }
 
@@ -722,9 +689,6 @@ function pinClassForJob(job){
 function providerNameForJob(job){
  return job?.provider_label||providerLabel(job?.provider_id);
 }
-function workTimeLabel(job){
- return W.workTimeLabel?W.workTimeLabel(job):(job?.minutes?job.minutes+' min':'Work time not listed');
-}
 function setJobSelectionStatus(message){
  const el=document.getElementById('jobSelectionStatus');
  if(el)el.textContent=message;
@@ -744,7 +708,6 @@ function setActiveJobTab(tab){
 function toggleRouteJobSelection(jobId,checked){
  const id=String(jobId||'');
  if(!id)return;
- if(checked&&!selectedRouteJobIds.has(id)&&selectedRouteJobIds.size>=20){setJobSelectionStatus('A route can contain at most 20 stops. Unselect one before adding another.');syncRenderedJobSelections();return;}
  if(checked)selectedRouteJobIds.add(id);
  else selectedRouteJobIds.delete(id);
  setJobSelectionStatus(`${selectedRouteJobIds.size} selected job(s).`);
@@ -1166,39 +1129,13 @@ function renderImportReview(){
  target.innerHTML=importReviewItems.map((item,index)=>{
   const blocked=!item.approvable;
   const status=blocked?`Blocked: ${item.blocked_reason}`:'Ready: route-visible for map and routing';
-  return `<div class="reviewItem ${blocked?'blocked':''}"><b>${index+1}. ${escapeHtml(item.title)}</b><span>${escapeHtml(providerLabel(item.provider_id))} · ${escapeHtml(item.status)} · ${escapeHtml(W.centsLabel(item.pay_cents))} · ${escapeHtml(workTimeLabel(item))}</span><span>${escapeHtml(item.address||'Address not listed')}</span><span>${escapeHtml(status)}</span></div>`;
- }).join('');
-}
-function priorityJobsForDisplay(){
- const origin=originForRecommendations();
- const ranked=W.recommendRouteJobs(workJobs,D,origin,{provider_id:'all',status:'all'});
- const needs=ranked.filter(job=>job.status==='needs_completion');
- return (needs.length?needs:ranked).slice(0,6);
-}
-function renderPriorityJobs(){
- const target=document.getElementById('priorityJobs');
- const status=document.getElementById('priorityJobsStatus');
- if(!target||!status)return;
- const jobs=priorityJobsForDisplay();
- if(!jobs.length){
-  target.innerHTML='<div class="workjob priorityJobCard needs"><b>No needed jobs yet</b><span>When a job is marked needs completion, it appears here as the top priority window.</span></div>';
-  status.textContent='No needs-completion jobs are saved right now. GTFS and live WeGo data remain available for route planning.';
-  return;
- }
- const needsCount=jobs.filter(job=>job.status==='needs_completion').length;
- const title=needsCount?`${needsCount} needs-completion job(s) pinned to the top.`:'No needs-completion jobs are saved yet, so the overlay is showing the best paying route cards.';
- status.textContent=`${title} The board stays visible below this floating window.`;
- target.innerHTML=jobs.map((job,index)=>{
-  const isNeeds=job.status==='needs_completion';
-  const label=isNeeds?'Needs completion first':'Best paying route';
-  return `<div class="workjob priorityJobCard ${isNeeds?'needs':''}"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(workTimeLabel(job))} · ${escapeHtml(job.status)}</span><span><b>Priority:</b> ${escapeHtml(label)}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Route score:</b> ${escapeHtml(String(job.recommendation_score||0))}</span>${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
+  return `<div class="reviewItem ${blocked?'blocked':''}"><b>${index+1}. ${escapeHtml(item.title)}</b><span>${escapeHtml(providerLabel(item.provider_id))} · ${escapeHtml(item.status)} · ${escapeHtml(W.centsLabel(item.pay_cents))} · ${escapeHtml(item.minutes||30)} min</span><span>${escapeHtml(item.address||'Address not listed')}</span><span>${escapeHtml(status)}</span></div>`;
  }).join('');
 }
 function renderWorkJobs(){
  renderProviderStats();
  renderPayments();
  renderImportReview();
- renderPriorityJobs();
  const target=document.getElementById('appRecommendations');
  const status=document.getElementById('appJobStatus');
  if(!target)return;
@@ -1221,10 +1158,10 @@ function renderWorkJobs(){
   accepted:'No accepted or claimed jobs saved yet. Accepted work will show here in yellow, and urgent needs-completion work will show in red.',
   completed:'No completed jobs saved yet. Old live-site jobs and pending-payment rows belong here, out of route scoring.',
  }[activeJobTab];
- target.innerHTML=visible.length?visible.map((job,index)=>{
+ target.innerHTML=visible.length?visible.slice(0,24).map((job,index)=>{
   const canRoute=W.isRouteVisibleJob(job);
   const checkbox=canRoute?`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select for route or move</label>`:`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select to move</label>`;
-  return `<div class="workjob"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(workTimeLabel(job))} · ${escapeHtml(job.status)}</span><span><b>Location:</b> ${escapeHtml(job.location_name||'Location name not listed')}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Ready state:</b> ${escapeHtml(job.ready_state||'Not listed')}</span><span><b>Timer after accept:</b> ${escapeHtml(job.timer_minutes?job.timer_minutes+' min':'Not listed')}</span><span><b>Photos:</b> ${escapeHtml(job.photos_required==null?'Not listed':job.photos_required)}</span><span><b>Purchase:</b> ${escapeHtml(job.purchase_required==null?'Not listed':job.purchase_required?'Required':'Not required')}</span><span><b>Requirements:</b> ${escapeHtml(job.requirements||'Not listed')}</span><span><b>Payment:</b> ${escapeHtml(job.payment_status||'Not listed')}</span><span><b>Source distance:</b> ${escapeHtml(job.distance_miles?job.distance_miles+' mi from provider app':'Not listed')}</span><span><b>Review note:</b> ${escapeHtml(job.review_note||'None')}</span><span><b>Map/source:</b> ${escapeHtml(job.recommendation_reason||'No route score needed')} ${job.coordinate?escapeHtml(' · '+job.coordinate.source):''}</span>${checkbox}${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
+  return `<div class="workjob"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(job.minutes||30)} min · ${escapeHtml(job.status)}</span><span><b>Location:</b> ${escapeHtml(job.location_name||'Location name not listed')}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Timer after accept:</b> ${escapeHtml(job.timer_minutes?job.timer_minutes+' min':'Not listed')}</span><span><b>Photos:</b> ${escapeHtml(job.photos_required==null?'Not listed':job.photos_required)}</span><span><b>Purchase:</b> ${escapeHtml(job.purchase_required==null?'Not listed':job.purchase_required?'Required':'Not required')}</span><span><b>Requirements:</b> ${escapeHtml(job.requirements||'Not listed')}</span><span><b>Payment:</b> ${escapeHtml(job.payment_status||'Not listed')}</span><span><b>Map/source:</b> ${escapeHtml(job.recommendation_reason||'No route score needed')} ${job.coordinate?escapeHtml(' · '+job.coordinate.source):''}</span>${checkbox}${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
  }).join(''):`<div class="workjob"><b>${activeJobTab==='open'?'No open jobs':'No '+activeJobTab+' jobs'} in this view</b><span>${emptyCopy}</span></div>`;
  syncRenderedJobSelections();
 }
@@ -1289,10 +1226,18 @@ window.LinkedJobsReceiveAndroidShare=function(payload){
  document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
 };
 function seedPlannerJobs(){
- const seeded=Object.entries(D.jobs||{}).map(([id,job])=>({...job,id,status:job.status||'available'})).filter(job=>job.address);
- const existing=new Set(workJobs.map(job=>String(job.id)));
- const additions=seeded.filter(job=>!existing.has(String(job.id)));
- if(additions.length){workJobs=[...additions,...workJobs];saveWorkJobs();}
+ const seeded=W.jobsForMap(jobsFromPlannerData(),{provider_id:'all',status:'all'});
+ const existingIds=new Set(workJobs.map(job=>String(job.id)));
+ const additions=seeded.filter(job=>!existingIds.has(String(job.id))).map(job=>({
+  ...job,
+  source:'planner-data',
+  status:job.status||'available',
+  map_color:job.map_color||W.jobMapColor(job),
+ }));
+ if(additions.length){
+  workJobs=[...additions,...workJobs];
+  saveWorkJobs();
+ }
 }
 function initWorkApps(){
  seedPlannerJobs();
@@ -1305,7 +1250,6 @@ function initWorkApps(){
   providerFilter.innerHTML='<option value="all">All apps together</option>'+W.PROVIDERS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
  }
  loadWorkJobs();
- mergeSubmittedJobsFromPlannerData();
  loadProviderConnections();
  loadPaymentSnapshots();
  loadImportReviewItems();
@@ -1427,6 +1371,20 @@ function routeLabel(leg){
  if(leg.route==='link')return 'WeGo Link';
  return 'Route '+leg.route;
 }
+function stopArrivalsHtml(stopId){
+ if(!stopId||!live.ok||!live.stopArrivals) return '';
+ const arr=live.stopArrivals[stopId];
+ if(!arr||!arr.length) return '<i style="font-size:11px;color:#888">No arrivals in next 90 min</i>';
+ const routeColors=window.PLANNER_DATA?.routeColors||{};
+ const idToShort=window.PLANNER_DATA?.routeIdToShort||{};
+ const lines=arr.map(a=>{
+  const rShort=idToShort[a.route_id]||a.route_id||'?';
+  const col=routeColors[rShort]||'#555';
+  const minsText=a.mins_away<=0?'<b style="color:#d71920">NOW</b>':`${a.mins_away} min`;
+  return `<span style="display:inline-block;background:${col};color:#fff;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:bold;margin-right:3px">Rt ${rShort}</span>${minsText}`;
+ });
+ return '<div style="margin-top:4px;font-size:12px"><b>Next arrivals:</b><br>'+lines.join('<br>')+'</div>';
+}
 function routeLegJobControls(leg){
  const ids=[leg.job,leg.extra_job].filter(Boolean);
  if(!ids.length)return '';
@@ -1447,8 +1405,8 @@ function drawTransitRoute(legs,bounds,routesUsed,details){
   const klass=l.label.toLowerCase().includes('route change')||l._section==='return'?'change':'leg';
   if(l.route!=='walk'&&l.route!=='link'){L.polyline(l.segment,{color:'#fff',weight:12,opacity:.96}).addTo(lines);L.polyline(l.segment,{color:c,weight:7,opacity:.96}).addTo(lines);l.segment.forEach(p=>bounds.push(p));routesUsed.add(l.route)}
   const b=[l.board_stop.lat,l.board_stop.lon],a=[l.alight_stop.lat,l.alight_stop.lon];bounds.push(b,a);
-  L.circleMarker(b,{radius:9,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>BOARD</b><br>'+escapeHtml(l.board_stop.name)+'<br>Stop '+escapeHtml(l.board)+'<br>'+escapeHtml(routeLabel(l))).addTo(pins);
-  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>EXIT</b><br>'+escapeHtml(l.alight_stop.name)+'<br>Stop '+escapeHtml(l.alight)+'<br><b>Destination:</b> '+escapeHtml(l.destination)).addTo(pins);
+  L.circleMarker(b,{radius:9,color:'#17324d',weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>BOARD</b><br>'+escapeHtml(l.board_stop.name)+'<br>Stop '+escapeHtml(l.board)+'<br>'+escapeHtml(routeLabel(l))+'<br>'+stopArrivalsHtml(l.board)).addTo(pins);
+  L.circleMarker(a,{radius:7,color:c,weight:3,fillColor:'#fff',fillOpacity:1}).bindPopup('<b>EXIT</b><br>'+escapeHtml(l.alight_stop.name)+'<br>Stop '+escapeHtml(l.alight)+'<br><b>Destination:</b> '+escapeHtml(l.destination)+'<br>'+stopArrivalsHtml(l.alight)).addTo(pins);
   details.push('<div class="'+klass+'"><div><span class="badge" style="background:'+c+'">'+escapeHtml(routeLabel(l))+'</span><b>'+escapeHtml(l.label)+'</b></div><div class="row"><b>Route number</b><span>'+escapeHtml(routeLabel(l))+'</span></div><div class="row"><b>Direction</b><span>'+escapeHtml(direction)+'</span></div><div class="row"><b>Boarding stop</b><span>'+escapeHtml(l.board_stop.name)+' ['+escapeHtml(l.board)+']</span></div><div class="row"><b>Board location</b><span>'+escapeHtml(l.board_stop.name)+'</span></div><div class="row"><b>Scheduled pickup</b><span class="time">'+escapeHtml(schedule.pickup)+'</span></div><div class="row"><b>Exit stop</b><span>'+escapeHtml(l.alight_stop.name)+' ['+escapeHtml(l.alight)+']</span></div><div class="row"><b>Exit location</b><span>'+escapeHtml(l.alight_stop.name)+'</span></div><div class="row"><b>Scheduled exit</b><span>'+escapeHtml(schedule.exit)+'</span></div><div class="row"><b>Walk time to job</b><span>'+escapeHtml(P.walkTime(l.static))+'</span></div><div class="row"><b>Job work time</b><span>'+escapeHtml(P.jobWorkTime(D,l))+'</span></div><div class="row"><b>Buffer / risk</b><span>Scheduled estimate - allow timing buffer</span></div><div class="row"><b>Source</b><span>Scheduled estimate</span></div><div class="row"><b>Job / address</b><span>'+escapeHtml(l.destination)+'</span></div>'+routeLegJobControls(l)+'</div>');
  }
 }
@@ -1498,6 +1456,10 @@ initWorkApps();
 const defaultPlan=Object.keys(D.plans||{})[0]||'';
 if(defaultPlan)planSel.value=defaultPlan;
 fillCorridors();refreshLive();setInterval(refreshLive,30000);setTimeout(startLocation,700);
+// GTFS static data: load from cache immediately, then schedule daily refresh
+reloadGtfs(false);setInterval(()=>reloadGtfs(false),GTFS_MAX_AGE_MS);
 </script>
 </body>
 </html>
+
+

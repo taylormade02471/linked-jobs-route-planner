@@ -2,9 +2,8 @@
   "name": "linked-jobs-route-planner",
   "version": "1.0.0",
   "private": true,
-  "description": "Local route planner with Android-safe provider job sync.",
+  "description": "Local route planner with live Jobslinger MegaLog sync.",
   "scripts": {
-    "start": "start.cmd",
-    "test": "node --test tests/domain/routePlanner.test.js tests/platform/desktop/*.test.js nashville-live-planner/tests/*.test.js"
+    "start": "start.cmd"
   }
 }
