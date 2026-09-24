@@ -366,3 +366,71 @@ button.tiny {
     padding: 8px 18px;
   }
 }
+
+
+.board-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.board-card {
+  border: 1px solid rgba(16, 33, 51, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  display: grid;
+  gap: 12px;
+}
+
+.board-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.board-card-head h3 {
+  margin: 0 0 6px;
+}
+
+.board-card-head p,
+.board-helper {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.board-card-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.board-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.board-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pill.small {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid rgba(16, 33, 51, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.85);
+  resize: vertical;
+}

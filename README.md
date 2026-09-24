@@ -7,7 +7,8 @@ It is not the Shopify project.
 ## What it does
 
 - Uses a local dashboard login that lasts 7 days
-- Keeps live job data coming in from a signed-in browser tab or browser extension
+- Lets you link one or more supported job boards after local login
+- Keeps live job data coming in from signed-in board tabs, the browser extension, or shared text intake
 - Lets you filter jobs, select stops, and open a route in Google Maps
 - Includes a free Android skeleton that points at the local app
 
@@ -46,18 +47,22 @@ You can override them in `backend/.env`.
 
 ## Live data sync
 
-The browser extension posts visible job rows from the main Jobslinger MegaLog page to:
+After you sign in to the local planner, open the **Link job boards and auto-feed work** section to choose which supported boards you want to connect and save the board details you want stored locally.
+
+The browser extension now posts visible job rows from supported signed-in job boards to:
 
 - `POST /api/jobs`
+- `POST /api/shared-jobs`
 
-That endpoint is left open for sync so the app does not depend on a browser session staying open.
+`/api/jobs` stays open for the local extension so the app does not depend on keeping the planner tab active. `/api/shared-jobs` lets you paste shared rows or JSON when a board works better through copy/share than through a visible page connector.
 The extension also polls on a timer, so updates keep flowing even when the page does not mutate.
 
 The Jobslinger login page includes a square-click challenge, so the reliable flow is:
 
-1. Log in on the main Jobslinger page in Chrome
+1. Log in on the supported job board page in Chrome
 2. Load the unpacked extension
-3. Keep the route planner running and the extension will stream live rows into it
+3. Save the board in the planner after local login
+4. Keep the route planner running and the extension will stream visible rows into it
 
 ## Save live login
 
@@ -82,6 +87,9 @@ If the page layout changes, the extension may need selector tweaks, but it will 
 - `GET /api/health`
 - `GET /api/jobs`
 - `POST /api/jobs`
+- `GET /api/linked-boards`
+- `POST /api/linked-boards`
+- `POST /api/shared-jobs`
 - `GET /api/events`
 - `POST /api/start`
 - `POST /api/scrape`

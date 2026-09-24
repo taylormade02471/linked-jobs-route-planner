@@ -33,7 +33,7 @@
   <body>
     <header class="topbar">
       <div>
-        <p class="eyebrow">Survey Merchandiser · Tobacco Audit · $8.25/store</p>
+        <p class="eyebrow">Linked job boards · live intake · route planning</p>
         <h1>Linked Jobs Route Planner</h1>
       </div>
       <div class="topbar-actions">
@@ -48,7 +48,6 @@
     </header>
 
     <main class="shell">
-      <!-- Metrics -->
       <div class="metrics-row">
         <div class="metric-card"><span>Total Jobs</span><strong id="jobCount">0</strong></div>
         <div class="metric-card"><span>🟢 WeGo Direct</span><strong id="greenCount">0</strong></div>
@@ -57,9 +56,8 @@
         <div class="metric-card"><span>Connection</span><strong id="connectionState">Idle</strong></div>
       </div>
 
-      <!-- Route Builder -->
       <details id="routeSection" open>
-        <summary>🚌 Best Transit Day Route (94 WeGo Bus → Nashville)</summary>
+        <summary>🚌 Best Transit Day Route</summary>
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
           <div style="flex:0 0 280px">
             <label style="display:block;margin-bottom:6px">Start (home base)
@@ -82,17 +80,14 @@
             </div>
           </div>
           <div style="flex:1;min-width:260px">
-            <p style="font-size:.8rem;color:#6b7280;margin:0 0 4px">WeGo Route 94: Clarksville Transit Center → Nashville</p>
-            <iframe id="mapFrame" class="map-frame"
-              src="https://www.google.com/maps/embed/v1/place?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&q=Nashville,TN"
-              allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <p style="font-size:.8rem;color:#6b7280;margin:0 0 4px">Preview your route before opening Google Maps.</p>
+            <iframe id="mapFrame" class="map-frame" src="https://www.google.com/maps?q=Nashville,TN&amp;output=embed" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
         </div>
       </details>
 
-      <!-- Job Board -->
       <details open>
-        <summary>📋 Job Board — Survey Merchandiser Tobacco Audit</summary>
+        <summary>📋 Job Board Feed</summary>
 
         <div class="tier-tabs" role="group">
           <button class="active" data-tier="all">All (<span id="tabAll">0</span>)</button>
@@ -102,7 +97,7 @@
         </div>
 
         <div class="panel controls" style="margin-bottom:8px">
-          <input id="searchInput" type="search" placeholder="Filter by store, city, route…" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;width:280px" />
+          <input id="searchInput" type="search" placeholder="Filter by store, city, route, or board…" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;width:280px" />
           <label class="inline" style="margin-left:12px">
             <input id="selectAll" type="checkbox" /> Select all visible
           </label>
@@ -119,6 +114,7 @@
                 <th>Pay</th>
                 <th>WeGo Route</th>
                 <th>Distance</th>
+                <th>Board</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -127,27 +123,46 @@
         </div>
       </details>
 
-      <!-- Credentials / Live Sync -->
       <details>
-        <summary>🔗 Live Sync & Account Settings</summary>
+        <summary>🔗 Link job boards and auto-feed work</summary>
         <section class="panel settings">
           <div class="settings-head">
             <div>
-              <p class="eyebrow">Live source</p>
-              <h2>Save your Jobslinger login safely</h2>
+              <p class="eyebrow">Linked boards</p>
+              <h2>Choose the job boards you want connected</h2>
             </div>
-            <span id="sourceStatus" class="pill">Not loaded</span>
+            <span id="linkedBoardsStatus" class="pill">Loading</span>
           </div>
-          <form id="sourceConfigForm" class="settings-form">
-            <label>Source name<input name="source_name" placeholder="Jobslinger MegaLog" /></label>
-            <label>Source URL<input name="source_url" placeholder="https://www.jobslingerplus.com/MegaLog" /></label>
-            <label>Username<input name="source_username" autocomplete="username" /></label>
-            <label>Password<input name="source_password" type="password" autocomplete="current-password" /></label>
+          <p class="helper">
+            Turn on the boards you want, save the board login details you use, then keep the signed-in board open with the browser extension running so new open work keeps feeding into this app.
+          </p>
+          <form id="linkedBoardsForm" class="settings-form">
+            <div id="linkedBoardsList" class="board-grid"></div>
             <div class="actions">
-              <button type="submit" class="primary">Save live login</button>
-              <button type="button" id="reloadSourceButton" class="secondary">Reload saved login</button>
+              <button type="submit" class="primary">Save linked boards</button>
+              <button type="button" id="reloadLinkedBoardsButton" class="secondary">Reload linked boards</button>
             </div>
           </form>
+        </section>
+
+        <section class="panel settings">
+          <div class="settings-head">
+            <div>
+              <p class="eyebrow">Share / parse intake</p>
+              <h2>Paste or share jobs into the planner</h2>
+            </div>
+            <span id="shareStatus" class="pill">Idle</span>
+          </div>
+          <label>Source label<input id="sharedJobsSource" value="Shared intake" /></label>
+          <label>Shared rows or JSON
+            <textarea id="sharedJobsInput" rows="7" placeholder="Example: Survey Merchandiser | 123 Main St | Nashville | TN | $8.25 | Open"></textarea>
+          </label>
+          <p class="helper">
+            Paste one job per line using tabs or <code>|</code> between fields, or paste a JSON array. This gives you a no-upload fallback for boards that work better through copy/share.
+          </p>
+          <div class="actions">
+            <button type="button" id="parseSharedJobsButton" class="primary">Parse shared jobs</button>
+          </div>
         </section>
       </details>
     </main>
@@ -161,6 +176,7 @@
         <td class="job-pay"></td>
         <td class="job-transit"></td>
         <td class="job-distance"></td>
+        <td class="job-source"></td>
         <td class="job-status"></td>
       </tr>
     </template>

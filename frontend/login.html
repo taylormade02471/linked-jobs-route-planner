@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Linked Jobs Route Planner Login</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <main class="shell credentials-shell" style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+      <section class="panel settings" style="width:min(420px,100%);">
+        <div class="settings-head">
+          <div>
+            <p class="eyebrow">Local dashboard login</p>
+            <h1 style="font-size:2rem;">Sign in</h1>
+          </div>
+        </div>
+        <form method="post" action="/auth/login" class="settings-form">
+          <label>
+            Username
+            <input name="username" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <div class="actions">
+            <button type="submit" class="primary">Log in</button>
+          </div>
+        </form>
+        <p class="helper">Choose the job boards you want to link after you sign in.</p>
+        <p class="helper">%%MESSAGE%%</p>
+      </section>
+    </main>
+  </body>
+</html>

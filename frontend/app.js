@@ -10,16 +10,7 @@ const buildBestRouteBtn = document.querySelector("#buildBestRoute");
 const exportButton = document.querySelector("#exportButton");
 const selectAll = document.querySelector("#selectAll");
 const logoutForm = document.querySelector("#logoutForm");
-const sourceConfigForm = document.querySelector("#sourceConfigForm");
-const reloadSourceButton = document.querySelector("#reloadSourceButton");
-const sourceStatus = document.querySelector("#sourceStatus");
-const credentialsForm = document.querySelector("#credentialsForm");
-const credentialsTableBody = document.querySelector("#credentialsTableBody");
-const credentialRowTemplate = document.querySelector("#credentialRowTemplate");
-const credentialsStatus = document.querySelector("#credentialsStatus");
-const clearCredentialButton = document.querySelector("#clearCredentialButton");
-const reloadCredentialsButton = document.querySelector("#reloadCredentialsButton");
-const template = document.querySelector("#jobRowTemplate");
+const jobRowTemplate = document.querySelector("#jobRowTemplate");
 const startAddressInput = document.querySelector("#startAddress");
 const endAddressInput = document.querySelector("#endAddress");
 const openMapsBtn = document.querySelector("#openMapsBtn");
@@ -30,13 +21,20 @@ const routeStatusEl = document.querySelector("#routeStatus");
 const bestRouteBox = document.querySelector("#bestRouteBox");
 const bestRouteList = document.querySelector("#bestRouteList");
 const bestRouteMeta = document.querySelector("#bestRouteMeta");
+const linkedBoardsForm = document.querySelector("#linkedBoardsForm");
+const linkedBoardsList = document.querySelector("#linkedBoardsList");
+const linkedBoardsStatus = document.querySelector("#linkedBoardsStatus");
+const reloadLinkedBoardsButton = document.querySelector("#reloadLinkedBoardsButton");
+const parseSharedJobsButton = document.querySelector("#parseSharedJobsButton");
+const sharedJobsInput = document.querySelector("#sharedJobsInput");
+const sharedJobsSource = document.querySelector("#sharedJobsSource");
+const shareStatus = document.querySelector("#shareStatus");
 
 let allJobs = [];
 let filteredJobs = [];
-let allCredentials = [];
+let allLinkedBoards = [];
 let activeTierFilter = "all";
 
-// ── Tier filter tabs ──────────────────────────────────────────────────────
 document.querySelectorAll(".tier-tabs button").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tier-tabs button").forEach((b) => b.classList.remove("active"));
@@ -46,84 +44,118 @@ document.querySelectorAll(".tier-tabs button").forEach((btn) => {
   });
 });
 
-// ── Transit tier helpers ──────────────────────────────────────────────────
-function jobTier(job) { return (job.tier || "red").toLowerCase(); }
-function tierLabel(t) { return t === "green" ? "🟢" : t === "yellow" ? "🟡" : "🔴"; }
-function tierBadgeClass(t) { return t === "green" ? "badge-green" : t === "yellow" ? "badge-yellow" : "badge-red"; }
-function tierRowClass(t) { return t === "green" ? "tier-green" : t === "yellow" ? "tier-yellow" : "tier-red"; }
-
-// ── Best-route algorithm ─────────────────────────────────────────────────
-const CORRIDOR_ORDER = ["WeGo Rt 22","WeGo Rt 23","WeGo Rt 14","WeGo Rt 56","WeGo Rt 77","WeGo Rt 52","WeGo Rt 55","WeGo Rt 6"];
-function corridorScore(transit) {
-  const idx = CORRIDOR_ORDER.findIndex((r) => (transit || "").includes(r.replace("WeGo ", "")));
-  return idx === -1 ? 99 : idx;
+function jobTier(job) {
+  return (job.tier || "red").toLowerCase();
 }
+
+function tierLabel(tier) {
+  return tier === "green" ? "🟢" : tier === "yellow" ? "🟡" : "🔴";
+}
+
+function tierBadgeClass(tier) {
+  return tier === "green" ? "badge-green" : tier === "yellow" ? "badge-yellow" : "badge-red";
+}
+
+function tierRowClass(tier) {
+  return tier === "green" ? "tier-green" : tier === "yellow" ? "tier-yellow" : "tier-red";
+}
+
+const CORRIDOR_ORDER = ["WeGo Rt 22", "WeGo Rt 23", "WeGo Rt 14", "WeGo Rt 56", "WeGo Rt 77", "WeGo Rt 52", "WeGo Rt 55", "WeGo Rt 6"];
+
+function corridorScore(transit) {
+  const index = CORRIDOR_ORDER.findIndex((route) => (transit || "").includes(route.replace("WeGo ", "")));
+  return index === -1 ? 99 : index;
+}
+
 function buildOptimalRoute(jobs) {
   const candidates = jobs
-    .filter((j) => jobTier(j) === "green" && j.transit)
+    .filter((job) => jobTier(job) === "green" && job.transit)
     .sort((a, b) => corridorScore(a.transit) - corridorScore(b.transit));
   const grouped = {};
-  candidates.forEach((j) => {
-    const key = (j.transit || "").split("/")[0].trim();
+  candidates.forEach((job) => {
+    const key = (job.transit || "").split("/")[0].trim();
     if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(j);
+    grouped[key].push(job);
   });
   const ordered = [];
-  CORRIDOR_ORDER.forEach((r) => { if (grouped[r]) ordered.push(...grouped[r]); });
-  candidates.forEach((j) => { if (!ordered.find((o) => o.id === j.id)) ordered.push(j); });
+  CORRIDOR_ORDER.forEach((route) => {
+    if (grouped[route]) ordered.push(...grouped[route]);
+  });
+  candidates.forEach((job) => {
+    if (!ordered.find((existing) => existing.id === job.id)) ordered.push(job);
+  });
   return ordered.slice(0, 9);
 }
+
 function renderBestRoute(route) {
-  if (!bestRouteBox || !route.length) { if (bestRouteBox) bestRouteBox.style.display = "none"; return; }
+  if (!bestRouteBox || !route.length) {
+    if (bestRouteBox) bestRouteBox.style.display = "none";
+    return;
+  }
   bestRouteBox.style.display = "";
   bestRouteList.innerHTML = "";
-  route.forEach((job, i) => {
+  route.forEach((job, index) => {
     const li = document.createElement("li");
-    li.textContent = `Stop ${i + 1}: ${job.title} — ${job.address} (${job.transit || "walk"}, ${job.distance || ""})`;
+    li.textContent = `Stop ${index + 1}: ${job.title} — ${job.address} (${job.transit || "walk"}, ${job.distance || ""})`;
     bestRouteList.append(li);
   });
   const earn = (route.length * 8.25).toFixed(2);
   if (bestRouteMeta) bestRouteMeta.textContent = `${route.length} stops · Est. $${earn} · ~5 min/store · WeGo Rt 94 → Nashville`;
 }
 
+function setConnection(text) {
+  if (connectionState) connectionState.textContent = text;
+}
+
+function setLinkedBoardsStatus(text) {
+  if (linkedBoardsStatus) linkedBoardsStatus.textContent = text;
+}
+
+function setShareStatus(text) {
+  if (shareStatus) shareStatus.textContent = text;
+}
+
+function getSelectedJobs() {
+  return allJobs.filter((job) => job.selected);
+}
+
 function render() {
   const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
   let jobs = allJobs;
-  if (activeTierFilter !== "all") jobs = jobs.filter((j) => jobTier(j) === activeTierFilter);
+  if (activeTierFilter !== "all") jobs = jobs.filter((job) => jobTier(job) === activeTierFilter);
   filteredJobs = jobs.filter((job) => {
     if (!query) return true;
-    const hay = [job.title, job.address, job.city, job.state, job.transit, job.pay, job.source].join(" ").toLowerCase();
-    return hay.includes(query);
+    const haystack = [job.title, job.address, job.city, job.state, job.transit, job.pay, job.source, job.status]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query);
   });
 
   jobsTableBody.innerHTML = "";
   filteredJobs.forEach((job) => {
     const tier = jobTier(job);
-    const row = template.content.firstElementChild.cloneNode(true);
+    const row = jobRowTemplate.content.firstElementChild.cloneNode(true);
     row.className = tierRowClass(tier);
     const check = row.querySelector(".job-check");
     check.checked = Boolean(job.selected);
-    check.addEventListener("change", (e) => { job.selected = e.target.checked; updateCounts(); });
+    check.addEventListener("change", (event) => {
+      job.selected = event.target.checked;
+      updateCounts();
+    });
 
     const tierCell = row.querySelector(".job-tier");
-    if (tierCell) {
-      const badge = document.createElement("span");
-      badge.className = `tier-badge ${tierBadgeClass(tier)}`;
-      badge.textContent = tierLabel(tier);
-      tierCell.appendChild(badge);
-    }
-    const titleCell = row.querySelector(".job-title");
-    if (titleCell) titleCell.textContent = job.title || "—";
-    const addrCell = row.querySelector(".job-address");
-    if (addrCell) addrCell.textContent = job.address || "—";
-    const payCell = row.querySelector(".job-pay");
-    if (payCell) payCell.textContent = job.pay || "$8.25";
-    const transitCell = row.querySelector(".job-transit");
-    if (transitCell) transitCell.textContent = job.transit || "—";
-    const distCell = row.querySelector(".job-distance");
-    if (distCell) distCell.textContent = job.distance || "—";
-    const statusCell = row.querySelector(".job-status");
-    if (statusCell) statusCell.textContent = job.status || "Available";
+    const badge = document.createElement("span");
+    badge.className = `tier-badge ${tierBadgeClass(tier)}`;
+    badge.textContent = tierLabel(tier);
+    tierCell.appendChild(badge);
+
+    row.querySelector(".job-title").textContent = job.title || "—";
+    row.querySelector(".job-address").textContent = job.address || "—";
+    row.querySelector(".job-pay").textContent = job.pay || "$8.25";
+    row.querySelector(".job-transit").textContent = job.transit || "—";
+    row.querySelector(".job-distance").textContent = job.distance || "—";
+    row.querySelector(".job-source").textContent = job.source || "—";
+    row.querySelector(".job-status").textContent = job.status || "Available";
     jobsTableBody.appendChild(row);
   });
 
@@ -131,36 +163,35 @@ function render() {
 }
 
 function updateCounts() {
-  const selected = allJobs.filter((j) => j.selected);
-  const green = allJobs.filter((j) => jobTier(j) === "green");
-  const yellow = allJobs.filter((j) => jobTier(j) === "yellow");
-  const red = allJobs.filter((j) => jobTier(j) === "red");
+  const selected = allJobs.filter((job) => job.selected);
+  const green = allJobs.filter((job) => jobTier(job) === "green");
+  const yellow = allJobs.filter((job) => jobTier(job) === "yellow");
+  const red = allJobs.filter((job) => jobTier(job) === "red");
 
   if (jobCount) jobCount.textContent = String(allJobs.length);
   if (greenCount) greenCount.textContent = String(green.length);
   if (selectedCount) selectedCount.textContent = String(selected.length);
-  const earnings = selected.reduce((s) => s + 8.25, 0);
-  if (earnCount) earnCount.textContent = `$${earnings.toFixed(2)}`;
-  if (selectAll) selectAll.checked = filteredJobs.length > 0 && filteredJobs.every((j) => j.selected);
+  if (earnCount) earnCount.textContent = `$${selected.reduce((sum) => sum + 8.25, 0).toFixed(2)}`;
+  if (selectAll) selectAll.checked = filteredJobs.length > 0 && filteredJobs.every((job) => job.selected);
 
-  // Update tab counts
-  ["all","green","yellow","red"].forEach((t) => {
-    const el = document.querySelector(`#tab${t.charAt(0).toUpperCase()+t.slice(1)}`);
-    if (el) el.textContent = t === "all" ? allJobs.length : (t === "green" ? green.length : t === "yellow" ? yellow.length : red.length);
+  ["all", "green", "yellow", "red"].forEach((tier) => {
+    const el = document.querySelector(`#tab${tier.charAt(0).toUpperCase() + tier.slice(1)}`);
+    if (!el) return;
+    el.textContent = String(
+      tier === "all" ? allJobs.length : tier === "green" ? green.length : tier === "yellow" ? yellow.length : red.length
+    );
   });
 
-  // Route status
-  const selWithAddr = selected.filter((j) => j.address);
-  if (routeStatusEl) routeStatusEl.textContent = selWithAddr.length ? `${selWithAddr.length} stop${selWithAddr.length>1?"s":""} ready for maps.` : "Select jobs to build transit route.";
-  if (openMapsBtn) openMapsBtn.disabled = !selWithAddr.length;
+  const withAddress = selected.filter((job) => job.address);
+  if (routeStatusEl) {
+    routeStatusEl.textContent = withAddress.length
+      ? `${withAddress.length} stop${withAddress.length > 1 ? "s" : ""} ready for maps.`
+      : "Select jobs to build transit route.";
+  }
+  if (openMapsBtn) openMapsBtn.disabled = !withAddress.length;
 }
 
-function setConnection(text) { if (connectionState) connectionState.textContent = text; }
-function setSourceStatus(text) { if (sourceStatus) sourceStatus.textContent = text; }
-function setCredentialsStatus(text) { if (credentialsStatus) credentialsStatus.textContent = text; }
-function getSelectedJobs() { return allJobs.filter((j) => j.selected); }
-
-
+async function loadJobs() {
   setConnection("Loading");
   const response = await fetch("/api/jobs", { credentials: "include" });
   if (response.status === 401) {
@@ -173,110 +204,97 @@ function getSelectedJobs() { return allJobs.filter((j) => j.selected); }
   render();
 }
 
-async function loadSourceConfig() {
-  if (!sourceConfigForm) return;
-  setSourceStatus("Loading");
-  const response = await fetch("/api/source-config", { credentials: "include" });
+function boardCard(board) {
+  return `
+    <article class="board-card">
+      <div class="board-card-head">
+        <div>
+          <h3>${board.label}</h3>
+          <p>${board.description}</p>
+        </div>
+        <label class="board-toggle">
+          <input type="checkbox" data-field="enabled" ${board.enabled ? "checked" : ""} />
+          Link board
+        </label>
+      </div>
+      <input type="hidden" data-field="id" value="${board.id}" />
+      <div class="board-card-grid">
+        <label>Login URL<input data-field="login_url" value="${board.login_url || ""}" placeholder="https://example.com/login" /></label>
+        <label>Username / email<input data-field="username" value="${board.username || ""}" autocomplete="username" /></label>
+        <label>Password<input data-field="password" type="password" autocomplete="current-password" placeholder="${board.has_password ? "Saved locally" : "Enter only if you want it stored locally"}" /></label>
+        <label>Notes<input data-field="notes" value="${board.notes || ""}" placeholder="Optional login or board note" /></label>
+      </div>
+      <div class="board-meta">
+        <span class="pill small">Sync: ${board.sync_mode.replaceAll("_", " ")}</span>
+        <a href="${board.board_url}" target="_blank" rel="noreferrer noopener">Open board</a>
+      </div>
+      <p class="helper board-helper">${board.connection_help}</p>
+    </article>
+  `;
+}
+
+function renderLinkedBoards() {
+  if (!linkedBoardsList) return;
+  linkedBoardsList.innerHTML = allLinkedBoards.map(boardCard).join("");
+  const enabledCount = allLinkedBoards.filter((board) => board.enabled).length;
+  setLinkedBoardsStatus(enabledCount ? `${enabledCount} linked` : "None linked");
+}
+
+async function loadLinkedBoards() {
+  if (!linkedBoardsList) return;
+  setLinkedBoardsStatus("Loading");
+  const response = await fetch("/api/linked-boards", { credentials: "include" });
   if (response.status === 401) {
     window.location.href = "/login";
     return;
   }
   const payload = await response.json();
-  sourceConfigForm.source_name.value = payload.source_name || "";
-  sourceConfigForm.source_url.value = payload.source_url || "";
-  sourceConfigForm.source_username.value = payload.source_username || "";
-  sourceConfigForm.source_password.value = "";
-  setSourceStatus(payload.has_password ? "Saved" : "Needs password");
+  allLinkedBoards = payload.boards || [];
+  renderLinkedBoards();
 }
 
-function clearCredentialsForm() {
-  if (!credentialsForm) return;
-  credentialsForm.id.value = "";
-  credentialsForm.app_name.value = "";
-  credentialsForm.login_url.value = "";
-  credentialsForm.username.value = "";
-  credentialsForm.password.value = "";
-  credentialsForm.notes.value = "";
+function serializeLinkedBoards() {
+  return Array.from(linkedBoardsList.querySelectorAll(".board-card")).map((card) => ({
+    id: card.querySelector('[data-field="id"]').value,
+    enabled: card.querySelector('[data-field="enabled"]').checked,
+    login_url: card.querySelector('[data-field="login_url"]').value.trim(),
+    username: card.querySelector('[data-field="username"]').value.trim(),
+    password: card.querySelector('[data-field="password"]').value,
+    notes: card.querySelector('[data-field="notes"]').value.trim(),
+  }));
 }
 
-function fillCredentialsForm(credential) {
-  if (!credentialsForm || !credential) return;
-  credentialsForm.id.value = credential.id || "";
-  credentialsForm.app_name.value = credential.app_name || "";
-  credentialsForm.login_url.value = credential.login_url || "";
-  credentialsForm.username.value = credential.username || "";
-  credentialsForm.password.value = "";
-  credentialsForm.notes.value = credential.notes || "";
-}
-
-function renderCredentials() {
-  if (!credentialsTableBody || !credentialRowTemplate) return;
-  credentialsTableBody.innerHTML = "";
-  allCredentials.forEach((credential) => {
-    const row = credentialRowTemplate.content.firstElementChild.cloneNode(true);
-    row.querySelector(".cred-app").textContent = credential.app_name || "—";
-    row.querySelector(".cred-url").textContent = credential.login_url || "—";
-    row.querySelector(".cred-user").textContent = credential.username || "—";
-    row.querySelector(".cred-notes").textContent = credential.notes || "—";
-    row.querySelector(".cred-status").textContent = credential.has_password ? "Saved locally" : "No password";
-
-    const actions = row.querySelector(".cred-actions");
-    const editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.className = "secondary tiny";
-    editButton.textContent = "Edit";
-    editButton.addEventListener("click", () => {
-      fillCredentialsForm(credential);
-      setCredentialsStatus(`Editing ${credential.app_name || "credential"}. Password stays local and must be re-entered only if you want to change it.`);
-    });
-
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "danger tiny";
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", async () => {
-      if (!confirm(`Delete saved login for ${credential.app_name || "this app"}?`)) {
-        return;
-      }
-      await saveCredential({ action: "delete", id: credential.id });
-    });
-
-    actions.append(editButton, deleteButton);
-    credentialsTableBody.appendChild(row);
-  });
-}
-
-async function loadCredentials() {
-  if (!credentialsTableBody) return;
-  setCredentialsStatus("Loading");
-  const response = await fetch("/api/credentials", { credentials: "include" });
-  if (response.status === 401) {
-    window.location.href = "/login";
-    return;
-  }
-  const payload = await response.json();
-  allCredentials = payload.credentials || [];
-  setCredentialsStatus(allCredentials.length ? `${allCredentials.length} saved login(s)` : "No saved logins");
-  renderCredentials();
-}
-
-async function saveCredential(extra = {}) {
-  if (!credentialsForm) return;
-  setCredentialsStatus("Saving");
-  const response = await fetch("/api/credentials", {
+async function saveLinkedBoards() {
+  setLinkedBoardsStatus("Saving");
+  const response = await fetch("/api/linked-boards", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ boards: serializeLinkedBoards() }),
+  });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+  const payload = await response.json();
+  allLinkedBoards = payload.boards || [];
+  renderLinkedBoards();
+}
+
+async function importSharedJobs() {
+  const text = sharedJobsInput?.value.trim() || "";
+  if (!text) {
+    setShareStatus("Paste one or more job rows first.");
+    return;
+  }
+  setShareStatus("Parsing");
+  const response = await fetch("/api/shared-jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({
-      action: extra.action || "upsert",
-      id: extra.id || credentialsForm.id.value.trim(),
-      app_name: credentialsForm.app_name.value.trim(),
-      login_url: credentialsForm.login_url.value.trim(),
-      username: credentialsForm.username.value.trim(),
-      password: extra.password ?? credentialsForm.password.value,
-      notes: credentialsForm.notes.value.trim(),
+      source: sharedJobsSource?.value.trim() || "Shared intake",
+      text,
     }),
   });
   if (response.status === 401) {
@@ -284,18 +302,24 @@ async function saveCredential(extra = {}) {
     return;
   }
   const payload = await response.json();
-  allCredentials = payload.credentials || allCredentials;
-  renderCredentials();
-  clearCredentialsForm();
-  setCredentialsStatus(allCredentials.length ? `${allCredentials.length} saved login(s)` : "No saved logins");
+  if (!response.ok) {
+    setShareStatus(payload.error || "Could not import shared jobs.");
+    return;
+  }
+  sharedJobsInput.value = "";
+  setShareStatus(`Imported ${payload.imported} job row(s).`);
+  await loadJobs();
 }
 
 function openMapsRoute() {
-  const selected = getSelectedJobs().filter((j) => j.address);
-  if (!selected.length) { alert("Select jobs with addresses first."); return; }
-  const start = (startAddressInput?.value.trim()) || "Clarksville, TN";
+  const selected = getSelectedJobs().filter((job) => job.address);
+  if (!selected.length) {
+    alert("Select jobs with addresses first.");
+    return;
+  }
+  const start = startAddressInput?.value.trim() || "Clarksville, TN";
   const end = endAddressInput?.value.trim() || selected[selected.length - 1].address;
-  const waypoints = selected.slice(0, -1).map((j) => j.address).filter(Boolean);
+  const waypoints = selected.slice(0, -1).map((job) => job.address).filter(Boolean);
   const url = new URL("https://www.google.com/maps/dir/");
   url.searchParams.set("api", "1");
   url.searchParams.set("origin", start);
@@ -305,95 +329,74 @@ function openMapsRoute() {
 }
 
 function exportCsv() {
-  const rows = [["tier","title","address","pay","transit","distance","status"]];
-  getSelectedJobs().forEach((j) => rows.push([j.tier||"",j.title,j.address,j.pay||"$8.25",j.transit||"",j.distance||"",j.status||""]));
-  const csv = rows.map((r) => r.map((v) => `"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const rows = [["tier", "title", "address", "pay", "transit", "distance", "source", "status"]];
+  getSelectedJobs().forEach((job) => {
+    rows.push([job.tier || "", job.title, job.address, job.pay || "$8.25", job.transit || "", job.distance || "", job.source || "", job.status || ""]);
+  });
+  const csv = rows
+    .map((row) => row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(","))
+    .join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(blob);
-  anchor.download = "survey-merchandiser-jobs.csv";
+  anchor.download = "linked-job-boards.csv";
   anchor.click();
   URL.revokeObjectURL(anchor.href);
 }
 
-refreshButton?.addEventListener("click", (e) => { e.preventDefault(); loadJobs(); });
+refreshButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  loadJobs();
+});
+
 buildBestRouteBtn?.addEventListener("click", () => {
   const route = buildOptimalRoute(allJobs);
   renderBestRoute(route);
-  route.forEach((j) => { j.selected = true; });
+  route.forEach((job) => {
+    job.selected = true;
+  });
   render();
   document.querySelector("#routeSection")?.setAttribute("open", "");
 });
+
 openMapsBtn?.addEventListener("click", openMapsRoute);
 selectGreenBtn?.addEventListener("click", () => {
-  allJobs.filter((j) => jobTier(j) === "green" && j.address).forEach((j) => { j.selected = true; });
+  allJobs.filter((job) => jobTier(job) === "green" && job.address).forEach((job) => {
+    job.selected = true;
+  });
   render();
 });
 selectVisibleBtn?.addEventListener("click", () => {
-  filteredJobs.filter((j) => j.address).forEach((j) => { j.selected = true; });
+  filteredJobs.filter((job) => job.address).forEach((job) => {
+    job.selected = true;
+  });
   render();
 });
 clearSelectedBtn?.addEventListener("click", () => {
-  allJobs.forEach((j) => { j.selected = false; });
+  allJobs.forEach((job) => {
+    job.selected = false;
+  });
   if (bestRouteBox) bestRouteBox.style.display = "none";
   render();
 });
-exportButton?.addEventListener("click", (e) => { e.preventDefault(); exportCsv(); });
+exportButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  exportCsv();
+});
 searchInput?.addEventListener("input", render);
-selectAll?.addEventListener("change", (e) => {
-  filteredJobs.forEach((j) => { j.selected = e.target.checked; });
+selectAll?.addEventListener("change", (event) => {
+  filteredJobs.forEach((job) => {
+    job.selected = event.target.checked;
+  });
   render();
 });
 if (logoutForm) logoutForm.addEventListener("submit", () => setConnection("Logged out"));
-
-if (sourceConfigForm) {
-  sourceConfigForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setSourceStatus("Saving");
-    const response = await fetch("/api/source-config", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        source_name: sourceConfigForm.source_name.value.trim(),
-        source_url: sourceConfigForm.source_url.value.trim(),
-        source_username: sourceConfigForm.source_username.value.trim(),
-        source_password: sourceConfigForm.source_password.value,
-      }),
-    });
-    if (response.status === 401) {
-      window.location.href = "/login";
-      return;
-    }
-    const payload = await response.json();
-    setSourceStatus(payload.config?.has_password ? "Saved" : "Needs password");
-    sourceConfigForm.source_password.value = "";
-  });
-}
-
-if (reloadSourceButton) {
-  reloadSourceButton.addEventListener("click", () => {
-    loadSourceConfig();
-  });
-}
-
-if (credentialsForm) {
-  credentialsForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await saveCredential();
-  });
-}
-
-if (clearCredentialButton) {
-  clearCredentialButton.addEventListener("click", clearCredentialsForm);
-}
-
-if (reloadCredentialsButton) {
-  reloadCredentialsButton.addEventListener("click", loadCredentials);
-}
+if (linkedBoardsForm) linkedBoardsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveLinkedBoards();
+});
+reloadLinkedBoardsButton?.addEventListener("click", loadLinkedBoards);
+parseSharedJobsButton?.addEventListener("click", importSharedJobs);
 
 loadJobs();
-loadSourceConfig();
-loadCredentials();
+loadLinkedBoards();
