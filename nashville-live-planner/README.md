@@ -2,27 +2,42 @@
 
 Isolated planner for the **current Nashville audit set only**. It intentionally does not use old JobSlinger/job-board links or historical provider connections.
 
-## Current work set
+## Current public work set
 
-- 18 quick photo/tobacco audits supplied in the current planning conversation.
-- Requested quick-audit incentive: **$8.50 each**.
-- One deliberate 1-hour anchor: **7601 Hwy 70 S**, $38.50, completed first.
-- Wednesday service date: **2026-08-26**.
+- No jobs are posted on the public website right now.
+- No old quick-audit list or anchor job is bundled in `planner-data.js`.
+- The planner stays empty until jobs are imported, approved, or synced as safe provider job records.
 
 ## Phone work app backbone
 
-The Nashville URL now includes a browser-local phone work app layer for:
+The Nashville URL includes a browser-local phone work app layer for:
 
 - Survey Merchandiser
 - Clickworker
 - Field Nation
 - Field Agent
 
-Jobs added, shared, or pasted from those apps are saved in the browser on that device. The planner ranks open available work against the user's current/map location, pay, work time, and verified Nashville planner address matches. Matched open jobs are shown as bright green pins; claimed/assigned jobs are shown as yellow pins.
+No provider jobs are seeded into the public page. Jobs added, shared, or pasted from those apps are saved in the browser on that device. Android can sync a cleaned copy of route-visible jobs to the planner backend so the computer can see the same map without receiving provider credentials.
+
+Route-visible jobs are:
+
+- **Green:** available/open/claim-now work.
+- **Yellow:** already accepted, claimed, or assigned work.
+- **Red:** accepted work that needs completion, is late, is due soon, or is in progress.
+
+Apply-required/requested work and completed/paid work are parsed for review context but kept out of route scoring.
 
 The Android wrapper can attempt to open installed provider apps by package name. It also accepts `text/plain` Android shares so visible provider job details can be sent into the planner import box for review. This does not scrape private app storage, bypass app security, or copy provider sessions.
 
 Payment-center snapshots can be pasted from visible provider screens and stored locally for field reference. Payment rows are app data only; they are not provider credentials and are not committed.
+
+Provider connection status is browser-local app data. The planner can remember that a provider is signed in on this device and can reopen that provider's official app/login surface, but it does not store provider passwords, tokens, cookies, MFA codes, or API keys in source code, GitHub, Vercel, or browser storage.
+
+The Android wrapper saves provider login credentials on the phone through Android encrypted storage on a native **Provider Connections** screen. The live web page can open that screen and request saved/not-saved status through the native bridge, but username/password entry is not shown on the public planner page. Saved passwords are not returned to the web page and are not written to browser `localStorage`, GitHub, Vercel, or repo files.
+
+Android shared job text now lands in Import Review first. Jobs parsed as **available/open**, **claimed/assigned**, or **needs completion** can be approved into the planner. Apply-required/requested rows and completed/paid rows stay out of route-visible planning.
+
+Provider-specific connector parsers live in `provider-connectors.js` for Survey Merchandiser, Clickworker, Field Nation, Field Agent, and generic screenshot/PDF OCR intake. The generic OCR connector accepts image/PDF shares as pending extraction; OCR itself is a later build step.
 
 Email job sync settings are browser-local app data. The first planned mailbox integration is Outlook/Hotmail using Microsoft Graph delegated `Mail.Read` only. The planner stores account labels, sender allowlists, metadata-first preferences, and local sync timestamps. It does not request `Mail.Send`, `Mail.ReadWrite`, passwords, cookies, refresh tokens, or provider credentials. Until OAuth is configured through a registered Microsoft app or native Android MSAL bridge, pasted/shared email text is the safe import path.
 
@@ -61,15 +76,20 @@ Provider connection status is also browser-local app data. The planner can remem
 
 The camera tool requests permission only when the user taps **Start camera**. Captured photos stay in browser storage and can be attached to a phone-app job for field reference. The public Vercel app does not receive provider passwords or log into private phone apps.
 
-Saved phone-app jobs are shared between the homepage and `jobs.html` through the same browser-local key, `nashville_phone_work_jobs_v1`. Every rendered job card has a **Job options** menu for keeping the saved copy, moving it to available, applied, assigned, or completed, restoring it to active, or deleting the local copy after confirmation. The separate **Saved jobs and passed history** page has active, completed/passed, and all-saved views plus JSON download. These actions change only the local planner copy and do not submit, accept, complete, or delete work on a provider site.
+Saved phone-app jobs are shared between the homepage and `jobs.html` through the same browser-local key, `nashville_phone_work_jobs_v1`. The homepage stays focused on active route work; the separate **Saved jobs and passed history** page has active, completed/passed, and all-saved views, plus local mark-passed/restore actions and JSON download. Marking a job passed changes only the local planner copy and does not submit or accept work on a provider site.
 
 The Android wrapper uses `https://www.routeplanner.space` as its planner URL and now builds with AndroidX enabled. Its debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk` when building the Android project. `android/local.properties` contains only the local SDK path and is ignored by Git.
 
 ## UI
 
-1. **Planned route** — Plan A/B/C/D.
-2. **Itinerary section** — numbered from Clarksville -> Nashville forward in actual order; return to Clarksville is a separate RETURN section.
-3. **Stop / route view** — starts with **All Stops in Planned Route**, then all stops in the selected section, then individual planned legs.
+1. **Plan Option** — Plan A/B/C/D.
+2. **Corridor / Accessible Routes** — starts with **All accessible routes in this plan**.
+3. **Section / Path / Stop** — starts with **All selected route sections**, then verified sections and exact verified stops.
+
+The phone work layer also has app/status filters:
+
+- **All apps together** or one provider.
+- **All route-visible jobs**, available/open, claimed/assigned, or needs completion.
 
 The map draws only GTFS geometry between the boarding and getting-off stops used by the selected plan. It never draws the entire WeGo line unless the plan actually uses that entire segment.
 
@@ -77,6 +97,8 @@ The map draws only GTFS geometry between the boarding and getting-off stops used
 
 - Static route geometry, stop names/IDs, and Wednesday schedule estimates come from the supplied `google_transit.zip`.
 - `/api/wego-live` proxies WeGo's official GTFS-Realtime vehicle, trip-update, and alert feeds server-side.
+- `/api/provider-jobs` stores safe provider job records for the computer map. It strips passwords, tokens, cookies, session values, API keys, and raw source text.
+- The desktop backend can serve this planner at `/nashville-live-planner/` so the computer map and `/api/provider-jobs` share the same origin.
 - Frontend refresh interval: **30 seconds**.
 - If live data fails, the static Wednesday route remains usable and the UI does not silently substitute an old GPS snapshot.
 - Browser geolocation is enabled in the planner. The page can request phone location permission, continuously update a **YOU ARE HERE** marker, show accuracy, and center the map on the user.

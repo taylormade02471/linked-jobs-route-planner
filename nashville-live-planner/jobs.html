@@ -7,7 +7,6 @@
 <style>
 :root{--navy:#17324d;--bg:#f4f7f9;--card:#fff;--line:#d9e1e7;--muted:#5d6c78;--green:#39ff14;--yellow:#ffd400}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#142434}header{background:var(--navy);color:#fff;padding:16px}header h1{font-size:21px;margin:0 0 5px}header p{margin:0;font-size:13px}main{max-width:1050px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.notice{background:#eef6fb}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar button,.toolbar a{font-size:15px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;color:var(--navy);text-decoration:none;cursor:pointer}.toolbar button.active{background:var(--navy);color:#fff}.toolbar button.danger{color:#8a1f14;background:#fff1f0;border-color:#f0b7b2}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.stat{padding:10px;background:#f8fafb;border-radius:9px}.stat strong{display:block;font-size:21px;color:var(--navy)}.status{font-size:13px;padding:9px;border-radius:8px;background:#eef8ef;border:1px solid #c9e5cc;margin-top:9px}.jobgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:9px}.job{border:1px solid #dce3e8;border-radius:10px;padding:11px;background:#fff}.job h2{font-size:16px;margin:0 0 6px;color:var(--navy)}.job p{font-size:13px;margin:5px 0;color:var(--muted);line-height:1.4}.pill{display:inline-block;border-radius:999px;padding:4px 7px;margin:0 4px 3px 0;font-size:11px;font-weight:bold}.open{background:var(--green);color:#052e16}.assigned{background:var(--yellow);color:#5d4700}.passed{background:#dfe7ed;color:#17324d}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.actions button{font-size:12px;padding:7px 8px;border:1px solid #cbd5dd;border-radius:7px;background:#fff;color:var(--navy);cursor:pointer}.empty{padding:18px;text-align:center;border:1px dashed #b8c6cf;border-radius:10px;color:var(--muted)}footer{margin-top:12px;color:var(--muted);font-size:12px}@media(max-width:680px){.stats{grid-template-columns:1fr 1fr}}
-.jobActions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:end;margin-top:10px}.jobActions label{font-size:12px;color:var(--muted)}.jobActions select,.jobActions button{width:100%;min-height:42px;padding:8px;border:1px solid #cbd5dd;border-radius:7px;background:#fff;color:var(--navy);font-size:14px}.jobActions button{width:auto;cursor:pointer;font-weight:bold}@media(max-width:680px){.jobActions{grid-template-columns:1fr}.jobActions button{width:100%}}
 </style>
 </head>
 <body>
@@ -31,15 +30,6 @@
  </div>
  <div id="historyStatus" class="status">Loading saved jobs...</div>
  <div id="jobList" class="jobgrid"></div>
- <template id="jobActionOptions">
-  <option value="keep_saved">Keep saved on this board</option>
-  <option value="move_available">Move to available/open</option>
-  <option value="move_applied">Move to applied/requested</option>
-  <option value="move_assigned">Move to claimed/assigned</option>
-  <option value="mark_completed">Mark completed/passed</option>
-  <option value="restore_active">Restore to active</option>
-  <option value="delete_saved">Delete saved job</option>
- </template>
  <footer>Marking a job as passed changes only its local planner status and preserves the job details. It does not submit, accept, or change anything on a provider site.</footer>
 </main>
 <script src="./work-app-backbone.js"></script>
@@ -63,8 +53,6 @@ function visibleJobs(){
 }
 function statusClass(job){if(isCompleted(job))return 'passed';if(W.isAssignedJob(job))return 'assigned';return 'open';}
 function statusLabel(job){if(isCompleted(job))return 'PASSED / COMPLETED';if(W.isAssignedJob(job))return 'CLAIMED / ASSIGNED';if(W.normalizeStatus(job.status)==='applied')return 'APPLIED / REQUESTED';return 'OPEN / AVAILABLE';}
-function actionOptions(){return document.getElementById('jobActionOptions').innerHTML;}
-function actionMessage(action){return ({keep_saved:'Job remains saved on this board.',move_available:'Job moved to available / open locally.',move_applied:'Job moved to applied / requested locally.',move_assigned:'Job moved to claimed / assigned locally.',mark_completed:'Job moved to completed / passed history locally.',restore_active:'Job restored to the active view locally.'})[action]||'Local job updated.';}
 function setStatus(text){document.getElementById('historyStatus').textContent=text;}
 function renderStats(){
  const active=jobs.filter(job=>!isCompleted(job));
@@ -79,7 +67,9 @@ function render(){
  const selected=visibleJobs();
  if(!selected.length){list.innerHTML='<div class="empty">No jobs in this view. New provider shares and imports will appear here.</div>';return;}
  list.innerHTML=selected.map(job=>{
-  return `<article class="job" data-job-id="${esc(job.id)}"><h2>${esc(job.title||'Saved job')}</h2><span class="pill ${statusClass(job)}">${statusLabel(job)}</span><span class="pill">${esc(providerLabel(job.provider_id))}</span><p><b>Address:</b> ${esc(job.address||'Not listed')}</p><p><b>Pay:</b> ${esc(W.centsLabel(job.pay_cents))} · <b>Work:</b> ${esc(job.minutes||30)} minutes</p><p><b>Due/window:</b> ${esc(job.due||'Not listed')}</p><p><b>Payment:</b> ${esc(job.payment_status||'Not listed')}</p><p><b>Source:</b> ${esc(job.source||'local planner')}</p>${job.completed_at?`<p><b>Passed at:</b> ${esc(new Date(job.completed_at).toLocaleString())}</p>`:''}<div class="jobActions"><label>Job options<select data-job-action aria-label="Job options for ${esc(job.title||'saved job')}">${actionOptions()}</select></label><button type="button" data-apply-job-action>Apply</button></div></article>`;
+  const complete=isCompleted(job);
+  const action=complete?'<button type="button" data-action="restore">Restore to active</button>':'<button type="button" data-action="passed">Mark passed</button>';
+  return `<article class="job" data-job-id="${esc(job.id)}"><h2>${esc(job.title||'Saved job')}</h2><span class="pill ${statusClass(job)}">${statusLabel(job)}</span><span class="pill">${esc(providerLabel(job.provider_id))}</span><p><b>Address:</b> ${esc(job.address||'Not listed')}</p><p><b>Pay:</b> ${esc(W.centsLabel(job.pay_cents))} · <b>Work:</b> ${esc(job.minutes||30)} minutes</p><p><b>Due/window:</b> ${esc(job.due||'Not listed')}</p><p><b>Payment:</b> ${esc(job.payment_status||'Not listed')}</p><p><b>Source:</b> ${esc(job.source||'local planner')}</p>${job.completed_at?`<p><b>Passed at:</b> ${esc(new Date(job.completed_at).toLocaleString())}</p>`:''}<div class="actions">${action}<button type="button" data-action="delete">Delete saved copy</button></div></article>`;
  }).join('');
 }
 function findJob(id){return jobs.find(job=>String(job.id)===String(id));}
@@ -88,6 +78,11 @@ function markPassed(job){
  job.completion_status='passed';
  job.completed_at=Date.now();
 }
+function restore(job){
+ job.status='available';
+ delete job.completion_status;
+ delete job.completed_at;
+}
 document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{
  filter=button.dataset.filter;
  document.querySelectorAll('[data-filter]').forEach(item=>item.classList.toggle('active',item===button));
@@ -95,20 +90,18 @@ document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListen
  setStatus(`${visibleJobs().length} job(s) shown in ${filter==='completed'?'completed / passed':filter==='all'?'all saved':'active'} view.`);
 }));
 document.getElementById('jobList').addEventListener('click',event=>{
- const button=event.target.closest('button[data-apply-job-action]');
+ const button=event.target.closest('button[data-action]');
  const card=event.target.closest('[data-job-id]');
  if(!button||!card)return;
  const job=findJob(card.dataset.jobId);
  if(!job)return;
- const action=card.querySelector('[data-job-action]')?.value||'keep_saved';
- if(action==='delete_saved'){
+ if(button.dataset.action==='delete'){
   if(!confirm(`Delete the saved copy of ${job.title||'this job'}?`))return;
   jobs=jobs.filter(item=>String(item.id)!==String(job.id));
   save();render();setStatus('Saved copy deleted locally.');return;
  }
- const updated=W.applyJobBoardAction(job,action);
- jobs=jobs.map(item=>String(item.id)===String(job.id)?updated:item);
- save();render();setStatus(actionMessage(action));
+ if(button.dataset.action==='passed')markPassed(job);else restore(job);
+ save();render();setStatus(button.dataset.action==='passed'?'Job moved to completed / passed history locally.':'Job restored to the active view locally.');
 });
 document.getElementById('markVisiblePassed').addEventListener('click',()=>{
  const selected=visibleJobs().filter(job=>!isCompleted(job));

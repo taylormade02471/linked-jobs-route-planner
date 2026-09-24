@@ -3,14 +3,24 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { URL } = require("url");
+const {
+  filterProviderJobs,
+  normalizeIncomingProviderJobs,
+  upsertProviderJobs,
+} = require("./provider-jobs");
 
 const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
+const nashvillePlannerDir = path.join(rootDir, "nashville-live-planner");
 const dataDir = path.join(rootDir, "data");
-const jobsPath = path.join(dataDir, "jobs.json");
+const jobsPath = path.join(dataDir, "jobs-v2-empty-launch.json");
+const providerJobsPath = path.join(dataDir, "provider-jobs-v2-empty-launch.json");
 const sourceConfigPath = path.join(dataDir, "source-config.json");
 const credentialsPath = path.join(dataDir, "credentials.json");
 const credentialKeyPath = path.join(dataDir, "credentials.key");
+
+loadEnvFile(path.join(__dirname, ".env"));
+loadEnvFile(path.join(__dirname, ".env.local"));
 
 const PORT = Number(process.env.PORT || 3300);
 const USERNAME = process.env.APP_USER || process.env.BASIC_AUTH_USER || "kyle";
@@ -25,11 +35,29 @@ const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "route_planner_session";
 
 let jobs = loadJobs();
+let providerJobs = loadProviderJobs();
 let sourceConfig = loadSourceConfig();
 let credentials = loadCredentials();
 let credentialsKey = loadCredentialsKey();
 let clients = new Set();
 let scrapeRunning = false;
+
+function loadEnvFile(filePath) {
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    raw.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return;
+      const index = trimmed.indexOf("=");
+      if (index === -1) return;
+      const key = trimmed.slice(0, index).trim();
+      const value = trimmed.slice(index + 1).trim().replace(/^['"]|['"]$/g, "");
+      if (key && process.env[key] === undefined) process.env[key] = value;
+    });
+  } catch {
+    // Local env files are optional and ignored by Git.
+  }
+}
 
 function loadJobs() {
   try {
@@ -44,6 +72,21 @@ function loadJobs() {
 function saveJobs() {
   fs.mkdirSync(dataDir, { recursive: true });
   fs.writeFileSync(jobsPath, JSON.stringify(jobs, null, 2), "utf8");
+}
+
+function loadProviderJobs() {
+  try {
+    const raw = fs.readFileSync(providerJobsPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveProviderJobs() {
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(providerJobsPath, JSON.stringify(providerJobs, null, 2), "utf8");
 }
 
 function loadSourceConfig() {
@@ -278,6 +321,18 @@ function isDashboardAuthed(req) {
   return isBasicAuthValid(req);
 }
 
+function isLocalRequest(req) {
+  const address = req.socket && req.socket.remoteAddress;
+  return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
+}
+
+function isProviderSyncAllowed(req) {
+  const syncKey = String(process.env.PROVIDER_SYNC_KEY || "");
+  const providedKey = String(req.headers["x-planner-sync-key"] || "");
+  if (syncKey && providedKey && providedKey === syncKey) return true;
+  return isDashboardAuthed(req) || (!syncKey && isLocalRequest(req));
+}
+
 function requireAuth(req, res) {
   if (isDashboardAuthed(req)) {
     return true;
@@ -315,14 +370,6 @@ function normalizeJob(job, index = 0) {
     notes: String(job.notes || ""),
     order: Number.isFinite(Number(job.order)) ? Number(job.order) : index + 1,
     updated_at: now,
-    // Survey Merchandiser / transit planner extended fields
-    pay: String(job.pay || job.Pay || job.Fee || "$8.25"),
-    tier: String(job.tier || job.transitTier || ""),
-    transit: String(job.transit || job.transitRoute || ""),
-    distance: String(job.distance || ""),
-    status: String(job.status || job.Status || "available"),
-    due: String(job.due || job.deadline || job.Due || ""),
-    campaign: String(job.campaign || ""),
   };
 }
 
@@ -469,6 +516,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "GET" && url.pathname === "/api/provider-jobs") {
+    if (!requireAuth(req, res)) return;
+    json(res, 200, {
+      jobs: filterProviderJobs(providerJobs, {
+        provider: url.searchParams.get("provider") || url.searchParams.get("provider_id") || "all",
+        status: url.searchParams.get("status") || "all",
+      }),
+    });
+    return;
+  }
+
   if (method === "GET" && url.pathname === "/api/source-config") {
     if (!requireAuth(req, res)) return;
     json(res, 200, publicSourceConfig());
@@ -563,6 +621,37 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "POST" && url.pathname === "/api/provider-jobs") {
+    if (!isProviderSyncAllowed(req)) {
+      json(res, 401, {
+        ok: false,
+        error: "Provider job sync requires dashboard auth, local access, or x-planner-sync-key.",
+      });
+      return;
+    }
+
+    const body = await parseBody(req).catch((error) => {
+      json(res, 400, { ok: false, error: error.message });
+      return null;
+    });
+    if (body === null) return;
+
+    const incoming = Array.isArray(body)
+      ? body
+      : Array.isArray(body.jobs)
+      ? body.jobs
+      : body.job
+      ? [body.job]
+      : [];
+
+    const safeJobs = normalizeIncomingProviderJobs(incoming);
+    providerJobs = upsertProviderJobs(providerJobs, safeJobs);
+    saveProviderJobs();
+    broadcast("provider-jobs", { jobs: providerJobs });
+    json(res, 200, { ok: true, count: safeJobs.length, jobs: providerJobs });
+    return;
+  }
+
   if (method === "GET" && url.pathname === "/api/events") {
     if (!requireAuth(req, res)) return;
     res.writeHead(200, {
@@ -601,6 +690,19 @@ const server = http.createServer(async (req, res) => {
   if (method === "GET" && url.pathname.startsWith("/frontend/")) {
     const relative = url.pathname.slice("/frontend/".length);
     serveStatic(path.join(frontendDir, relative), res);
+    return;
+  }
+
+  if (method === "GET" && (url.pathname === "/nashville-live-planner" || url.pathname === "/nashville-live-planner/")) {
+    if (!requireAuth(req, res)) return;
+    serveStatic(path.join(nashvillePlannerDir, "index.html"), res);
+    return;
+  }
+
+  if (method === "GET" && url.pathname.startsWith("/nashville-live-planner/")) {
+    if (!requireAuth(req, res)) return;
+    const relative = url.pathname.slice("/nashville-live-planner/".length);
+    serveStatic(path.join(nashvillePlannerDir, relative), res);
     return;
   }
 

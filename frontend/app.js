@@ -1,12 +1,10 @@
 const jobsTableBody = document.querySelector("#jobsTableBody");
 const jobCount = document.querySelector("#jobCount");
-const greenCount = document.querySelector("#greenCount");
-const earnCount = document.querySelector("#earnCount");
 const selectedCount = document.querySelector("#selectedCount");
 const connectionState = document.querySelector("#connectionState");
 const searchInput = document.querySelector("#searchInput");
 const refreshButton = document.querySelector("#refreshButton");
-const buildBestRouteBtn = document.querySelector("#buildBestRoute");
+const routeButton = document.querySelector("#routeButton");
 const exportButton = document.querySelector("#exportButton");
 const selectAll = document.querySelector("#selectAll");
 const logoutForm = document.querySelector("#logoutForm");
@@ -20,110 +18,62 @@ const credentialsStatus = document.querySelector("#credentialsStatus");
 const clearCredentialButton = document.querySelector("#clearCredentialButton");
 const reloadCredentialsButton = document.querySelector("#reloadCredentialsButton");
 const template = document.querySelector("#jobRowTemplate");
-const startAddressInput = document.querySelector("#startAddress");
-const endAddressInput = document.querySelector("#endAddress");
-const openMapsBtn = document.querySelector("#openMapsBtn");
-const selectGreenBtn = document.querySelector("#selectGreenBtn");
-const selectVisibleBtn = document.querySelector("#selectVisibleBtn");
-const clearSelectedBtn = document.querySelector("#clearSelectedBtn");
-const routeStatusEl = document.querySelector("#routeStatus");
-const bestRouteBox = document.querySelector("#bestRouteBox");
-const bestRouteList = document.querySelector("#bestRouteList");
-const bestRouteMeta = document.querySelector("#bestRouteMeta");
 
 let allJobs = [];
 let filteredJobs = [];
 let allCredentials = [];
-let activeTierFilter = "all";
 
-// ── Tier filter tabs ──────────────────────────────────────────────────────
-document.querySelectorAll(".tier-tabs button").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tier-tabs button").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    activeTierFilter = btn.dataset.tier || "all";
-    render();
-  });
-});
-
-// ── Transit tier helpers ──────────────────────────────────────────────────
-function jobTier(job) { return (job.tier || "red").toLowerCase(); }
-function tierLabel(t) { return t === "green" ? "🟢" : t === "yellow" ? "🟡" : "🔴"; }
-function tierBadgeClass(t) { return t === "green" ? "badge-green" : t === "yellow" ? "badge-yellow" : "badge-red"; }
-function tierRowClass(t) { return t === "green" ? "tier-green" : t === "yellow" ? "tier-yellow" : "tier-red"; }
-
-// ── Best-route algorithm ─────────────────────────────────────────────────
-const CORRIDOR_ORDER = ["WeGo Rt 22","WeGo Rt 23","WeGo Rt 14","WeGo Rt 56","WeGo Rt 77","WeGo Rt 52","WeGo Rt 55","WeGo Rt 6"];
-function corridorScore(transit) {
-  const idx = CORRIDOR_ORDER.findIndex((r) => (transit || "").includes(r.replace("WeGo ", "")));
-  return idx === -1 ? 99 : idx;
+function setConnection(text) {
+  connectionState.textContent = text;
 }
-function buildOptimalRoute(jobs) {
-  const candidates = jobs
-    .filter((j) => jobTier(j) === "green" && j.transit)
-    .sort((a, b) => corridorScore(a.transit) - corridorScore(b.transit));
-  const grouped = {};
-  candidates.forEach((j) => {
-    const key = (j.transit || "").split("/")[0].trim();
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(j);
-  });
-  const ordered = [];
-  CORRIDOR_ORDER.forEach((r) => { if (grouped[r]) ordered.push(...grouped[r]); });
-  candidates.forEach((j) => { if (!ordered.find((o) => o.id === j.id)) ordered.push(j); });
-  return ordered.slice(0, 9);
+
+function setSourceStatus(text) {
+  if (sourceStatus) {
+    sourceStatus.textContent = text;
+  }
 }
-function renderBestRoute(route) {
-  if (!bestRouteBox || !route.length) { if (bestRouteBox) bestRouteBox.style.display = "none"; return; }
-  bestRouteBox.style.display = "";
-  bestRouteList.innerHTML = "";
-  route.forEach((job, i) => {
-    const li = document.createElement("li");
-    li.textContent = `Stop ${i + 1}: ${job.title} — ${job.address} (${job.transit || "walk"}, ${job.distance || ""})`;
-    bestRouteList.append(li);
-  });
-  const earn = (route.length * 8.25).toFixed(2);
-  if (bestRouteMeta) bestRouteMeta.textContent = `${route.length} stops · Est. $${earn} · ~5 min/store · WeGo Rt 94 → Nashville`;
+
+function setCredentialsStatus(text) {
+  if (credentialsStatus) {
+    credentialsStatus.textContent = text;
+  }
+}
+
+function getSelectedJobs() {
+  return filteredJobs.filter((job) => job.selected);
 }
 
 function render() {
-  const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
-  let jobs = allJobs;
-  if (activeTierFilter !== "all") jobs = jobs.filter((j) => jobTier(j) === activeTierFilter);
-  filteredJobs = jobs.filter((job) => {
-    if (!query) return true;
-    const hay = [job.title, job.address, job.city, job.state, job.transit, job.pay, job.source].join(" ").toLowerCase();
-    return hay.includes(query);
+  const query = searchInput.value.trim().toLowerCase();
+  filteredJobs = allJobs.filter((job) => {
+    const haystack = [
+      job.title,
+      job.address,
+      job.city,
+      job.state,
+      job.postcode,
+      job.source,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return !query || haystack.includes(query);
   });
 
   jobsTableBody.innerHTML = "";
-  filteredJobs.forEach((job) => {
-    const tier = jobTier(job);
-    const row = template.content.firstElementChild.cloneNode(true);
-    row.className = tierRowClass(tier);
-    const check = row.querySelector(".job-check");
-    check.checked = Boolean(job.selected);
-    check.addEventListener("change", (e) => { job.selected = e.target.checked; updateCounts(); });
 
-    const tierCell = row.querySelector(".job-tier");
-    if (tierCell) {
-      const badge = document.createElement("span");
-      badge.className = `tier-badge ${tierBadgeClass(tier)}`;
-      badge.textContent = tierLabel(tier);
-      tierCell.appendChild(badge);
-    }
-    const titleCell = row.querySelector(".job-title");
-    if (titleCell) titleCell.textContent = job.title || "—";
-    const addrCell = row.querySelector(".job-address");
-    if (addrCell) addrCell.textContent = job.address || "—";
-    const payCell = row.querySelector(".job-pay");
-    if (payCell) payCell.textContent = job.pay || "$8.25";
-    const transitCell = row.querySelector(".job-transit");
-    if (transitCell) transitCell.textContent = job.transit || "—";
-    const distCell = row.querySelector(".job-distance");
-    if (distCell) distCell.textContent = job.distance || "—";
-    const statusCell = row.querySelector(".job-status");
-    if (statusCell) statusCell.textContent = job.status || "Available";
+  filteredJobs.forEach((job) => {
+    const row = template.content.firstElementChild.cloneNode(true);
+    row.querySelector(".job-check").checked = Boolean(job.selected);
+    row.querySelector(".job-check").addEventListener("change", (event) => {
+      job.selected = event.target.checked;
+      updateCounts();
+    });
+    row.querySelector(".job-title").textContent = job.title;
+    row.querySelector(".job-address").textContent = job.address || "—";
+    row.querySelector(".job-location").textContent = [job.city, job.state, job.postcode]
+      .filter(Boolean)
+      .join(", ") || "—";
+    row.querySelector(".job-source").textContent = job.source || "browser-extension";
     jobsTableBody.appendChild(row);
   });
 
@@ -131,36 +81,13 @@ function render() {
 }
 
 function updateCounts() {
-  const selected = allJobs.filter((j) => j.selected);
-  const green = allJobs.filter((j) => jobTier(j) === "green");
-  const yellow = allJobs.filter((j) => jobTier(j) === "yellow");
-  const red = allJobs.filter((j) => jobTier(j) === "red");
-
-  if (jobCount) jobCount.textContent = String(allJobs.length);
-  if (greenCount) greenCount.textContent = String(green.length);
-  if (selectedCount) selectedCount.textContent = String(selected.length);
-  const earnings = selected.reduce((s) => s + 8.25, 0);
-  if (earnCount) earnCount.textContent = `$${earnings.toFixed(2)}`;
-  if (selectAll) selectAll.checked = filteredJobs.length > 0 && filteredJobs.every((j) => j.selected);
-
-  // Update tab counts
-  ["all","green","yellow","red"].forEach((t) => {
-    const el = document.querySelector(`#tab${t.charAt(0).toUpperCase()+t.slice(1)}`);
-    if (el) el.textContent = t === "all" ? allJobs.length : (t === "green" ? green.length : t === "yellow" ? yellow.length : red.length);
-  });
-
-  // Route status
-  const selWithAddr = selected.filter((j) => j.address);
-  if (routeStatusEl) routeStatusEl.textContent = selWithAddr.length ? `${selWithAddr.length} stop${selWithAddr.length>1?"s":""} ready for maps.` : "Select jobs to build transit route.";
-  if (openMapsBtn) openMapsBtn.disabled = !selWithAddr.length;
+  const selected = allJobs.filter((job) => job.selected).length;
+  jobCount.textContent = String(allJobs.length);
+  selectedCount.textContent = String(selected);
+  selectAll.checked = filteredJobs.length > 0 && filteredJobs.every((job) => job.selected);
 }
 
-function setConnection(text) { if (connectionState) connectionState.textContent = text; }
-function setSourceStatus(text) { if (sourceStatus) sourceStatus.textContent = text; }
-function setCredentialsStatus(text) { if (credentialsStatus) credentialsStatus.textContent = text; }
-function getSelectedJobs() { return allJobs.filter((j) => j.selected); }
-
-
+async function loadJobs() {
   setConnection("Loading");
   const response = await fetch("/api/jobs", { credentials: "include" });
   if (response.status === 401) {
@@ -290,61 +217,77 @@ async function saveCredential(extra = {}) {
   setCredentialsStatus(allCredentials.length ? `${allCredentials.length} saved login(s)` : "No saved logins");
 }
 
-function openMapsRoute() {
-  const selected = getSelectedJobs().filter((j) => j.address);
-  if (!selected.length) { alert("Select jobs with addresses first."); return; }
-  const start = (startAddressInput?.value.trim()) || "Clarksville, TN";
-  const end = endAddressInput?.value.trim() || selected[selected.length - 1].address;
-  const waypoints = selected.slice(0, -1).map((j) => j.address).filter(Boolean);
-  const url = new URL("https://www.google.com/maps/dir/");
-  url.searchParams.set("api", "1");
-  url.searchParams.set("origin", start);
-  url.searchParams.set("destination", end);
-  if (waypoints.length) url.searchParams.set("waypoints", waypoints.join("|"));
-  window.open(url.toString(), "_blank", "noopener");
+function openRoute() {
+  const selected = getSelectedJobs();
+  if (!selected.length) {
+    alert("Select one or more jobs first.");
+    return;
+  }
+  const stops = selected
+    .map((job) => job.address || [job.city, job.state].filter(Boolean).join(", "))
+    .filter(Boolean);
+  const destination = stops.at(-1) || "";
+  const origin = stops[0] || "";
+  const mapsUrl = new URL("https://www.google.com/maps/dir/");
+  if (origin) mapsUrl.searchParams.set("api", "1");
+  if (origin) mapsUrl.searchParams.set("origin", origin);
+  if (destination) mapsUrl.searchParams.set("destination", destination);
+  if (stops.length > 2) {
+    mapsUrl.searchParams.set("waypoints", stops.slice(1, -1).join("|"));
+  }
+  window.open(mapsUrl.toString(), "_blank", "noopener");
 }
 
 function exportCsv() {
-  const rows = [["tier","title","address","pay","transit","distance","status"]];
-  getSelectedJobs().forEach((j) => rows.push([j.tier||"",j.title,j.address,j.pay||"$8.25",j.transit||"",j.distance||"",j.status||""]));
-  const csv = rows.map((r) => r.map((v) => `"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const rows = [["title", "address", "city", "state", "postcode", "source"]];
+  getSelectedJobs().forEach((job) => {
+    rows.push([job.title, job.address, job.city, job.state, job.postcode, job.source]);
+  });
+  const csv = rows
+    .map((row) =>
+      row
+        .map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`)
+        .join(",")
+    )
+    .join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
-  anchor.href = URL.createObjectURL(blob);
-  anchor.download = "survey-merchandiser-jobs.csv";
+  anchor.href = url;
+  anchor.download = "selected-jobs.csv";
   anchor.click();
-  URL.revokeObjectURL(anchor.href);
+  URL.revokeObjectURL(url);
 }
 
-refreshButton?.addEventListener("click", (e) => { e.preventDefault(); loadJobs(); });
-buildBestRouteBtn?.addEventListener("click", () => {
-  const route = buildOptimalRoute(allJobs);
-  renderBestRoute(route);
-  route.forEach((j) => { j.selected = true; });
-  render();
-  document.querySelector("#routeSection")?.setAttribute("open", "");
+refreshButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  loadJobs();
 });
-openMapsBtn?.addEventListener("click", openMapsRoute);
-selectGreenBtn?.addEventListener("click", () => {
-  allJobs.filter((j) => jobTier(j) === "green" && j.address).forEach((j) => { j.selected = true; });
-  render();
+
+routeButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  openRoute();
 });
-selectVisibleBtn?.addEventListener("click", () => {
-  filteredJobs.filter((j) => j.address).forEach((j) => { j.selected = true; });
-  render();
+
+exportButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  exportCsv();
 });
-clearSelectedBtn?.addEventListener("click", () => {
-  allJobs.forEach((j) => { j.selected = false; });
-  if (bestRouteBox) bestRouteBox.style.display = "none";
-  render();
-});
-exportButton?.addEventListener("click", (e) => { e.preventDefault(); exportCsv(); });
-searchInput?.addEventListener("input", render);
-selectAll?.addEventListener("change", (e) => {
-  filteredJobs.forEach((j) => { j.selected = e.target.checked; });
+
+searchInput.addEventListener("input", render);
+
+selectAll.addEventListener("change", (event) => {
+  filteredJobs.forEach((job) => {
+    job.selected = event.target.checked;
+  });
   render();
 });
-if (logoutForm) logoutForm.addEventListener("submit", () => setConnection("Logged out"));
+
+if (logoutForm) {
+  logoutForm.addEventListener("submit", () => {
+    setConnection("Logged out");
+  });
+}
 
 if (sourceConfigForm) {
   sourceConfigForm.addEventListener("submit", async (event) => {

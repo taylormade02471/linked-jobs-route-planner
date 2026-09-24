@@ -1,45 +1,218 @@
-/* android-app-backbone.js — safe Android share/import bridge */
 (function registerAndroidAppBackbone(root, factory) {
-  const api = factory();
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  const api = factory(root.WorkAppBackbone);
+
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = api;
+  }
+
   root.AndroidAppBackbone = api;
-})(typeof window !== 'undefined' ? window : globalThis, function androidAppBackboneFactory() {
-  const SECRET_PATTERN = /(password|passcode|token|secret|cookie|session|authorization|bearer|api[_-]?key|csrf)/i;
+})(typeof window !== "undefined" ? window : globalThis, function androidAppBackboneFactory(defaultWorkApi) {
+  const PROVIDER_IDS = new Set(["survey_merchandiser", "clickworker", "field_nation", "field_agent"]);
+  const ALLOWED_SHARE_MIME_TYPES = new Set(["text/plain", "image/png", "image/jpeg", "application/pdf"]);
+  const ANDROID_VAULT = "android_encrypted_storage";
 
-  function normalizeSharePayload(text) {
-    if (!text || typeof text !== 'string') return { ok: false, reason: 'empty' };
-    if (SECRET_PATTERN.test(text)) return { ok: false, reason: 'contains_secret_field' };
-    return { ok: true, text: text.trim().substring(0, 4000) };
+  function asText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
   }
 
-  function createImportReviewItems(rawText) {
-    const norm = normalizeSharePayload(rawText);
-    if (!norm.ok) return [];
-    const lines = norm.text.split(/\n+/).map(l => l.trim()).filter(Boolean);
-    return lines.map((line, i) => ({ id: `import_${Date.now()}_${i}`, raw: line, reviewed: false }));
+  function providerId(value) {
+    const id = asText(value).toLowerCase();
+    return PROVIDER_IDS.has(id) ? id : "survey_merchandiser";
   }
 
-  function approveRouteVisibleReviewItems(items) {
-    return (items || []).filter(it => it && !it.reviewed).map(it => ({ ...it, reviewed: true, approvedAt: Date.now() }));
+  function mimeType(value) {
+    return asText(value).toLowerCase().split(";")[0];
   }
 
-  function createSafeJobSyncPayload(jobs) {
-    if (!Array.isArray(jobs)) return [];
-    return jobs.map(j => ({
-      id: j.id, title: j.title, address: j.address, pay: j.pay,
-      tier: j.tier, transit: j.transit, due: j.due, status: j.status,
-      campaign: j.campaign, minutes: j.minutes,
-    }));
-  }
-
-  function publicCredentialState(connections) {
-    // Returns only non-secret connection status metadata
-    const out = {};
-    for (const [k, v] of Object.entries(connections || {})) {
-      out[k] = { status: v.status || 'not_connected', label: v.label || '', updatedAt: v.updatedAt || null };
+  function normalizeSharePayload(payload = {}) {
+    const mime = mimeType(payload.mime_type || payload.type);
+    if (!ALLOWED_SHARE_MIME_TYPES.has(mime)) {
+      return {
+        accepted: false,
+        kind: "unsupported",
+        mime_type: mime || "unknown",
+        reason: "This shared item type is not supported for Android job intake.",
+      };
     }
-    return out;
+
+    if (mime === "text/plain") {
+      return {
+        accepted: true,
+        kind: "text",
+        mime_type: mime,
+        text: String(payload.text || payload.value || ""),
+        source: "android-share",
+      };
+    }
+
+    return {
+      accepted: true,
+      kind: mime === "application/pdf" ? "pdf" : "screenshot",
+      mime_type: mime,
+      uri: String(payload.uri || payload.url || ""),
+      source: "android-share",
+    };
   }
 
-  return { normalizeSharePayload, createImportReviewItems, approveRouteVisibleReviewItems, createSafeJobSyncPayload, publicCredentialState };
+  function createCredentialSaveRequest(input = {}) {
+    const id = providerId(input.provider_id);
+    const username = asText(input.username || input.email || input.account);
+    const password = String(input.password || "");
+
+    return {
+      native_payload: {
+        provider_id: id,
+        username,
+        password,
+      },
+      public_state: {
+        provider_id: id,
+        username,
+        has_saved_login: Boolean(username && password),
+        vault: ANDROID_VAULT,
+        updated_at: Date.now(),
+      },
+    };
+  }
+
+  function publicCredentialState(state = {}) {
+    return {
+      provider_id: providerId(state.provider_id),
+      username: asText(state.username),
+      has_saved_login: Boolean(state.has_saved_login),
+      vault: state.vault === ANDROID_VAULT ? ANDROID_VAULT : "",
+      updated_at: Number(state.updated_at) || 0,
+    };
+  }
+
+  function requireWorkApi(workApi) {
+    const api = workApi || defaultWorkApi;
+    if (!api || typeof api.parseSharedJobs !== "function" || typeof api.isRouteVisibleJob !== "function") {
+      throw new Error("WorkAppBackbone is required for Android import review.");
+    }
+    return api;
+  }
+
+  function createImportReviewItems(text, selectedProviderId = "survey_merchandiser", workApi) {
+    const api = requireWorkApi(workApi);
+    return api.parseSharedJobs(text, providerId(selectedProviderId)).map((job, index) => {
+      const status = api.normalizeStatus(job.status);
+      const routeJob = { ...job, status };
+      const approvable = api.isRouteVisibleJob(routeJob);
+      return {
+        review_id: [job.id || "job", index].join(":").slice(0, 220),
+        review_status: "pending_review",
+        approvable,
+        blocked_reason: approvable ? "" : "Only open, assigned, or needs-completion jobs can be approved into the route planner.",
+        ...job,
+        status,
+        source: "android-import-review-pending",
+      };
+    });
+  }
+
+  function approveRouteVisibleReviewItems(reviewItems = []) {
+    return (Array.isArray(reviewItems) ? reviewItems : [])
+      .filter((item) => item && item.approvable === true)
+      .map((item) => ({
+        ...item,
+        review_status: "approved",
+        source: "android-import-review",
+        imported_at: Date.now(),
+      }));
+  }
+
+  function approveAvailableReviewItems(reviewItems = []) {
+    return approveRouteVisibleReviewItems(reviewItems);
+  }
+
+  function createSafeJobSyncPayload(jobs = [], workApi) {
+    const api = requireWorkApi(workApi);
+    const allowedFields = [
+      "id",
+      "provider_id",
+      "provider_label",
+      "connector_id",
+      "external_id",
+      "title",
+      "location_name",
+      "address",
+      "city",
+      "state",
+      "postcode",
+      "lat",
+      "lon",
+      "lng",
+      "distance_miles",
+      "pay_cents",
+      "due",
+      "accepted_at",
+      "minutes",
+      "duration_text",
+      "timer_minutes",
+      "photos_required",
+      "purchase_required",
+      "requirements",
+      "ready_state",
+      "status",
+      "payment_status",
+      "source",
+      "source_video",
+      "submitted_at",
+      "review_note",
+      "order",
+      "imported_at",
+      "updated_at",
+    ];
+
+    const isSyncableSafeJob = (job) =>
+      api.isRouteVisibleJob(job) ||
+      (typeof api.isCompletedJob === "function"
+        ? api.isCompletedJob(job)
+        : api.normalizeStatus(job?.status) === "completed");
+
+    const safeJobs = (Array.isArray(jobs) ? jobs : [])
+      .map((job) => ({ ...job, status: api.normalizeStatus(job?.status) }))
+      .filter(isSyncableSafeJob)
+      .map((job) => {
+        const safe = {};
+        allowedFields.forEach((field) => {
+          if (job[field] !== undefined && job[field] !== null && job[field] !== "") safe[field] = job[field];
+        });
+        return safe;
+      });
+
+    return {
+      source: "android-safe-provider-sync",
+      synced_at: Date.now(),
+      jobs: safeJobs,
+    };
+  }
+
+  function createProviderCheckPlan(input = {}) {
+    return {
+      provider_id: providerId(input.provider_id),
+      can_use_saved_login: Boolean(input.has_saved_login),
+      can_scan_private_app_storage: false,
+      allowed_methods: [
+        "open_provider_app",
+        "share_visible_text",
+        "capture_screenshot",
+        "browser_board_adapter_if_available",
+      ],
+    };
+  }
+
+  return {
+    ALLOWED_SHARE_MIME_TYPES: Array.from(ALLOWED_SHARE_MIME_TYPES),
+    ANDROID_VAULT,
+    approveAvailableReviewItems,
+    approveRouteVisibleReviewItems,
+    createCredentialSaveRequest,
+    createImportReviewItems,
+    createProviderCheckPlan,
+    createSafeJobSyncPayload,
+    normalizeSharePayload,
+    publicCredentialState,
+  };
 });

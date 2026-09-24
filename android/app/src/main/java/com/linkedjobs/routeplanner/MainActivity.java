@@ -13,32 +13,38 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
-
-import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "LinkedJobsRoutePlanner";
     private static final String PLANNER_URL = "https://www.routeplanner.space";
     private static final String SHARED_INBOX_FILE = "shared_inbox/latest.txt";
+
     private WebView webView;
     private PermissionRequest pendingWebPermissionRequest;
     private GeolocationPermissions.Callback pendingGeolocationCallback;
     private String pendingGeolocationOrigin;
     private ActivityResultLauncher<String[]> permissionLauncher;
+    private ProviderCredentialStore credentialStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        credentialStore = new ProviderCredentialStore(this);
         permissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestMultiplePermissions(),
             this::handlePermissionResult
@@ -54,12 +60,10 @@ public class MainActivity extends AppCompatActivity {
         settings.setUseWideViewPort(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
 
-        String sharedText = sharedTextFromIntent(getIntent());
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (sharedText == null || sharedText.isEmpty()) return;
-                view.evaluateJavascript("window.LinkedJobsReceiveSharedText && window.LinkedJobsReceiveSharedText(" + JSONObject.quote(sharedText) + ");", null);
+                deliverSharedPayload(view, sharedPayloadFromIntent(getIntent()));
             }
         });
         webView.addJavascriptInterface(new ProviderAppBridge(), "LinkedJobsAndroid");
@@ -94,10 +98,38 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl(PLANNER_URL);
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (webView != null) {
+            deliverSharedPayload(webView, sharedPayloadFromIntent(intent));
+        }
+    }
+
     public class ProviderAppBridge {
         @JavascriptInterface
         public void openProviderApp(String providerId) {
             runOnUiThread(() -> openProviderAppOnUiThread(providerId));
+        }
+
+        @JavascriptInterface
+        public void openProviderSettings(String providerId) {
+            runOnUiThread(() -> {
+                Intent intent = new Intent(MainActivity.this, ProviderConnectionActivity.class);
+                intent.putExtra("provider_id", providerId);
+                startActivity(intent);
+            });
+        }
+
+        @JavascriptInterface
+        public String getProviderLoginStatus(String providerId) {
+            return credentialStore.statusJson(providerId);
+        }
+
+        @JavascriptInterface
+        public String clearProviderLogin(String providerId) {
+            return credentialStore.clearLogin(providerId);
         }
 
         @JavascriptInterface
@@ -117,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
             File file = new File(getFilesDir(), SHARED_INBOX_FILE);
             File parent = file.getParentFile();
             if (parent != null && !parent.exists()) {
-                // Keep shared imports in the app's local private storage.
                 parent.mkdirs();
             }
             try (FileOutputStream out = new FileOutputStream(file, false)) {
@@ -136,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openProviderAppOnUiThread(String providerId) {
-        String packageName = packageForProvider(providerId);
+        String packageName = credentialStore.packageForProvider(providerId);
         if (packageName == null) return;
 
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
@@ -155,19 +186,42 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + packageName)));
     }
 
-    private String packageForProvider(String providerId) {
-        if ("survey_merchandiser".equals(providerId)) return "iSurvey.Android";
-        if ("clickworker".equals(providerId)) return "com.clickworker.clickworkerapp";
-        if ("field_nation".equals(providerId)) return "com.fieldnation.android";
-        if ("field_agent".equals(providerId)) return "net.fieldagent";
-        return null;
+    private void deliverSharedPayload(WebView target, String payloadJson) {
+        if (payloadJson == null || payloadJson.isEmpty()) return;
+        target.evaluateJavascript("window.LinkedJobsReceiveAndroidShare && window.LinkedJobsReceiveAndroidShare(" + payloadJson + ");", null);
     }
 
-    private String sharedTextFromIntent(Intent intent) {
-        if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return "";
+    private String sharedPayloadFromIntent(Intent intent) {
+        if (intent == null) return "";
+        String action = intent.getAction();
+        if (!Intent.ACTION_SEND.equals(action) && !Intent.ACTION_SEND_MULTIPLE.equals(action)) return "";
         String type = intent.getType();
-        if (type == null || !"text/plain".equals(type)) return "";
-        return intent.getStringExtra(Intent.EXTRA_TEXT);
+        if (type == null || type.isEmpty()) return "";
+
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("action", action);
+            payload.put("mime_type", type);
+
+            String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+            if (text != null) payload.put("text", text);
+
+            Uri stream = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            if (stream != null) payload.put("uri", stream.toString());
+
+            ArrayList<Uri> streams = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+            if (streams != null && !streams.isEmpty()) {
+                JSONArray items = new JSONArray();
+                for (Uri item : streams) {
+                    if (item != null) items.put(item.toString());
+                }
+                payload.put("items", items);
+            }
+
+            return payload.toString();
+        } catch (Exception error) {
+            return "";
+        }
     }
 
     private boolean hasCameraPermission() {
@@ -202,4 +256,3 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
