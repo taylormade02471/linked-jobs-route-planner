@@ -115,6 +115,15 @@ function setShareStatus(text) {
   if (shareStatus) shareStatus.textContent = text;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function getSelectedJobs() {
   return allJobs.filter((job) => job.selected);
 }
@@ -209,26 +218,26 @@ function boardCard(board) {
     <article class="board-card">
       <div class="board-card-head">
         <div>
-          <h3>${board.label}</h3>
-          <p>${board.description}</p>
+          <h3>${escapeHtml(board.label)}</h3>
+          <p>${escapeHtml(board.description)}</p>
         </div>
         <label class="board-toggle">
           <input type="checkbox" data-field="enabled" ${board.enabled ? "checked" : ""} />
           Link board
         </label>
       </div>
-      <input type="hidden" data-field="id" value="${board.id}" />
+      <input type="hidden" data-field="id" value="${escapeHtml(board.id)}" />
       <div class="board-card-grid">
-        <label>Login URL<input data-field="login_url" value="${board.login_url || ""}" placeholder="https://example.com/login" /></label>
-        <label>Username / email<input data-field="username" value="${board.username || ""}" autocomplete="username" /></label>
+        <label>Login URL<input data-field="login_url" value="${escapeHtml(board.login_url || "")}" placeholder="https://example.com/login" /></label>
+        <label>Username / email<input data-field="username" value="${escapeHtml(board.username || "")}" autocomplete="username" /></label>
         <label>Password<input data-field="password" type="password" autocomplete="current-password" placeholder="${board.has_password ? "Saved locally" : "Enter only if you want it stored locally"}" /></label>
-        <label>Notes<input data-field="notes" value="${board.notes || ""}" placeholder="Optional login or board note" /></label>
+        <label>Notes<input data-field="notes" value="${escapeHtml(board.notes || "")}" placeholder="Optional login or board note" /></label>
       </div>
       <div class="board-meta">
-        <span class="pill small">Sync: ${board.sync_mode.replaceAll("_", " ")}</span>
-        <a href="${board.board_url}" target="_blank" rel="noreferrer noopener">Open board</a>
+        <span class="pill small">Sync: ${escapeHtml(board.sync_mode.replaceAll("_", " "))}</span>
+        <a href="${escapeHtml(board.board_url)}" target="_blank" rel="noreferrer noopener">Open board</a>
       </div>
-      <p class="helper board-helper">${board.connection_help}</p>
+      <p class="helper board-helper">${escapeHtml(board.connection_help)}</p>
     </article>
   `;
 }

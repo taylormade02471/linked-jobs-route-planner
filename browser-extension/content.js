@@ -59,7 +59,10 @@ function parseTableJobs(provider) {
 }
 
 function parseCardJobs(provider) {
-  const selectors = ["article", "[data-job-id]", ".job-card", ".card", "li"];
+  const pathHint = /job|jobs|work|order|task|gig/i.test(window.location.pathname);
+  if (!pathHint) return [];
+
+  const selectors = ["[data-job-id]", "[data-job-card]", ".job-card", ".job-listing", ".job-row", ".work-order-card"];
   for (const selector of selectors) {
     const cards = Array.from(document.querySelectorAll(selector)).filter((node) => node.querySelectorAll("a, button, div, span, p").length >= 3);
     if (cards.length < 2) continue;
