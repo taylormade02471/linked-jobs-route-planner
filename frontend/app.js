@@ -26,14 +26,20 @@ const linkedBoardsList = document.querySelector("#linkedBoardsList");
 const linkedBoardsStatus = document.querySelector("#linkedBoardsStatus");
 const reloadLinkedBoardsButton = document.querySelector("#reloadLinkedBoardsButton");
 const parseSharedJobsButton = document.querySelector("#parseSharedJobsButton");
+const sharedJobsProvider = document.querySelector("#sharedJobsProvider");
 const sharedJobsInput = document.querySelector("#sharedJobsInput");
 const sharedJobsSource = document.querySelector("#sharedJobsSource");
 const shareStatus = document.querySelector("#shareStatus");
+const importantJobsBoard = document.querySelector("#importantJobsBoard");
+const importantJobsList = document.querySelector("#importantJobsList");
+const closeImportantJobsButton = document.querySelector("#closeImportantJobsButton");
+const showImportantJobsButton = document.querySelector("#showImportantJobsButton");
 
 let allJobs = [];
 let filteredJobs = [];
 let allLinkedBoards = [];
 let activeTierFilter = "all";
+let importantJobsDismissed = window.localStorage.getItem("importantJobsDismissed") === "true";
 
 document.querySelectorAll(".tier-tabs button").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -128,6 +134,79 @@ function getSelectedJobs() {
   return allJobs.filter((job) => job.selected);
 }
 
+function normalizeJobStatus(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\b(paid|complete|completed|done|passed)\b/.test(text)) return "completed";
+  if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
+  if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
+  if (text.includes("available") || text.includes("open")) return "available";
+  return text || "available";
+}
+
+function payAmount(job) {
+  const match = String(job?.pay || "").match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function importantJobScore(job) {
+  let score = 0;
+  const status = normalizeJobStatus(job.status);
+  if (status === "assigned") score += 4;
+  if (status === "available") score += 3;
+  if ((job.provider_id || "") === "survey_merchandiser") score += 3;
+  if (payAmount(job) >= 15) score += 3;
+  if (/\b(today|deadline|due|urgent|priority)\b/i.test(`${job.due || ""} ${job.title || ""}`)) score += 2;
+  return score;
+}
+
+function topImportantJobs() {
+  return allJobs
+    .filter((job) => {
+      const status = normalizeJobStatus(job.status);
+      return (
+        status === "available" ||
+        status === "assigned" ||
+        (job.provider_id || "") === "survey_merchandiser" ||
+        payAmount(job) >= 15 ||
+        /\b(priority|urgent)\b/i.test(`${job.title || ""} ${job.notes || ""}`)
+      );
+    })
+    .sort((a, b) => importantJobScore(b) - importantJobScore(a))
+    .slice(0, 5);
+}
+
+function renderImportantJobs() {
+  if (!importantJobsBoard || !importantJobsList || !showImportantJobsButton) return;
+  const jobs = topImportantJobs();
+  if (!jobs.length) {
+    importantJobsBoard.hidden = true;
+    showImportantJobsButton.hidden = true;
+    return;
+  }
+
+  importantJobsList.innerHTML = "";
+  jobs.forEach((job) => {
+    const item = document.createElement("li");
+    item.className = "important-job-item";
+
+    const title = document.createElement("strong");
+    title.textContent = job.title || "Job";
+
+    const meta = document.createElement("span");
+    const status = normalizeJobStatus(job.status) || "available";
+    meta.textContent = [job.source || "Linked board", job.pay || "$8.25", status].filter(Boolean).join(" · ");
+
+    const detail = document.createElement("span");
+    detail.textContent = job.address || job.due || "Open work ready to review";
+
+    item.append(title, meta, detail);
+    importantJobsList.appendChild(item);
+  });
+
+  importantJobsBoard.hidden = importantJobsDismissed;
+  showImportantJobsButton.hidden = !importantJobsDismissed;
+}
+
 function render() {
   const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
   let jobs = allJobs;
@@ -211,6 +290,7 @@ async function loadJobs() {
   allJobs = (payload.jobs || []).map((job) => ({ ...job, selected: Boolean(job.selected) }));
   setConnection("Ready");
   render();
+  renderImportantJobs();
 }
 
 function boardCard(board) {
@@ -310,6 +390,7 @@ async function importSharedJobs() {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({
+      provider_id: sharedJobsProvider?.value || "",
       source: sharedJobsSource?.value.trim() || "Shared intake",
       text,
     }),
@@ -414,6 +495,16 @@ if (linkedBoardsForm) linkedBoardsForm.addEventListener("submit", async (event) 
 });
 reloadLinkedBoardsButton?.addEventListener("click", loadLinkedBoards);
 parseSharedJobsButton?.addEventListener("click", importSharedJobs);
+closeImportantJobsButton?.addEventListener("click", () => {
+  importantJobsDismissed = true;
+  window.localStorage.setItem("importantJobsDismissed", "true");
+  renderImportantJobs();
+});
+showImportantJobsButton?.addEventListener("click", () => {
+  importantJobsDismissed = false;
+  window.localStorage.setItem("importantJobsDismissed", "false");
+  renderImportantJobs();
+});
 
 loadJobs();
 loadLinkedBoards();

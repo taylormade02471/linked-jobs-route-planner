@@ -54,6 +54,22 @@ function findColumnIndex(headers, field) {
   return headers.findIndex((header) => aliases.some((alias) => header.includes(alias)));
 }
 
+function normalizeStatus(value) {
+  const text = String(value || "").toLowerCase();
+  if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
+  if (text.includes("available") || text.includes("open")) return "available";
+  if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
+  if (/\b(paid|complete|completed|done|passed)\b/.test(text)) return "completed";
+  return text;
+}
+
+function shouldSyncProviderJob(provider, status) {
+  if (provider.id !== "survey_merchandiser") return true;
+  if (!status) return true;
+  const normalized = normalizeStatus(status);
+  return normalized === "available" || normalized === "assigned";
+}
+
 function parseTableJobs(provider) {
   const tables = Array.from(document.querySelectorAll("table"));
   const targetTable = tables
@@ -87,6 +103,7 @@ function parseTableJobs(provider) {
       const postcode = postcodeIndex >= 0 ? cells[postcodeIndex] || "" : cells[4] || "";
       const pay = payIndex >= 0 ? cells[payIndex] || "" : cells[5] || "";
       const status = statusIndex >= 0 ? cells[statusIndex] || "" : cells[6] || "";
+      if (!shouldSyncProviderJob(provider, status)) return null;
       return {
         id: `${provider.id}-${slug(title)}-${slug(address)}-${index}`,
         title: title || "Job",
@@ -124,6 +141,7 @@ function parseCardJobs(provider) {
         const state = card.querySelector("[data-state], .state")?.textContent?.trim() || "";
         const pay = card.querySelector("[data-pay], .pay, .rate")?.textContent?.trim() || "";
         const status = card.querySelector("[data-status], .status, .badge")?.textContent?.trim() || "";
+        if (!shouldSyncProviderJob(provider, status)) return null;
         if (!title || !(location || city || state)) return null;
         return {
           id: `${provider.id}-${slug(title)}-${slug(location || `${city}-${state}`)}-${index}`,

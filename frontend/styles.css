@@ -449,3 +449,77 @@ textarea {
 .login-title {
   font-size: 2rem;
 }
+
+.important-jobs-board {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: min(360px, calc(100vw - 36px));
+  z-index: 30;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 20px 50px rgba(16, 33, 51, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.important-jobs-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.important-jobs-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.icon-button {
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.important-jobs-copy {
+  margin-top: 8px;
+}
+
+.important-jobs-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.important-job-item {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.12);
+}
+
+.important-job-item strong,
+.important-job-item span {
+  display: block;
+}
+
+.important-job-item span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .important-jobs-board {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+}

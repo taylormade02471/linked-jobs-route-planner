@@ -37,6 +37,7 @@
         <h1>Linked Jobs Route Planner</h1>
       </div>
       <div class="topbar-actions">
+        <button id="showImportantJobsButton" class="secondary" hidden>Important jobs</button>
         <button id="buildBestRoute" class="primary" style="background:#1e6452">🚌 Best Transit Route</button>
         <button id="refreshButton" class="secondary">↻ Refresh</button>
         <button id="exportButton" class="secondary">Export CSV</button>
@@ -153,6 +154,15 @@
             </div>
             <span id="shareStatus" class="pill">Idle</span>
           </div>
+          <label for="sharedJobsProvider">Linked board</label>
+          <select id="sharedJobsProvider">
+            <option value="">Auto-detect / generic share</option>
+            <option value="survey_merchandiser">Survey Merchandiser</option>
+            <option value="jobslinger">Jobslinger MegaLog</option>
+            <option value="clickworker">Clickworker</option>
+            <option value="field_nation">Field Nation</option>
+            <option value="field_agent">Field Agent</option>
+          </select>
           <label for="sharedJobsSource">Source label</label>
           <input id="sharedJobsSource" value="Shared intake" />
           <label for="sharedJobsInput">Shared rows or JSON</label>
@@ -180,6 +190,18 @@
         <td class="job-status"></td>
       </tr>
     </template>
+
+    <aside id="importantJobsBoard" class="important-jobs-board" hidden>
+      <div class="important-jobs-head">
+        <div>
+          <p class="eyebrow">Important jobs</p>
+          <h2>Open and active work</h2>
+        </div>
+        <button id="closeImportantJobsButton" class="secondary icon-button" type="button" aria-label="Close important jobs board">×</button>
+      </div>
+      <p class="helper important-jobs-copy">Quick view for Survey Merchandiser and other high-priority open work.</p>
+      <ul id="importantJobsList" class="important-jobs-list"></ul>
+    </aside>
 
     <script src="/frontend/app.js" type="module"></script>
   </body>

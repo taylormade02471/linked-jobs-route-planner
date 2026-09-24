@@ -487,7 +487,58 @@ function splitSharedLine(line) {
   return [trimmed];
 }
 
-function parseSharedJobs(text, sourceLabel = "Shared intake") {
+function normalizeSharedStatus(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\b(paid|complete|completed|done|passed)\b/.test(text)) return "completed";
+  if (text.includes("submitted") || text.includes("applied") || text.includes("requested")) return "applied";
+  if (text.includes("claimed") || text.includes("reserved") || text.includes("planned") || text.includes("accepted") || text.includes("assigned")) return "assigned";
+  if (text.includes("available") || text.includes("open")) return "available";
+  return text || "available";
+}
+
+function sharedProviderId(providerId, sourceLabel) {
+  const normalizedProviderId = String(providerId || "").trim();
+  if (normalizedProviderId) return normalizedProviderId;
+  const label = String(sourceLabel || "").toLowerCase();
+  const supported = SUPPORTED_BOARDS.find(
+    (board) => label.includes(board.id.replaceAll("_", " ")) || label.includes(board.label.toLowerCase()),
+  );
+  return supported?.id || "manual_share";
+}
+
+function parseSharedBlocks(text, sourceLabel, providerId) {
+  const streetPattern = /\d{1,6}\s+[^\n,]+(?:street|st|road|rd|avenue|ave|boulevard|blvd|drive|dr|lane|ln|way|parkway|pkwy|highway|hwy|pike|court|ct)\b[^\n]*/i;
+  return String(text || "")
+    .split(/\n\s*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, index) => {
+      const lines = block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const address = (block.match(streetPattern) || [])[0] || "";
+      const pay = (block.match(/\$\s*\d+(?:\.\d{1,2})?/) || [])[0] || "";
+      const due = lines.find((line) => /\b(due|deadline|date|starts?|arrival|window|today|tomorrow)\b/i.test(line)) || "";
+      const statusLine = lines.find((line) => /\b(status|available|open|assigned|claimed|accepted|reserved|planned|applied|requested)\b/i.test(line)) || "available";
+      const title =
+        lines.find((line) => line !== address && line !== pay && line !== due && line !== statusLine) ||
+        `${sourceLabel} job`;
+      return {
+        id: `${sourceLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}-${index}`,
+        title,
+        address,
+        pay,
+        due,
+        status: normalizeSharedStatus(statusLine),
+        source: sourceLabel,
+        provider_id: providerId,
+        source_url: "manual-share",
+        notes: block,
+        order: index + 1,
+      };
+    })
+    .filter((job) => job.title || job.address || job.pay || job.due);
+}
+
+function parseSharedJobs(text, sourceLabel = "Shared intake", providerId = "manual_share") {
   const raw = String(text || "").trim();
   if (!raw) return [];
 
@@ -498,11 +549,24 @@ function parseSharedJobs(text, sourceLabel = "Shared intake") {
       return jsonJobs.map((job, index) => ({
         ...job,
         source: job.source || sourceLabel,
-        provider_id: job.provider_id || "manual_share",
+        provider_id: job.provider_id || providerId,
         order: job.order || index + 1,
+        status: normalizeSharedStatus(job.status || job.Status || "available"),
       }));
     }
   } catch {}
+
+  const resolvedProviderId = sharedProviderId(providerId, sourceLabel);
+  if (resolvedProviderId === "survey_merchandiser" || /\n\s*\n+/.test(raw)) {
+    const parsedBlocks = parseSharedBlocks(raw, sourceLabel, resolvedProviderId);
+    if (resolvedProviderId === "survey_merchandiser") {
+      return parsedBlocks.filter((job) => {
+        const status = normalizeSharedStatus(job.status);
+        return status === "available" || status === "assigned";
+      });
+    }
+    return parsedBlocks;
+  }
 
   return raw
     .split(/\r?\n+/)
@@ -518,9 +582,9 @@ function parseSharedJobs(text, sourceLabel = "Shared intake") {
         city,
         state,
         pay,
-        status,
+        status: normalizeSharedStatus(status),
         source: sourceLabel,
-        provider_id: "manual_share",
+        provider_id: resolvedProviderId,
         source_url: "manual-share",
         order: index + 1,
       };
@@ -758,7 +822,8 @@ const server = http.createServer(async (req, res) => {
     if (body === null) return;
 
     const source = String(body.source || body.source_name || "Shared intake").trim() || "Shared intake";
-    const parsedJobs = parseSharedJobs(body.text || body.rows || "", source);
+    const providerId = String(body.provider_id || body.providerId || "").trim();
+    const parsedJobs = parseSharedJobs(body.text || body.rows || "", source, providerId);
     if (!parsedJobs.length) {
       json(res, 400, { ok: false, error: "Paste at least one job row or JSON payload to import." });
       return;
