@@ -725,6 +725,13 @@ const server = http.createServer(async (req, res) => {
     if (body === null) return;
 
     const incomingBoards = Array.isArray(body.boards) ? body.boards : [];
+    if (incomingBoards.length && incomingBoards.length !== SUPPORTED_BOARDS.length) {
+      json(res, 400, {
+        ok: false,
+        error: "Expected a full linked board payload for all supported boards.",
+      });
+      return;
+    }
     linkedBoards = incomingBoards
       .map((entry) => {
         const normalized = normalizeLinkedBoard(entry);
