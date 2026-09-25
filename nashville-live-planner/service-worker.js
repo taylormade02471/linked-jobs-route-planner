@@ -1,4 +1,4 @@
-const CACHE_NAME = "nashville-planner-shell-v1";
+const CACHE_NAME = "nashville-planner-shell-v2";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
@@ -27,6 +27,31 @@ async function cacheBestEffort(cache, request) {
   }
 }
 
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const response = await fetch(request);
+    if (response.ok) await cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cached = await caches.match(request,{ignoreSearch:true});
+    if (cached) return cached;
+    if (request.mode==='navigate') return caches.match("./index.html");
+    return Response.error();
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok || response.type === "opaque") {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  }
+  return response;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -52,18 +77,14 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   const isLiveApi = url.origin === self.location.origin && url.pathname.startsWith("/api/");
-  const isShellAsset = url.origin === self.location.origin || STATIC_CROSS_ORIGIN_ASSETS.some((asset) => asset === request.url);
-  if (isLiveApi || !isShellAsset) return;
+  if (isLiveApi) return;
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok || response.type === "opaque") {
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
-        }
-        return response;
-      });
-    })
-  );
+  if (url.origin === self.location.origin) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (STATIC_CROSS_ORIGIN_ASSETS.some((asset) => asset === request.url)) {
+    event.respondWith(cacheFirst(request));
+  }
 });

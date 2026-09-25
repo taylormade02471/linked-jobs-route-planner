@@ -397,6 +397,13 @@ function refreshOfflineStatus(){
 }
 function registerOfflineShell(){
  if('serviceWorker' in navigator){
+  const reloadOnUpdate=Boolean(navigator.serviceWorker.controller);
+  let reloadingForUpdate=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+   if(!reloadOnUpdate||reloadingForUpdate)return;
+   reloadingForUpdate=true;
+   window.location.reload();
+  });
   navigator.serviceWorker.register('./service-worker.js').catch(()=>updateOfflineStatus('Online. Offline shell registration is unavailable in this browser.'));
  }
  window.addEventListener('online',refreshOfflineStatus);
