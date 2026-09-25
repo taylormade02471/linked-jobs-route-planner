@@ -23,6 +23,10 @@ test("offline shell upgrades stale job data automatically while retaining an off
   assert.match(serviceWorker, /request\.mode==='navigate'/);
   assert.match(html, /navigator\.serviceWorker\.addEventListener\('controllerchange'/);
   assert.match(html, /window\.location\.reload\(\)/);
+  assert.match(html, /planner-data\.js\?v=20260924-eight-jobs/);
+  assert.match(html, /work-app-backbone\.js\?v=20260924-eight-jobs/);
+  assert.match(serviceWorker, /planner-data\.js\?v=20260924-eight-jobs/);
+  assert.match(serviceWorker, /work-app-backbone\.js\?v=20260924-eight-jobs/);
 });
 
 test("planner map does not depend on the broken watermarked CARTO tile endpoint", () => {
