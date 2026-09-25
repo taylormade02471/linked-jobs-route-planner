@@ -427,6 +427,19 @@ function serveStatic(filePath, res) {
   }
 }
 
+function staticFileWithin(root, relativePath) {
+  const rootPath = path.resolve(root);
+  const relative = String(relativePath || "").replaceAll("\\", "/");
+  if (!relative || relative.includes("\0")) return null;
+  const candidate = path.resolve(rootPath, relative);
+  if (!candidate.startsWith(`${rootPath}${path.sep}`)) return null;
+  try {
+    return fs.statSync(candidate).isFile() ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 function renderLoginPage(message = "") {
   return readFile(path.join(frontendDir, "login.html")).replace("%%MESSAGE%%", message);
 }
@@ -443,6 +456,12 @@ const server = http.createServer(async (req, res) => {
   const method = req.method || "GET";
 
   if (method === "GET" && url.pathname === "/") {
+    // The phone planner is the primary app. Its provider APIs remain protected below.
+    serveStatic(path.join(nashvillePlannerDir, "index.html"), res);
+    return;
+  }
+
+  if (method === "GET" && (url.pathname === "/legacy" || url.pathname === "/legacy/")) {
     if (!requireAuth(req, res)) return;
     serveStatic(path.join(frontendDir, "index.html"), res);
     return;
@@ -480,7 +499,7 @@ const server = http.createServer(async (req, res) => {
     if (username === USERNAME && password === PASSWORD) {
       res.writeHead(302, authHeader({
         "Set-Cookie": createSessionCookie(username),
-        Location: "/",
+        Location: "/legacy/",
       }));
       res.end();
       return;
@@ -694,15 +713,38 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "GET" && (url.pathname === "/nashville-live-planner" || url.pathname === "/nashville-live-planner/")) {
-    if (!requireAuth(req, res)) return;
-    serveStatic(path.join(nashvillePlannerDir, "index.html"), res);
+    res.writeHead(302, { Location: "/" });
     return;
   }
 
   if (method === "GET" && url.pathname.startsWith("/nashville-live-planner/")) {
-    if (!requireAuth(req, res)) return;
     const relative = url.pathname.slice("/nashville-live-planner/".length);
-    serveStatic(path.join(nashvillePlannerDir, relative), res);
+    const filePath = staticFileWithin(nashvillePlannerDir, relative);
+    if (!filePath) {
+      sendText(res, 404, "Not found");
+      return;
+    }
+    serveStatic(filePath, res);
+    return;
+  }
+
+  if (method === "GET") {
+    const filePath = staticFileWithin(nashvillePlannerDir, url.pathname.slice(1));
+    if (filePath) {
+      serveStatic(filePath, res);
+      return;
+    }
+  }
+
+  if (method === "GET" && url.pathname.startsWith("/legacy/")) {
+    const relative = url.pathname.slice("/legacy/".length);
+    const filePath = staticFileWithin(frontendDir, relative);
+    if (filePath) {
+      if (!requireAuth(req, res)) return;
+      serveStatic(filePath, res);
+      return;
+    }
+    sendText(res, 404, "Not found");
     return;
   }
 

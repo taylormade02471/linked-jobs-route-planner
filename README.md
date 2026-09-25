@@ -6,22 +6,22 @@ It is not the Shopify project.
 
 ## What it does
 
-- Uses a local dashboard login that lasts 7 days
-- Starts with no posted jobs
+- Opens the Nashville phone planner directly at the local root URL
+- Keeps the current saved jobs available for offline planning
 - Lets Android sync cleaned provider job data when you choose to show jobs on the map
-- Lets you filter jobs, select stops, and open a route in Google Maps
+- Lets you use the phone's current location to create a furthest-first return route
 - Includes a free Android skeleton that points at the local app
 
-## Local login
+## Primary planner and legacy dashboard
 
-The dashboard login is separate from any linked-account website login.
+The phone planner is the primary application. It does not require the old desktop dashboard login:
 
-Default local credentials:
+- `http://localhost:3300/` - Nashville planner
+- `http://localhost:3300/nashville-live-planner/` - redirects to the primary planner
 
-- Username: `kyle`
-- Password: `taylor`
+The previous desktop dashboard remains available at `http://localhost:3300/legacy/`. Its session and API protections are unchanged and can be configured through ignored backend environment files.
 
-You can override them in `backend/.env` or `backend/.env.local`. Those files are ignored by Git and loaded before the local server starts.
+Provider passwords are not stored in the planner source or sent to the browser.
 
 ## Run locally
 
@@ -40,10 +40,11 @@ You can override them in `backend/.env` or `backend/.env.local`. Those files are
 
    This runs `backend/server_live.js` on port `3300` from the repository root.
 
-3. Open:
+3. Open the planner:
 
-   - `http://localhost:3300/login`
    - `http://localhost:3300/`
+
+4. On the phone, allow location, then press `Plan current jobs`. The route begins from that current location, shows the saved job details, and labels CTS timing as a RideCTS verification step rather than inventing bus times.
 
 ## Job data sync
 
