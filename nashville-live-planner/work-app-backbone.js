@@ -972,6 +972,16 @@
     }));
   }
 
+  function archivePlannerJobsById(jobs, jobIds = [], options = {}) {
+    const ids = new Set((Array.isArray(jobIds) ? jobIds : []).map(asText).filter(Boolean));
+    if (!ids.size) return Array.isArray(jobs) ? jobs.slice() : [];
+
+    return (Array.isArray(jobs) ? jobs : []).map((job) => {
+      if (!ids.has(asText(job?.id)) || isCompletedJob(job)) return job;
+      return markJobsCompleted([job], options)[0];
+    });
+  }
+
   function moveJobsToFolder(jobs, selectedIds = [], folder = "completed", options = {}) {
     const ids = new Set((Array.isArray(selectedIds) ? selectedIds : []).map(asText).filter(Boolean));
     const targetFolder = asText(folder).toLowerCase();
@@ -1011,6 +1021,44 @@
         map_color: "gray",
       };
     });
+  }
+
+  function mergePlannerSubmittedJobs(existingJobs, submittedJobs, options = {}) {
+    const existing = Array.isArray(existingJobs) ? existingJobs : [];
+    const submitted = Array.isArray(submittedJobs) ? submittedJobs : [];
+    const replaceIdPrefix = asText(options.replaceIdPrefix);
+    const existingById = new Map(existing.map((job) => [asText(job?.id), job]));
+    const submittedIds = new Set(submitted.map((job) => asText(job?.id)));
+    const stateFields = [
+      "status",
+      "payment_status",
+      "completed_at",
+      "completion_reason",
+      "claimed_at",
+      "paid_at",
+      "submitted_at",
+    ];
+
+    const refreshed = submitted.map((job) => {
+      const previous = existingById.get(asText(job?.id));
+      if (!previous) return { ...job };
+
+      const savedState = {};
+      stateFields.forEach((field) => {
+        if (Object.prototype.hasOwnProperty.call(previous, field)) {
+          savedState[field] = previous[field];
+        }
+      });
+      return { ...previous, ...job, ...savedState };
+    });
+
+    const retained = existing.filter((job) => {
+      const id = asText(job?.id);
+      if (submittedIds.has(id)) return false;
+      return !(replaceIdPrefix && id.startsWith(replaceIdPrefix));
+    });
+
+    return [...refreshed, ...retained];
   }
 
   function recommendJobs(jobs, data, origin) {
@@ -1058,6 +1106,8 @@
     jobMapColor,
     jobsForTab,
     jobsForMap,
+    archivePlannerJobsById,
+    mergePlannerSubmittedJobs,
     markJobsCompleted,
     moveJobsToFolder,
     moneyToCents,

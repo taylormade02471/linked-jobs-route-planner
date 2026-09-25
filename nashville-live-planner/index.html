@@ -43,20 +43,20 @@ main>#mainMap{order:1}
 </style>
 </head>
 <body>
-<header><h1>Nashville Live Audit Transit Planner</h1><p>Submitted job list loaded. Provider credentials stay off this public planner.</p></header>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>Tomorrow's ready jobs, transit map, and saved offline route.</p></header>
 <main>
-<div class="notice"><b>Updated submitted job list:</b> old seeded route jobs are not published here. The latest reviewed Survey Merchandiser jobs load as safe app records with no passwords, sessions, or raw screen text.</div>
+<div class="notice"><b>Tomorrow's Clarksville route:</b> all eight ready-to-start jobs from the September 24 assignment review are saved below. Open the job drawer to review instructions and select route stops.</div>
 <div id="offlineStatus" class="status" aria-live="polite">Checking the offline planner shell and saved job snapshot...</div>
 
 <div class="card metrics">
- <div class="metric">Public posted jobs<strong>0</strong><span>No seeded audit list</span></div>
- <div class="metric">Submitted jobs<strong>15</strong><span>Reviewed from latest video</span></div>
- <div class="metric">Provider map pins<strong>Needs coords</strong><span>Addresses and app distances saved</span></div>
- <div class="metric">Transit plan<strong>Hidden</strong><span>Select jobs, then View route</span></div>
+ <div class="metric">Submitted jobs<strong>8</strong><span>Ready to start September 26</span></div>
+ <div class="metric">Route pay<strong>$77.50</strong><span>Before expenses</span></div>
+ <div class="metric">Authorization<strong>4 jobs</strong><span>Three noodle letters plus Reynolds</span></div>
+ <div class="metric">Transit plan<strong>Map first</strong><span>Select jobs, then View route</span></div>
 </div>
 
 <details class="card" id="workApps">
- <summary class="jobBoardSummary"><span><span class="greenpin"></span>Phone work app jobs<small>Open the drawer to review available, accepted, and completed work.</small></span><span>Open jobs +</span></summary>
+ <summary class="jobBoardSummary"><span><span class="greenpin"></span>Tomorrow's 8 ready jobs<small>Open the drawer to review instructions and choose route stops.</small></span><span>View jobs +</span></summary>
  <div class="sectionTitle"><span class="greenpin"></span>Phone work app jobs</div>
  <div class="jobStatus"><a href="./jobs.html" target="_blank" rel="noopener">Open saved jobs and completed / passed history</a> · The homepage stays focused on current route work.</div>
  <div id="providerStats" class="providergrid"></div>
@@ -69,8 +69,8 @@ main>#mainMap{order:1}
   </label>
  </div>
  <div class="jobtabs" role="tablist" aria-label="Phone job folders">
-  <button id="jobTabOpen" class="active" type="button">Open jobs</button>
-  <button id="jobTabAccepted" type="button">Accepted / claimed</button>
+  <button id="jobTabOpen" type="button">Open jobs</button>
+  <button id="jobTabAccepted" class="active" type="button">Accepted / claimed</button>
   <button id="jobTabCompleted" type="button">Completed jobs</button>
  </div>
  <div id="jobSelectionActions" class="routeActions">
@@ -233,6 +233,7 @@ main>#mainMap{order:1}
 </div>
 </details>
 
+<section id="technicalConnections" hidden aria-hidden="true">
 <div class="card">
  <div class="controls">
   <label>1. Plan Option
@@ -277,6 +278,7 @@ main>#mainMap{order:1}
  </div>
  <div id="keyVaultPlanStatus" class="jobStatus">Suggested names are shown for planning only. Create the vault objects in Azure Portal, then enter the final names here.</div>
 </div>
+</section>
 
 <div class="card"><div id="details"></div></div>
 <div class="card" id="mainMap"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
@@ -344,7 +346,7 @@ let cameraStream=null,capturedPhotoDataUrl='';
 let providerSyncTimer=null;
 let emailSyncTimer=null;
 let googleTokenClient=null,gmailBearer='',gmailTokenExpiresAt=0;
-let activeJobTab='open';
+let activeJobTab='accepted';
 let selectedRouteJobIds=new Set();
 let offlineSnapshot=null;
 let offlineSnapshotSource={provider_id:'local_planner',provider_label:'Planner local data',mode:'local_snapshot',source_status:'cached'};
@@ -506,35 +508,14 @@ function submittedJobsFromPlannerData(){
 function mergeSubmittedJobsFromPlannerData(){
  const submitted=submittedJobsFromPlannerData();
  if(!submitted.length)return;
- const savedIds=new Set(workJobs.map(job=>String(job?.id||'')));
- const fresh=submitted.filter(job=>!savedIds.has(String(job.id)));
- if(!fresh.length)return;
- workJobs=[...fresh,...workJobs];
+ workJobs=W.mergePlannerSubmittedJobs(workJobs,submitted,{replaceIdPrefix:'recording-20260924-'});
  saveWorkJobs();
 }
 function moveExistingSavedJobsToCompletedOnce(){
- if(localStorage.getItem(EXISTING_JOBS_COMPLETED_KEY)){
-  clearLegacyPlannerStorage();
-  return;
- }
- const existing=[
-  ...readStoredJobArray(WORK_JOBS_KEY),
-  ...LEGACY_STORAGE_KEYS.flatMap(readStoredJobArray),
-  ...jobsFromPlannerData(),
- ];
- const seen=new Set();
- const deduped=existing.filter((job,index)=>{
-  if(!job)return false;
-  const key=job.id||[job.provider_id,job.address,job.title,job.pay_cents,index].map(value=>String(value||'')).join(':');
-  if(seen.has(key))return false;
-  seen.add(key);
-  return true;
+ workJobs=W.archivePlannerJobsById(workJobs,Object.keys(D.jobs||{}),{
+  completion_reason:'Archived from the older route plan',
  });
- if(deduped.length){
-  localStorage.setItem(WORK_JOBS_KEY,JSON.stringify(W.markJobsCompleted(deduped,{
-   completion_reason:'Moved from old live-site data',
-  })));
- }
+ localStorage.setItem(WORK_JOBS_KEY,JSON.stringify(workJobs));
  clearLegacyPlannerStorage();
  localStorage.setItem(EXISTING_JOBS_COMPLETED_KEY,String(Date.now()));
 }
@@ -1420,6 +1401,7 @@ function initWorkApps(){
   providerFilter.innerHTML='<option value="all">All apps together</option>'+W.PROVIDERS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
  }
  loadWorkJobs();
+ moveExistingSavedJobsToCompletedOnce();
  mergeSubmittedJobsFromPlannerData();
  loadProviderConnections();
  loadPaymentSnapshots();

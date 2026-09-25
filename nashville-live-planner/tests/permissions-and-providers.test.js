@@ -23,7 +23,7 @@ test("public planner pages expose the current safe video-imported job dataset", 
   const nashvilleData = fs.readFileSync(path.join(plannerRoot, "planner-data.js"), "utf8");
   const desktopIndex = fs.readFileSync(path.join(projectRoot, "frontend", "index.html"), "utf8");
 
-  assert.match(nashvilleIndex, /Submitted job list loaded/);
+  assert.match(nashvilleIndex, /Tomorrow's 8 ready jobs/);
   assert.match(nashvilleIndex, /clearLegacyPlannerStorage/);
   assert.match(nashvilleIndex, /nashville_phone_work_jobs_v1/);
   assert.doesNotMatch(nashvilleIndex, /current 18 quick|18 jobs = \$153|1-hour Walgreens|7601 Hwy 70 S/i);
