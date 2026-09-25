@@ -17,15 +17,17 @@ test("offline shell upgrades stale job data automatically while retaining an off
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 
-  assert.match(serviceWorker, /nashville-planner-shell-v2/);
+  assert.match(serviceWorker, /nashville-planner-shell-v3/);
   assert.match(serviceWorker, /async function networkFirst/);
   assert.match(serviceWorker, /caches\.match\(request,\{ignoreSearch:true\}\)/);
   assert.match(serviceWorker, /request\.mode==='navigate'/);
   assert.match(html, /navigator\.serviceWorker\.addEventListener\('controllerchange'/);
   assert.match(html, /window\.location\.reload\(\)/);
   assert.match(html, /planner-data\.js\?v=20260924-eight-jobs/);
+  assert.match(html, /route-planner-core\.js\?v=20260925-furthest-first/);
   assert.match(html, /work-app-backbone\.js\?v=20260924-eight-jobs/);
   assert.match(serviceWorker, /planner-data\.js\?v=20260924-eight-jobs/);
+  assert.match(serviceWorker, /route-planner-core\.js\?v=20260925-furthest-first/);
   assert.match(serviceWorker, /work-app-backbone\.js\?v=20260924-eight-jobs/);
 });
 

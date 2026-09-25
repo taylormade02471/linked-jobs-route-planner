@@ -281,7 +281,7 @@ main>#mainMap{order:1}
 </section>
 
 <div class="card"><div id="details"></div></div>
-<div class="card" id="mainMap"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">Thick colored lines are only the verified saved GTFS pieces. White circles are boarding stops, smaller outlined circles are exit stops, and orange circles are actual live WeGo buses when the realtime feed identifies their route.</p></div>
+<div class="card" id="mainMap"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="planFurthestFirstRoute" type="button">Plan current jobs</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">The blue current-job line is a map-coordinate sequence, not a live CTS itinerary. Saved GTFS pieces and orange live buses are only shown when their verified WeGo data is selected. Confirm every Clarksville transit leg in RideCTS before leaving.</p></div>
 <div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
 <div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 <footer class="siteFooter"><b>Privacy-first field planner:</b> <a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a></footer>
@@ -290,6 +290,7 @@ main>#mainMap{order:1}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="./offline-cache.js"></script>
 <script src="./planner-data.js?v=20260924-eight-jobs"></script>
+<script src="./route-planner-core.js?v=20260925-furthest-first"></script>
 <script src="./transit-picker.js"></script>
 <script src="./work-app-backbone.js?v=20260924-eight-jobs"></script>
 <script src="./provider-connectors.js"></script>
@@ -297,6 +298,7 @@ main>#mainMap{order:1}
 <script>
 const D=window.PLANNER_DATA;
 const P=window.TransitPicker;
+const R=window.RoutePlannerCore;
 const W=window.WorkAppBackbone;
 const C=window.ProviderConnectors;
 const A=window.AndroidAppBackbone;
@@ -309,6 +311,7 @@ let currentBounds=null;
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
+document.getElementById('planFurthestFirstRoute').onclick=planFurthestFirstRoute;
 document.getElementById('navigateNextJob').onclick=navigateNextJob;
 document.getElementById('openGoogleRoute').onclick=openGoogleRoute;
 document.getElementById('toggleAllBuses').onclick=()=>{
@@ -444,6 +447,7 @@ window.addEventListener('message',(event)=>{
 });
 let showTransitRoute=false;
 let showAllLiveBuses=true;
+let furthestFirstRoute=null;
 
 function clearLegacyPlannerStorage(){
  LEGACY_STORAGE_KEYS.filter(key=>key!==WORK_JOBS_KEY).forEach(key=>localStorage.removeItem(key));
@@ -596,6 +600,8 @@ function drawMyLocation(lat,lon,accuracy){
  updateLocationStatus(`<b>Location LIVE</b> — accuracy about ${Math.round(accuracy||0)} m — updated ${new Date().toLocaleTimeString()}`);
 }
 function navigationJobs(){
+ const planned=plannedRouteJobs();
+ if(planned.length)return planned.slice(0,20);
  return visibleJobsForActiveTab().filter(job=>job&&job.address).slice(0,20);
 }
 function googleMapsRouteUrl(jobs){
@@ -612,9 +618,10 @@ function navigateNextJob(){
  window.open(googleMapsRouteUrl([job]),'_blank','noopener');
 }
 function openGoogleRoute(){
- const jobs=selectedRouteJobIds.size?navigationJobs().filter(job=>selectedRouteJobIds.has(String(job.id))):navigationJobs().slice(0,20);
+ const planned=plannedRouteJobs();
+ const jobs=planned.length?planned:(selectedRouteJobIds.size?navigationJobs().filter(job=>selectedRouteJobIds.has(String(job.id))):navigationJobs().slice(0,20));
  if(!jobs.length){updateNavigationStatus('Select jobs or add active jobs with addresses first.',true);return;}
- updateNavigationStatus('Opened Google Maps with '+jobs.length+' stop(s) for live transit and voice guidance.');
+ updateNavigationStatus('Opened an optional Google Maps fallback with '+jobs.length+' planned stop(s). The in-app route remains the main plan.');
  window.open(googleMapsRouteUrl(jobs),'_blank','noopener');
 }
 function startLocation(){
@@ -668,6 +675,82 @@ function originForRecommendations(){
  if(myPosition)return {lat:myPosition[0],lon:myPosition[1]};
  const center=map.getCenter();
  return center?{lat:center.lat,lon:center.lng}:null;
+}
+const CLARKSVILLE_LUNCH_STOP={
+ id:'loaves-and-fishes-lunch',
+ kind:'lunch',
+ name:'Loaves & Fishes lunch checkpoint',
+ address:'825 Crossland Ave, Clarksville, TN 37040',
+ lat:36.5201625,
+ lon:-87.3497063,
+ preferred_arrival:'11:30 AM - 12:00 PM',
+ note:'Optional lunch checkpoint. Confirm the day-of schedule before relying on it.',
+};
+function currentRouteOrigin(){
+ if(!myPosition)return null;
+ return {lat:myPosition[0],lon:myPosition[1],label:'Current location captured for this route'};
+}
+function currentReadyJobIds(){
+ return new Set((Array.isArray(D.submittedJobs)?D.submittedJobs:[])
+  .filter(job=>job?.service_date===D.serviceDate&&job?.ready_state==='ready_to_start')
+  .map(job=>String(job.id)));
+}
+function routeCandidatesForCurrentPlan(){
+ const routeVisible=workJobs.filter(job=>W.isRouteVisibleJob(job)&&W.coordinateForJob(job,D));
+ const selected=Array.from(selectedRouteJobIds);
+ if(selected.length)return routeVisible.filter(job=>selected.includes(String(job.id)));
+ const currentIds=currentReadyJobIds();
+ const current=routeVisible.filter(job=>currentIds.has(String(job.id)));
+ return current.length?current:routeVisible;
+}
+function plannerStopForJob(job){
+ const coordinate=W.coordinateForJob(job,D);
+ if(!coordinate)return null;
+ return {...job,lat:coordinate.lat,lon:coordinate.lon,name:job.location_name||job.name||job.title||job.address||'Job'};
+}
+function plannedRouteJobs(){
+ if(!furthestFirstRoute)return [];
+ const byId=new Map(workJobs.map(job=>[String(job.id),job]));
+ return furthestFirstRoute.stops
+  .filter(stop=>stop.kind==='job')
+  .map(stop=>byId.get(String(stop.id))||stop)
+  .filter(job=>job&&job.address);
+}
+function clearFurthestFirstRoute(message='Furthest-first route cleared. Job pins stay visible.'){
+ furthestFirstRoute=null;
+ if(message)setJobSelectionStatus(message);
+}
+function planFurthestFirstRoute(){
+ const origin=currentRouteOrigin();
+ if(!origin){
+  startLocation();
+  setJobSelectionStatus('Allow your current location, then tap Plan current jobs again. The route never uses a guessed start point.');
+  updateNavigationStatus('Current location is required to create a return route.',true);
+  return;
+ }
+ if(!R?.planFurthestFirstReturnSweep){
+  setJobSelectionStatus('The route planner did not load. Refresh this page and try again.');
+  return;
+ }
+ const candidates=routeCandidatesForCurrentPlan().map(plannerStopForJob).filter(Boolean);
+ const plan=R.planFurthestFirstReturnSweep(candidates,origin,{lunchStop:CLARKSVILLE_LUNCH_STOP,returnPoint:origin});
+ const jobStops=plan.stops.filter(stop=>stop.kind==='job');
+ if(!jobStops.length){
+  setJobSelectionStatus('No current mapped jobs are available for a route yet.');
+  return;
+ }
+ furthestFirstRoute=plan;
+ showTransitRoute=false;
+ activeJobTab='accepted';
+ ['Open','Accepted','Completed'].forEach(name=>{
+  const button=document.getElementById('jobTab'+name);
+  if(button)button.classList.toggle('active',name==='Accepted');
+ });
+ selectedRouteJobIds.clear();
+ jobStops.forEach(stop=>selectedRouteJobIds.add(String(stop.id)));
+ setJobSelectionStatus(`Current route ready: ${jobStops.length} job(s), outward first and back toward your captured location. RideCTS verification is still required for bus times and stops.`);
+ updateNavigationStatus(`Next planned job: ${jobStops[0].name||jobStops[0].title||'Job'}. Review RideCTS before you depart.`);
+ render();
 }
 function loadWorkJobs(){
  try{workJobs=JSON.parse(localStorage.getItem(WORK_JOBS_KEY)||'[]');if(!Array.isArray(workJobs))workJobs=[];}catch{workJobs=[];}
@@ -828,6 +911,7 @@ function setJobSelectionStatus(message){
 function setActiveJobTab(tab){
  activeJobTab=tab;
  showTransitRoute=false;
+ furthestFirstRoute=null;
  const statusFilter=document.getElementById('jobStatusFilter');
  if(statusFilter)statusFilter.value='all';
  ['Open','Accepted','Completed'].forEach(name=>{
@@ -843,7 +927,11 @@ function toggleRouteJobSelection(jobId,checked){
  if(checked&&!selectedRouteJobIds.has(id)&&selectedRouteJobIds.size>=20){setJobSelectionStatus('A route can contain at most 20 stops. Unselect one before adding another.');syncRenderedJobSelections();return;}
  if(checked)selectedRouteJobIds.add(id);
  else selectedRouteJobIds.delete(id);
- setJobSelectionStatus(`${selectedRouteJobIds.size} selected job(s).`);
+ if(furthestFirstRoute){
+  furthestFirstRoute=null;
+  showTransitRoute=false;
+  setJobSelectionStatus(`${selectedRouteJobIds.size} selected job(s). Selection changed, so tap Plan current jobs to rebuild the return route.`);
+ }else setJobSelectionStatus(`${selectedRouteJobIds.size} selected job(s).`);
  syncRenderedJobSelections();
 }
 function syncRenderedJobSelections(){
@@ -856,13 +944,14 @@ function viewSelectedRoute(){
   setJobSelectionStatus('Select one or more open or accepted jobs first, then View route.');
   return;
  }
+ furthestFirstRoute=null;
  showTransitRoute=true;
  setJobSelectionStatus(`Showing route layer for ${selectedRouteJobIds.size} selected job(s).`);
  render();
 }
 function hideSelectedRoute(){
  showTransitRoute=false;
- setJobSelectionStatus('Transit route hidden. Job pins stay visible.');
+ clearFurthestFirstRoute('Route hidden. Job pins stay visible.');
  render();
 }
 function moveSelectedJobs(){
@@ -875,6 +964,7 @@ function moveSelectedJobs(){
  workJobs=W.moveJobsToFolder(workJobs,ids,folder);
  selectedRouteJobIds.clear();
  showTransitRoute=false;
+ furthestFirstRoute=null;
  saveWorkJobs();
  renderWorkJobs();
  render();
@@ -1218,11 +1308,23 @@ function renderProviderStats(){
   return `<div class="provider"><b>${provider.label}</b><span>${W.connectionLabel(connection)}</span><span>${provider.connection}</span><span>${openCount} open · ${assignedCount} claimed · ${redCount} needs completion · ${completedJobs.length} completed · ${mapped} mapped</span><span><a target="_blank" rel="noopener" href="${provider.boardUrl}">Open provider</a></span></div>`;
  }).join('');
 }
+function orderJobsForCurrentPlan(jobs){
+ if(!furthestFirstRoute)return jobs;
+ const ranks=new Map(furthestFirstRoute.stops.filter(stop=>stop.kind==='job').map(stop=>[String(stop.id),stop.sequence]));
+ return jobs.slice().sort((a,b)=>{
+  const aRank=ranks.get(String(a.id));
+  const bRank=ranks.get(String(b.id));
+  if(aRank!=null&&bRank!=null)return aRank-bRank;
+  if(aRank!=null)return -1;
+  if(bRank!=null)return 1;
+  return 0;
+ });
+}
 function visibleJobsForActiveTab(){
  if(activeJobTab==='completed'){
   return W.jobsForTab(workJobs,activeTabFilters()).map(job=>W.scoreJob(job,D,originForRecommendations())).sort((a,b)=>(b.completed_at||b.updated_at||0)-(a.completed_at||a.updated_at||0));
  }
- return W.recommendRouteJobs(workJobs,D,originForRecommendations(),activeTabFilters());
+ return orderJobsForCurrentPlan(W.recommendRouteJobs(workJobs,D,originForRecommendations(),activeTabFilters()));
 }
 function renderApiRegistry(){
  const target=document.getElementById('apiRegistry');
@@ -1236,8 +1338,10 @@ function renderApiRegistry(){
 function drawWorkJobs(bounds){
  jobLayer.clearLayers();
  const visible=visibleJobsForActiveTab();
+ const plannedRanks=new Map((furthestFirstRoute?.stops||[]).filter(stop=>stop.kind==='job').map(stop=>[String(stop.id),stop.sequence]));
  visible.forEach((job,index)=>{
   if(!job.coordinate)return;
+  const sequence=plannedRanks.get(String(job.id));
   const color=W.jobMapColor(job);
   const palette={
    green:{stroke:'#052e16',fill:'#39ff14',label:'OPEN / AVAILABLE'},
@@ -1245,8 +1349,9 @@ function drawWorkJobs(bounds){
    red:{stroke:'#7a1114',fill:'#d71920',label:'NEEDS COMPLETION'},
    gray:{stroke:'#4d5964',fill:'#a7b0b8',label:'COMPLETED / ARCHIVED'},
   }[color]||{stroke:'#333',fill:'#ccc',label:String(job.status||'JOB').toUpperCase()};
-  const marker=L.circleMarker([job.coordinate.lat,job.coordinate.lon],{radius:index===0?12:9,color:palette.stroke,weight:3,fillColor:palette.fill,fillOpacity:.95}).addTo(jobLayer);
-  marker.bindPopup(`<b>${job.title}</b><br>${providerNameForJob(job)}<br><b>${palette.label}</b><br>${job.location_name||''}<br>${job.address||'Address not listed'}<br>${W.centsLabel(job.pay_cents)}<br>${job.due||''}<br>${job.payment_status||''}<br>${job.recommendation_reason||''}<br>${job.coordinate.source}`);
+  const marker=L.circleMarker([job.coordinate.lat,job.coordinate.lon],{radius:sequence===1?14:(sequence?11:(index===0?12:9)),color:palette.stroke,weight:3,fillColor:palette.fill,fillOpacity:.95}).addTo(jobLayer);
+  marker.bindPopup(`${sequence?`<b>Planned stop ${sequence}</b><br>`:''}<b>${job.title}</b><br>${providerNameForJob(job)}<br><b>${palette.label}</b><br>${job.location_name||''}<br>${job.address||'Address not listed'}<br>${W.centsLabel(job.pay_cents)}<br>${job.due||''}<br>${job.payment_status||''}<br>${job.recommendation_reason||''}<br>${job.coordinate.source}`);
+  if(sequence)marker.bindTooltip(String(sequence),{permanent:true,direction:'center',className:'stepnum'});
   bounds.push([job.coordinate.lat,job.coordinate.lon]);
  });
 }
@@ -1538,6 +1643,40 @@ function routeLegJobControls(leg){
  if(!ids.length)return '';
  return ids.map(id=>`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(id)}" ${selectedRouteJobIds.has(String(id))?'checked':''}> Select linked job ${escapeHtml(id)}</label>`).join('');
 }
+function mapMilesLabel(value){
+ const miles=Number(value);
+ return Number.isFinite(miles)?`${miles.toFixed(miles<10?1:0)} mi map estimate`:'Map distance unavailable';
+}
+function drawFurthestFirstRoute(plan,bounds,details){
+ const start=plan?.returnPoint;
+ if(!start||!Number.isFinite(Number(start.lat))||!Number.isFinite(Number(start.lon)))return;
+ const pointFor=stop=>[Number(stop.lat),Number(stop.lon)];
+ const path=[pointFor(start),...plan.stops.map(pointFor),pointFor(start)];
+ L.polyline(path,{color:'#fff',weight:12,opacity:.94}).addTo(lines);
+ L.polyline(path,{color:'#0b5fa5',weight:7,opacity:.95,dashArray:'12 8'}).addTo(lines);
+ path.forEach(point=>bounds.push(point));
+ L.circleMarker(pointFor(start),{radius:11,color:'#17324d',weight:3,fillColor:'#42a5f5',fillOpacity:1})
+  .bindPopup('<b>START + RETURN</b><br>Current location captured when you planned this route.')
+  .addTo(pins);
+ details.push(`<div class="notice"><b>Current job route:</b> start at your captured phone location, work the outer area first, and continue inward before returning. ${plan.stops.filter(stop=>stop.kind==='job').length} job(s), ${mapMilesLabel(plan.totalMapMiles)} including the return leg.<br><b>Transit status:</b> ${escapeHtml(plan.warning||'Verify every leg in RideCTS before leaving.')} RideCTS is the final source for Clarksville bus stops and live departures.</div>`);
+ plan.stops.forEach(stop=>{
+  const lunch=stop.kind==='lunch';
+  const markerColor=lunch?'#c47b00':'#0b5fa5';
+  L.circleMarker(pointFor(stop),{radius:lunch?11:10,color:'#17324d',weight:3,fillColor:markerColor,fillOpacity:.98})
+   .bindTooltip(lunch?'L':String(stop.sequence),{permanent:true,direction:'center',className:'stepnum'})
+   .bindPopup(`<b>${lunch?'LUNCH CHECKPOINT':`PLANNED STOP ${stop.sequence}`}</b><br>${escapeHtml(stop.name||stop.title||'Stop')}<br>${escapeHtml(stop.address||'Address not listed')}`)
+   .addTo(pins);
+  if(lunch){
+   details.push(`<div class="change"><b>Stop ${stop.sequence}: ${escapeHtml(stop.name)}</b><div class="row"><b>Address</b><span>${escapeHtml(stop.address)}</span></div><div class="row"><b>Preferred arrival</b><span>${escapeHtml(stop.preferred_arrival||'Check RideCTS before leaving')}</span></div><div class="row"><b>Planning note</b><span>${escapeHtml(stop.note||'Optional checkpoint')}</span></div><div class="row"><b>From prior stop</b><span>${mapMilesLabel(stop.legMapMiles)}</span></div></div>`);
+   return;
+  }
+  const provider=W.providerById(stop.provider_id);
+  const providerLink=provider?.boardUrl?`<a target="_blank" rel="noopener" href="${escapeHtml(provider.boardUrl)}">Open provider board</a>`:'Open the provider app to verify the live job card.';
+  const authorization=stop.authorization_required?'Required - confirm that the printed letter is in your route packet.':'No authorization letter was listed in the saved job data.';
+  details.push(`<div class="leg"><div><span class="badge" style="background:#0b5fa5">STOP ${stop.sequence}</span><b>${escapeHtml(stop.name||stop.title||'Job')}</b></div><div class="row"><b>Address</b><span>${escapeHtml(stop.address||'Address not listed')}</span></div><div class="row"><b>From prior stop</b><span>${mapMilesLabel(stop.legMapMiles)}</span></div><div class="row"><b>Pay / work time</b><span>${escapeHtml(W.centsLabel(stop.pay_cents))} / ${escapeHtml(workTimeLabel(stop))}</span></div><div class="row"><b>Due / window</b><span>${escapeHtml(stop.due||'Not listed')}${stop.visit_window?` - visit ${escapeHtml(stop.visit_window)}`:''}</span></div><div class="row"><b>Authorization</b><span>${escapeHtml(authorization)}</span></div><div class="row"><b>Documents</b><span>${escapeHtml(stop.attachments_status||'Verify live provider card')}</span></div><div class="row"><b>Job instructions</b><span>${escapeHtml(stop.requirements||'Verify the live provider card before beginning.')}</span></div><div class="row"><b>Live job link</b><span>${providerLink}</span></div></div>`);
+ });
+ details.push(`<div class="change"><b>Return to start</b><div class="row"><b>Return point</b><span>${escapeHtml(start.label||'Current location captured for this route')}</span></div><div class="row"><b>Final leg</b><span>${mapMilesLabel(plan.returnLegMiles)}</span></div><div class="row"><b>Transit check</b><span>Open RideCTS and verify final bus availability before starting the last job.</span></div></div>`);
+}
 function drawTransitRoute(legs,bounds,routesUsed,details){
  const stop=selectedStop();
  if(stop){
@@ -1561,11 +1700,13 @@ function drawTransitRoute(legs,bounds,routesUsed,details){
 function render(){
  lines.clearLayers();pins.clearLayers();jobLayer.clearLayers();busLayer.clearLayers();
  const bounds=[],routesUsed=new Set(),details=[];
- if(showTransitRoute){
+ if(furthestFirstRoute){
+  drawFurthestFirstRoute(furthestFirstRoute,bounds,details);
+ }else if(showTransitRoute){
   const legs=selectedLegs();
   drawTransitRoute(legs,bounds,routesUsed,details);
  }else{
-  details.push('<div class="notice"><b>Job pin mode:</b> transit mapping is hidden. Select jobs, then View route to show transit mapping and detailed stop-by-stop directions.</div>');
+  details.push('<div class="notice"><b>Job pin mode:</b> press Plan current jobs to use your live phone location and create a furthest-first return route. Select jobs, then View route only for the older verified WeGo route layers.</div>');
  }
  document.getElementById('details').innerHTML=details.join('')||'No verified route section matches this selection.';
  drawWorkJobs(bounds);
@@ -1584,11 +1725,11 @@ function render(){
    }
   }
  }
- document.getElementById('buses').innerHTML=!showTransitRoute?'<div class="bus">Transit buses are hidden until you press View route.</div>':busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>');
+ document.getElementById('buses').innerHTML=furthestFirstRoute?'<div class="bus"><b>RideCTS verification needed:</b> this current-job route does not invent CTS bus times or stops. Open the installed RideCTS app before departure and at each transfer.</div>':(!showTransitRoute?'<div class="bus">Transit buses are hidden until you press View route.</div>':busRows.length?busRows.join(''):(live.ok?'<div class="bus">No current live vehicle is explicitly assigned to the selected route piece(s).</div>':'<div class="bus">Live backend unavailable; no stale snapshot is substituted.</div>'));
 
  let al=[];
  if(showTransitRoute&&live.ok)al=live.alerts.filter(x=>(x.routes||[]).some(r=>routesUsed.has(shortFor(r))||routesUsed.has(r)));
- document.getElementById('alerts').innerHTML=!showTransitRoute?'<div class="alert">Transit alerts are hidden until you press View route.</div>':al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>');
+ document.getElementById('alerts').innerHTML=furthestFirstRoute?'<div class="alert"><b>CTS route notice:</b> the plan is a geographic return sweep from your current location. It remains provisional until RideCTS confirms live departures, detours, and transfers.</div>':(!showTransitRoute?'<div class="alert">Transit alerts are hidden until you press View route.</div>':al.length?al.map(x=>`<div class="alert"><b>${x.header||'WeGo alert'}</b><br>${x.description||''}</div>`).join(''):(live.ok?'<div class="alert">No current realtime alert targets the selected route piece(s).</div>':'<div class="alert">Live alert backend unavailable.</div>'));
  syncRenderedJobSelections();
 }
 function updateCorridorSelection(){

@@ -51,6 +51,16 @@ test("phone planner foreground shows tomorrow's jobs without technical backend p
   assert.match(html, /loadWorkJobs\(\);\s*moveExistingSavedJobsToCompletedOnce\(\);\s*mergeSubmittedJobsFromPlannerData\(\);/);
 });
 
+test("phone planner can build the current jobs into a furthest-first return route", () => {
+  const html = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(html, /id="planFurthestFirstRoute"/);
+  assert.match(html, /route-planner-core\.js/);
+  assert.match(html, /planFurthestFirstReturnSweep/);
+  assert.match(html, /CLARKSVILLE_LUNCH_STOP/);
+  assert.match(html, /RideCTS/);
+});
+
 test("recording batch refresh removes stale cards while preserving user job state", () => {
   const currentJob = {
     id: "recording-20260924-kroger-540-lunch-bowls",
