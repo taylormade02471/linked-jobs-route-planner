@@ -48,6 +48,73 @@
     return ordered;
   }
 
+  function isMappableStop(stop) {
+    return distanceMiles(stop, stop) !== null;
+  }
+
+  function planFurthestFirstReturnSweep(jobs, origin, options = {}) {
+    const returnPoint = options.returnPoint || origin;
+    const startLabel = origin?.label || "Current location";
+    const safeJobs = (Array.isArray(jobs) ? jobs : [])
+      .filter(isMappableStop)
+      .slice(0, MAX_STOPS)
+      .map((job) => ({ ...job, id: String(job.id), kind: job.kind || "job" }));
+    const lunchStop = isMappableStop(options.lunchStop)
+      ? { ...options.lunchStop, id: String(options.lunchStop.id || "lunch"), kind: "lunch" }
+      : null;
+
+    if (!isMappableStop(origin) || !isMappableStop(returnPoint)) {
+      return {
+        mode: "furthest_first_return_sweep",
+        source: "map_coordinate_estimate",
+        requiresTransitVerification: true,
+        stops: [],
+        skippedCount: safeJobs.length,
+        totalMapMiles: 0,
+        returnPoint: { ...returnPoint, label: returnPoint?.label || startLabel },
+        warning: "A current map location is required before a return route can be planned.",
+      };
+    }
+
+    const seenIds = new Set();
+    const candidates = [...safeJobs, ...(lunchStop ? [lunchStop] : [])]
+      .filter((stop) => {
+        if (!stop.id || seenIds.has(stop.id)) return false;
+        seenIds.add(stop.id);
+        return true;
+      })
+      .map((stop) => ({ ...stop, distanceFromReturnMiles: distanceMiles(returnPoint, stop) }))
+      // The day starts in the outermost feasible area, then works progressively toward the return point.
+      .sort((a, b) => b.distanceFromReturnMiles - a.distanceFromReturnMiles || a.id.localeCompare(b.id));
+
+    let cursor = origin;
+    let totalMapMiles = 0;
+    const stops = candidates.map((stop, index) => {
+      const legMapMiles = distanceMiles(cursor, stop) || 0;
+      totalMapMiles += legMapMiles;
+      cursor = stop;
+      return {
+        ...stop,
+        sequence: index + 1,
+        legMapMiles,
+      };
+    });
+    const returnLegMiles = stops.length ? distanceMiles(cursor, returnPoint) || 0 : 0;
+    totalMapMiles += returnLegMiles;
+
+    return {
+      mode: "furthest_first_return_sweep",
+      source: "map_coordinate_estimate",
+      requiresTransitVerification: true,
+      stops,
+      skippedCount: Math.max(0, (Array.isArray(jobs) ? jobs.length : 0) - safeJobs.length),
+      totalMapMiles,
+      returnLegMiles,
+      returnPoint: { ...returnPoint, label: returnPoint?.label || startLabel },
+      warning: "This is a map-coordinate sequence, not a live CTS bus itinerary. Verify every transit leg in RideCTS before leaving.",
+    };
+  }
+
   function collectVerifiedRoutes(data) {
     const routes = new Map();
     Object.values((data && data.sections) || {}).forEach((section) => {
@@ -102,6 +169,7 @@
     distanceMiles,
     normalizeStopIds,
     orderStopsByFeasibility,
+    planFurthestFirstReturnSweep,
     collectVerifiedRoutes,
     collectPlanJobIds,
     buildGuidance,
