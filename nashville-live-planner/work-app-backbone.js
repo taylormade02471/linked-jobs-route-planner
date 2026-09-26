@@ -1042,6 +1042,7 @@
     const refreshed = submitted.map((job) => {
       const previous = existingById.get(asText(job?.id));
       if (!previous) return { ...job };
+      if (job?.state_authoritative === true) return { ...previous, ...job };
 
       const savedState = {};
       stateFields.forEach((field) => {

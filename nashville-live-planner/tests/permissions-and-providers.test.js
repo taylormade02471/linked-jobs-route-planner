@@ -28,7 +28,7 @@ test("public planner pages expose the current safe video-imported job dataset", 
   assert.match(nashvilleIndex, /nashville_phone_work_jobs_v1/);
   assert.doesNotMatch(nashvilleIndex, /current 18 quick|18 jobs = \$153|1-hour Walgreens|7601 Hwy 70 S/i);
   assert.match(nashvilleData, /Screen_Recording_20260827_233541\.mp4/);
-  assert.match(nashvilleData, /"jobs":\{/);
+  assert.match(nashvilleData, /"jobs":\s*\{/);
   assert.match(nashvilleData, /Dollar General Store #2360/);
   assert.match(nashvilleData, /Family Dollar Store #1033/);
   assert.doesNotMatch(nashvilleData, /password|access_token|refresh_token|cookie|source_text/i);

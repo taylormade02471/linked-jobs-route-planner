@@ -14,9 +14,11 @@ function loadPlannerData() {
   return sandbox.window.PLANNER_DATA;
 }
 
-test("September 24 recording import contains all eight ready Clarksville jobs", () => {
+test("September 26 reconciliation keeps four route jobs and four unpaid completed jobs", () => {
   const data = loadPlannerData();
   const jobs = data.submittedJobs.filter((job) => job.import_batch === "recording-20260924-ready-eight");
+  const active = jobs.filter((job) => job.status === "assigned");
+  const completed = jobs.filter((job) => job.status === "completed");
 
   assert.equal(jobs.length, 8);
   assert.deepEqual(
@@ -25,11 +27,29 @@ test("September 24 recording import contains all eight ready Clarksville jobs", 
   );
   assert.equal(jobs.reduce((total, job) => total + job.pay_cents, 0), 7750);
   assert.equal(jobs.filter((job) => job.authorization_required).length, 4);
-  assert.ok(jobs.every((job) => job.status === "assigned"));
-  assert.ok(jobs.every((job) => job.ready_state === "ready_to_start"));
+  assert.equal(active.length, 4);
+  assert.equal(active.reduce((total, job) => total + job.pay_cents, 0), 4350);
+  assert.deepEqual(
+    [...active.map((job) => String(job.address))].sort(),
+    [
+      "1489 Madison St, Clarksville, TN 37040",
+      "2015 Needmore Rd, Clarksville, TN 37042",
+      "2100 Lowes Dr, Clarksville, TN 37040",
+      "2551 Whitfield Rd, Clarksville, TN 37040",
+    ].sort(),
+  );
+  assert.ok(active.every((job) => job.ready_state === "ready_to_start"));
+  assert.equal(completed.length, 4);
+  assert.equal(completed.reduce((total, job) => total + job.pay_cents, 0), 3400);
+  assert.ok(completed.every((job) => job.ready_state === "completed"));
+  assert.ok(completed.every((job) => job.payment_status === "unpaid"));
+  assert.ok(completed.every((job) => job.completion_status === "submitted_awaiting_payment"));
+  assert.ok(completed.every((job) => Number.isInteger(job.completed_at)));
+  assert.ok(completed.every((job) => job.state_authoritative === true));
   assert.ok(jobs.every((job) => Number.isInteger(job.due_at_ms)));
   assert.ok(jobs.every((job) => Number.isFinite(job.lat) && Number.isFinite(job.lon)));
-  assert.equal(data.importMeta.latestImport.confirmedJobsVisible, 8);
+  assert.equal(data.importMeta.latestImport.activeJobs, 4);
+  assert.equal(data.importMeta.latestImport.completedAwaitingPayment, 4);
 });
 
 test("phone planner foreground shows tomorrow's jobs without technical backend panels", () => {
@@ -93,6 +113,35 @@ test("recording batch refresh removes stale cards while preserving user job stat
   assert.equal(merged[0].payment_status, "Pending payment");
   assert.equal(merged[0].completed_at, 1790000000000);
   assert.equal(merged[1].id, "older-saved-job");
+});
+
+test("authoritative reconciliation overrides stale cached state without marking a job paid", () => {
+  const completedAt = Date.UTC(2026, 8, 26, 15, 23, 47);
+  const existing = [{
+    id: "recording-20260924-target-959-candy",
+    status: "assigned",
+    ready_state: "ready_to_start",
+    payment_status: "unpaid",
+  }];
+  const reconciliation = [{
+    id: "recording-20260924-target-959-candy",
+    status: "completed",
+    ready_state: "completed",
+    completion_status: "submitted_awaiting_payment",
+    payment_status: "unpaid",
+    completed_at: completedAt,
+    state_authoritative: true,
+  }];
+
+  const merged = workAppBackbone.mergePlannerSubmittedJobs(existing, reconciliation, {
+    replaceIdPrefix: "recording-20260924-",
+  });
+
+  assert.equal(merged[0].status, "completed");
+  assert.equal(merged[0].ready_state, "completed");
+  assert.equal(merged[0].completion_status, "submitted_awaiting_payment");
+  assert.equal(merged[0].payment_status, "unpaid");
+  assert.equal(merged[0].completed_at, completedAt);
 });
 
 test("historical planner jobs move to completed without removing current assignments", () => {
