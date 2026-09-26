@@ -27,36 +27,48 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .priorityJobCard{border-color:#92c89c;background:#fff}
 .priorityJobCard.needs{border-color:#f0b7b2;background:#fff7f6}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
+.appViewNav{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:rgba(244,247,249,.96);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(23,50,77,.12);backdrop-filter:blur(10px)}
+.appViewNav button,.appViewNav a{display:flex;align-items:center;justify-content:center;min-height:42px;padding:8px;border:1px solid #cbd5dd;border-radius:9px;background:#fff;color:var(--navy);font-size:13px;font-weight:800;text-align:center;text-decoration:none}
+.appViewNav button.active{background:var(--navy);border-color:var(--navy);color:#fff}.connectionsIntro{margin:0 0 10px;color:var(--muted);font-size:13px;line-height:1.45}.advancedConnections{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.advancedConnections>summary{cursor:pointer;color:var(--navy);font-weight:800}.connectionsStack{display:grid;gap:10px}
+[data-app-panel][hidden]{display:none!important}
 main{display:flex;flex-direction:column}
 main>.notice,main>.metrics,main>.card,main>.siteFooter{order:3}
-main>#workApps{order:2}
+main>#appViewNav{order:0}
+main>#workApps,main>#connectionsView{order:1}
 main>#mainMap{order:1}
 .jobBoardSummary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:4px 2px;font-weight:800;color:#17324d}
 .jobBoardSummary::-webkit-details-marker{display:none}
 .jobBoardSummary small{display:block;color:var(--muted);font-weight:400;margin-top:4px}
 #workApps[open]>.jobBoardSummary{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
 #appRecommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));overflow:visible;gap:8px;padding-bottom:8px}
-@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-template-columns:1fr}.priorityPanel{position:static}}
+@media(max-width:720px){#map{height:520px}.row{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}label{min-width:100%}#appRecommendations{grid-template-columns:1fr}.priorityPanel{position:static}.appViewNav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .siteFooter{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.76);color:#4f6458;font-size:14px}
 .siteFooter a{color:#0f6b3f;font-weight:800;text-decoration:none}.siteFooter a:hover{text-decoration:underline}
 @media(max-width:720px){.workform{grid-template-columns:1fr}.wide{grid-column:auto}.cameraPanel{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>Nashville Live Audit Transit Planner</h1><p>Tomorrow's ready jobs, transit map, and saved offline route.</p></header>
+<header><h1>Nashville Live Audit Transit Planner</h1><p>Current work, transit map, and saved offline route.</p></header>
 <main>
-<div class="notice"><b>Tomorrow's Clarksville route:</b> all eight ready-to-start jobs from the September 24 assignment review are saved below. Open the job drawer to review instructions and select route stops.</div>
+<nav id="appViewNav" class="appViewNav" aria-label="Planner views">
+ <button type="button" class="active" data-app-view="map">Map &amp; route</button>
+ <button type="button" data-app-view="jobs">Jobs (4 active)</button>
+ <button type="button" data-app-view="connections">Connections &amp; sync</button>
+ <a href="./jobs.html">History</a>
+</nav>
+<div id="routeSummary" class="notice" data-app-panel="map"><b>Current Clarksville work:</b> four assignments remain active. Four jobs reported complete are saved under Completed jobs as unpaid and awaiting payment.</div>
 <div id="offlineStatus" class="status" aria-live="polite">Checking the offline planner shell and saved job snapshot...</div>
 
-<div class="card metrics">
- <div class="metric">Submitted jobs<strong>8</strong><span>Ready to start September 26</span></div>
- <div class="metric">Route pay<strong>$77.50</strong><span>Before expenses</span></div>
- <div class="metric">Authorization<strong>4 jobs</strong><span>Three noodle letters plus Reynolds</span></div>
+<div id="routeMetrics" class="card metrics" data-app-panel="map">
+ <div class="metric">Active jobs<strong>4</strong><span>Ready to route</span></div>
+ <div class="metric">Remaining pay<strong>$43.50</strong><span>Before expenses</span></div>
+ <div class="metric">Route documents<strong>4</strong><span>One authorization + three sell sheets</span></div>
+ <div class="metric">Completed<strong>4</strong><span>Awaiting payment</span></div>
  <div class="metric">Transit plan<strong>Map first</strong><span>Select jobs, then View route</span></div>
 </div>
 
-<details class="card" id="workApps">
- <summary class="jobBoardSummary"><span><span class="greenpin"></span>Tomorrow's 8 ready jobs<small>Open the drawer to review instructions and choose route stops.</small></span><span>View jobs +</span></summary>
+<details class="card" id="workApps" data-app-panel="jobs">
+ <summary class="jobBoardSummary"><span><span class="greenpin"></span>Current 4 active jobs<small>Review instructions and choose route stops. Completed work stays in its own folder.</small></span><span>View jobs +</span></summary>
  <div class="sectionTitle"><span class="greenpin"></span>Phone work app jobs</div>
  <div class="jobStatus"><a href="./jobs.html" target="_blank" rel="noopener">Open saved jobs and completed / passed history</a> · The homepage stays focused on current route work.</div>
  <div id="providerStats" class="providergrid"></div>
@@ -82,7 +94,7 @@ main>#mainMap{order:1}
   <button id="moveSelectedJobs" type="button">Move selected</button>
   <span id="jobSelectionStatus">Select jobs, then View route to show transit mapping.</span>
  </div>
- <div class="connectionPanel">
+ <div class="connectionPanel" data-connections-panel="provider">
   <h3>Provider connection saved on this device</h3>
   <div id="providerConnectionStatus" class="jobStatus">Choose a provider below to manage its local connection status.</div>
   <div class="workform">
@@ -183,7 +195,7 @@ main>#mainMap{order:1}
  </div>
  <div class="sectionTitle">Best open work near your location</div>
  <div id="appRecommendations" class="recommendations"></div>
- <div class="connectionPanel emailPanel">
+ <div class="connectionPanel emailPanel" data-connections-panel="email">
   <h3>Email job sync permissions</h3>
   <div id="emailSyncStatus" class="jobStatus">Outlook/Hotmail is the first planned read-only email connection. It will use Microsoft Graph delegated Mail.Read after OAuth is configured.</div>
   <div class="workform">
@@ -233,6 +245,17 @@ main>#mainMap{order:1}
 </div>
 </details>
 
+<section id="connectionsView" class="card" data-app-panel="connections" hidden>
+ <div class="sectionTitle">Connections &amp; sync</div>
+ <p class="connectionsIntro">Connection controls live here instead of on the route screen. Safe job details can refresh while the planner is open; passwords, cookies, and provider sessions stay out of this public page.</p>
+ <div id="automationOverview" class="jobStatus">Checking the available local and phone connectors...</div>
+ <div id="connectionPanels" class="connectionsStack"></div>
+ <details class="advancedConnections">
+  <summary>Advanced connection and backend details</summary>
+  <div id="advancedConnectionsBody"></div>
+ </details>
+</section>
+
 <section id="technicalConnections" hidden aria-hidden="true">
 <div class="card">
  <div class="controls">
@@ -280,10 +303,10 @@ main>#mainMap{order:1}
 </div>
 </section>
 
-<div class="card"><div id="details"></div></div>
-<div class="card" id="mainMap"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="planFurthestFirstRoute" type="button">Plan current jobs</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">The blue current-job line is a map-coordinate sequence, not a live CTS itinerary. Saved GTFS pieces and orange live buses are only shown when their verified WeGo data is selected. Confirm every Clarksville transit leg in RideCTS before leaving.</p></div>
-<div class="card"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
-<div class="card"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
+<div class="card" id="routeDetailsCard" data-app-panel="map"><div id="details"></div></div>
+<div class="card" id="mainMap" data-app-panel="map"><div class="maptoolbar"><button id="cleanMap" class="active">Clean map</button><button id="streetMap">Street map</button><button id="fitMap">Fit selected route</button><button id="planFurthestFirstRoute" type="button">Plan current jobs</button><button id="enableLocation">Enable my location</button><button id="centerMe">Center on me</button></div><div id="locationStatus" class="locationStatus">Location not enabled yet.</div><div class="maptoolbar"><button id="navigateNextJob" type="button">Navigate next job</button><button id="openGoogleRoute" type="button">Open full route in Google Maps</button><button id="toggleAllBuses" class="active" type="button">All WeGo buses</button></div><div id="navigationStatus" class="locationStatus">Enable location for live navigation.</div><div id="map"></div><p style="font-size:12px;color:var(--muted)">The blue current-job line is a map-coordinate sequence, not a live CTS itinerary. Saved GTFS pieces and orange live buses are only shown when their verified WeGo data is selected. Confirm every Clarksville transit leg in RideCTS before leaving.</p></div>
+<div class="card" id="liveBusesCard" data-app-panel="map"><h3>Live buses on selected route piece(s)</h3><div id="buses"></div></div>
+<div class="card" id="liveAlertsCard" data-app-panel="map"><h3>Live alerts affecting selected route piece(s)</h3><div id="alerts"></div><p><a target="_blank" href="https://www.wegotransit.com/ride/alerts/">Official WeGo alerts</a> · <a target="_blank" href="https://www.wegotransit.com/routes/">WeGo Bus Arrival Info</a></p></div>
 <footer class="siteFooter"><b>Privacy-first field planner:</b> <a href="./privacy.html">Privacy Policy</a> · <a href="./terms.html">Terms of Service</a></footer>
 </main>
 
@@ -308,6 +331,42 @@ const cleanTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{m
 const streetTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
 cleanTiles.addTo(map);
 let currentBounds=null;
+function organizeConnectionPanels(){
+ const panels=document.getElementById('connectionPanels');
+ document.querySelectorAll('[data-connections-panel]').forEach(panel=>panels?.appendChild(panel));
+ const advanced=document.getElementById('advancedConnectionsBody');
+ const technical=document.getElementById('technicalConnections');
+ if(advanced&&technical){
+  technical.hidden=false;
+  technical.setAttribute('aria-hidden','false');
+  advanced.appendChild(technical);
+ }
+}
+function switchAppView(view,options={}){
+ const selected=['map','jobs','connections'].includes(view)?view:'map';
+ document.querySelectorAll('[data-app-panel]').forEach(panel=>{
+  panel.hidden=panel.dataset.appPanel!==selected;
+ });
+ document.querySelectorAll('[data-app-view]').forEach(button=>{
+  const active=button.dataset.appView===selected;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',String(active));
+ });
+ if(selected==='jobs')document.getElementById('workApps')?.setAttribute('open','');
+ if(selected==='map'){
+  setTimeout(()=>{
+   map.invalidateSize();
+   if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]});
+  },80);
+ }
+ if(options.focus){
+  const target=document.getElementById(selected==='map'?'mainMap':selected==='jobs'?'workApps':'connectionsView');
+  setTimeout(()=>target?.scrollIntoView({behavior:'smooth',block:'start'}),0);
+ }
+}
+function focusMapView(){
+ switchAppView('map',{focus:true});
+}
 document.getElementById('cleanMap').onclick=()=>{if(map.hasLayer(streetTiles))map.removeLayer(streetTiles);if(!map.hasLayer(cleanTiles))cleanTiles.addTo(map);document.getElementById('cleanMap').classList.add('active');document.getElementById('streetMap').classList.remove('active')};
 document.getElementById('streetMap').onclick=()=>{if(map.hasLayer(cleanTiles))map.removeLayer(cleanTiles);if(!map.hasLayer(streetTiles))streetTiles.addTo(map);document.getElementById('streetMap').classList.add('active');document.getElementById('cleanMap').classList.remove('active')};
 document.getElementById('fitMap').onclick=()=>{if(currentBounds)map.fitBounds(currentBounds,{padding:[40,40]})};
@@ -439,6 +498,7 @@ function providerBridgeJobs(payload){
  renderImportReview();
  document.getElementById('appJobStatus').textContent=`Provider bridge received ${review.length} safe job record(s). Review and approve them before they enter routing. No credentials were accepted.`;
  document.getElementById('workApps')?.setAttribute('open','');
+ switchAppView('jobs',{focus:true});
  return true;
 }
 window.LinkedJobsReceiveProviderSnapshot=providerBridgeJobs;
@@ -761,6 +821,7 @@ function planFurthestFirstRoute(){
  setJobSelectionStatus(`Current route ready: ${jobStops.length} job(s), outward first and back toward your captured location. RideCTS verification is still required for bus times and stops.`);
  updateNavigationStatus(`Next planned job: ${jobStops[0].name||jobStops[0].title||'Job'}. Review RideCTS before you depart.`);
  render();
+ focusMapView();
 }
 function loadWorkJobs(){
  try{workJobs=JSON.parse(localStorage.getItem(WORK_JOBS_KEY)||'[]');if(!Array.isArray(workJobs))workJobs=[];}catch{workJobs=[];}
@@ -958,6 +1019,7 @@ function viewSelectedRoute(){
  showTransitRoute=true;
  setJobSelectionStatus(`Showing route layer for ${selectedRouteJobIds.size} selected job(s).`);
  render();
+ focusMapView();
 }
 function hideSelectedRoute(){
  showTransitRoute=false;
@@ -1486,7 +1548,7 @@ function receiveSharedText(text,message='Shared text received from Android. Revi
  if(!input)return;
  input.value=String(text||'').trim();
  document.getElementById('appJobStatus').textContent=message;
- document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
+ switchAppView('jobs',{focus:true});
 }
 window.LinkedJobsReceiveSharedText=function(text){
  receiveSharedText(text);
@@ -1495,7 +1557,7 @@ window.LinkedJobsReceiveAndroidShare=function(payload){
  const normalized=A.normalizeSharePayload(payload||{});
  if(!normalized.accepted){
   document.getElementById('appJobStatus').textContent=normalized.reason;
-  document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
+  switchAppView('jobs',{focus:true});
   return;
  }
  if(normalized.kind==='text'){
@@ -1503,7 +1565,7 @@ window.LinkedJobsReceiveAndroidShare=function(payload){
   return;
  }
  document.getElementById('appJobStatus').textContent=`Android ${normalized.kind} received. OCR/PDF extraction is the next build step; for now paste the visible job text or capture a readable photo.`;
- document.getElementById('workApps').scrollIntoView({behavior:'smooth',block:'start'});
+ switchAppView('jobs',{focus:true});
 };
 function seedPlannerJobs(){
  const seeded=Object.entries(D.jobs||{}).map(([id,job])=>({...job,id,status:job.status||'available'})).filter(job=>job.address);
@@ -1513,6 +1575,11 @@ function seedPlannerJobs(){
 }
 function initWorkApps(){
  registerOfflineShell();
+ organizeConnectionPanels();
+ document.querySelectorAll('[data-app-view]').forEach(button=>{
+  button.addEventListener('click',()=>switchAppView(button.dataset.appView,{focus:true}));
+ });
+ switchAppView('map');
  seedPlannerJobs();
  const provider=document.getElementById('appProvider');
  const providerFilter=document.getElementById('jobProviderFilter');

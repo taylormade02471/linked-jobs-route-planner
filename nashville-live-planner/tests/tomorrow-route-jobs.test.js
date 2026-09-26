@@ -52,11 +52,12 @@ test("September 26 reconciliation keeps four route jobs and four unpaid complete
   assert.equal(data.importMeta.latestImport.completedAwaitingPayment, 4);
 });
 
-test("phone planner foreground shows tomorrow's jobs without technical backend panels", () => {
+test("phone planner foreground shows current jobs with technical details behind the connections tab", () => {
   const html = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
 
-  assert.match(html, /Tomorrow's 8 ready jobs/);
-  assert.match(html, /Submitted jobs<strong>8<\/strong>/);
+  assert.match(html, /Current 4 active jobs/);
+  assert.match(html, /Active jobs<strong>4<\/strong>/);
+  assert.match(html, /Remaining pay<strong>\$43\.50<\/strong>/);
   assert.match(html, /id="jobTabAccepted" class="active"/);
   assert.match(html, /let activeJobTab='accepted'/);
   assert.match(
@@ -79,6 +80,22 @@ test("phone planner can build the current jobs into a furthest-first return rout
   assert.match(html, /planFurthestFirstReturnSweep/);
   assert.match(html, /CLARKSVILLE_LUNCH_STOP/);
   assert.match(html, /RideCTS/);
+});
+
+test("phone planner separates map jobs and connections and returns route actions to the map", () => {
+  const html = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(html, /id="appViewNav"/);
+  assert.match(html, /data-app-view="map"/);
+  assert.match(html, /data-app-view="jobs"/);
+  assert.match(html, /data-app-view="connections"/);
+  assert.match(html, /id="connectionsView"[^>]*data-app-panel="connections"/);
+  assert.match(html, /data-connections-panel/);
+  assert.match(html, /function organizeConnectionPanels\(/);
+  assert.match(html, /function switchAppView\(/);
+  assert.match(html, /function focusMapView\(/);
+  assert.match(html, /function viewSelectedRoute\(\)[\s\S]*?focusMapView\(\);/);
+  assert.match(html, /function planFurthestFirstRoute\(\)[\s\S]*?focusMapView\(\);/);
 });
 
 test("recording batch refresh removes stale cards while preserving user job state", () => {

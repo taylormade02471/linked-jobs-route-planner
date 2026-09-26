@@ -23,7 +23,7 @@ test("public planner pages expose the current safe video-imported job dataset", 
   const nashvilleData = fs.readFileSync(path.join(plannerRoot, "planner-data.js"), "utf8");
   const desktopIndex = fs.readFileSync(path.join(projectRoot, "frontend", "index.html"), "utf8");
 
-  assert.match(nashvilleIndex, /Tomorrow's 8 ready jobs/);
+  assert.match(nashvilleIndex, /Current 4 active jobs/);
   assert.match(nashvilleIndex, /clearLegacyPlannerStorage/);
   assert.match(nashvilleIndex, /nashville_phone_work_jobs_v1/);
   assert.doesNotMatch(nashvilleIndex, /current 18 quick|18 jobs = \$153|1-hour Walgreens|7601 Hwy 70 S/i);
@@ -114,12 +114,13 @@ test("Nashville planner separates job tabs and hides transit until View route", 
   assert.match(index, /moveExistingSavedJobsToCompletedOnce/);
 });
 
-test("Nashville planner keeps the map first, collapses the job board, and caps routes at 20 stops", () => {
+test("Nashville planner keeps the map as the default tab and caps routes at 20 stops", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
 
   assert.match(index, /main>#mainMap\{order:1\}/);
-  assert.match(index, /main>#workApps\{order:2\}/);
-  assert.match(index, /<details class="card" id="workApps">/);
+  assert.match(index, /main>#workApps,main>#connectionsView\{order:1\}/);
+  assert.match(index, /<details class="card" id="workApps" data-app-panel="jobs">/);
+  assert.match(index, /switchAppView\('map'\)/);
   assert.match(index, /Custom route/);
   assert.match(index, /Automatic best route/);
   assert.match(index, /at most 20 stops/);
