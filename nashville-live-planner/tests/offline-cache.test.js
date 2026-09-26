@@ -21,6 +21,7 @@ test("offline snapshots deduplicate jobs, record UTC freshness, and strip privat
         address: "100 Main St, Nashville, TN",
         status: "assigned",
         pay_cents: 3850,
+        details_url: "https://www.jobslingerplus.com/Info?id=job-1",
         password: "never cache this",
         cookie: "never cache this",
         source_text: "private provider page text",
@@ -40,6 +41,7 @@ test("offline snapshots deduplicate jobs, record UTC freshness, and strip privat
   assert.equal(snapshot.jobs.length, 1);
   assert.equal(snapshot.jobs[0].title, "Updated audit");
   assert.equal(snapshot.jobs[0].pay_cents, 3850);
+  assert.equal(snapshot.jobs[0].details_url, "https://www.jobslingerplus.com/Info?id=job-1");
   assert.equal(snapshot.jobs[0].password, undefined);
   assert.equal(snapshot.jobs[0].cookie, undefined);
   assert.equal(snapshot.jobs[0].source_text, undefined);

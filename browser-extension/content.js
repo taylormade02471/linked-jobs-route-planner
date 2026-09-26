@@ -1,58 +1,103 @@
-const SOURCE_URL = "http://127.0.0.1:3300/api/jobs";
-const POLL_INTERVAL_MS = 10000;
+const POLL_INTERVAL_MS = 30 * 60 * 1000;
+const MUTATION_DEBOUNCE_MS = 1500;
 
-function readVisibleJobs() {
-  const tables = Array.from(document.querySelectorAll("table"));
-  const targetTable = tables.find((table) => table.querySelectorAll("tr").length > 1) || tables[0];
-  if (!targetTable) return [];
+let syncTimer = null;
+let syncInFlight = false;
+let lastSignature = "";
 
-  const rows = Array.from(targetTable.querySelectorAll("tr"));
-  const jobs = [];
-
-  rows.forEach((row, index) => {
-    const cells = Array.from(row.querySelectorAll("td,th")).map((cell) =>
-      cell.textContent.trim()
-    );
-    if (cells.length < 2) return;
-    const [title, address, city, state, postcode] = cells;
-    if (!title && !address) return;
-    jobs.push({
-      id: `${title || "job"}-${index}`,
-      title: title || "Job",
-      address: address || "",
-      city: city || "",
-      state: state || "",
-      postcode: postcode || "",
-      source: "browser-extension",
-      source_url: window.location.href,
-      order: index + 1,
-    });
-  });
-
-  return jobs;
+function jobCardForMapLink(link) {
+  return (
+    link.closest("tr, [data-job], [data-assignment], .job, .shop, .assignment, article, li") ||
+    link.parentElement?.parentElement ||
+    link.parentElement
+  );
 }
 
-async function syncJobs() {
-  const jobs = readVisibleJobs();
-  if (!jobs.length) return;
-
+function detailsUrlForCard(card) {
+  const link = card?.querySelector('a[href*="jobslingerplus.com/Info"], a[href^="/Info"]');
+  if (!link) return "";
   try {
-    await fetch(SOURCE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ jobs }),
-    });
+    return new URL(link.getAttribute("href"), window.location.origin).toString();
   } catch {
-    // The dashboard may be offline. Try again on the next page update.
+    return "";
   }
 }
 
-const observer = new MutationObserver(() => {
-  syncJobs();
-});
+function readVisibleJobs() {
+  if (!/^\/MegaLog(?:\/|$)/i.test(window.location.pathname)) return [];
+  const parser = globalThis.JobSlingerParser;
+  if (!parser?.parseMegaLogCard) return [];
 
+  const mapLinks = Array.from(
+    document.querySelectorAll('a[href*="maps.google.com/maps"], a[href*="google.com/maps"]'),
+  );
+  const jobs = mapLinks
+    .map((link, index) => {
+      const card = jobCardForMapLink(link);
+      if (!card) return null;
+      return parser.parseMegaLogCard({
+        index,
+        mapUrl: link.href,
+        detailsUrl: detailsUrlForCard(card),
+        text: card.innerText || card.textContent || "",
+      });
+    })
+    .filter(Boolean);
+
+  return jobs.filter((job, index, all) => all.findIndex((candidate) => candidate.id === job.id) === index);
+}
+
+function signatureForJobs(jobs) {
+  return JSON.stringify(
+    jobs.map((job) => ({
+      id: job.id,
+      title: job.title,
+      address: job.address,
+      pay_cents: job.pay_cents,
+      due: job.due,
+      status: job.status,
+      details_url: job.details_url,
+    })),
+  );
+}
+
+async function syncJobs() {
+  if (syncInFlight) return;
+  const jobs = readVisibleJobs();
+  if (!jobs.length) return;
+  const signature = signatureForJobs(jobs);
+  if (signature === lastSignature) return;
+
+  syncInFlight = true;
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "sync-provider-jobs",
+      payload: {
+        source: {
+          provider_id: "jobslinger_megalog",
+          provider_label: "JobSlinger MegaLog",
+          mode: "signed-in-browser-extension",
+          source_status: "live",
+        },
+        retrieved_at_utc_ms: Date.now(),
+        jobs,
+      },
+    });
+    if (!response?.ok) throw new Error(response?.error || "Planner sync failed");
+    lastSignature = signature;
+  } catch {
+    // The local planner may be closed. The next page change or timed check retries safely.
+  } finally {
+    syncInFlight = false;
+  }
+}
+
+function scheduleSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncJobs, MUTATION_DEBOUNCE_MS);
+}
+
+const observer = new MutationObserver(scheduleSync);
 observer.observe(document.documentElement, { childList: true, subtree: true });
 syncJobs();
 setInterval(syncJobs, POLL_INTERVAL_MS);

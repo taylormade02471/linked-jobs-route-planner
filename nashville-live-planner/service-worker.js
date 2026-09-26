@@ -1,14 +1,14 @@
-const CACHE_NAME = "nashville-planner-shell-v3";
+const CACHE_NAME = "nashville-planner-shell-v4";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
   "./jobs.html",
   "./privacy.html",
   "./terms.html",
-  "./planner-data.js?v=20260924-eight-jobs",
+  "./planner-data.js?v=20260926-four-active",
   "./route-planner-core.js?v=20260925-furthest-first",
   "./transit-picker.js",
-  "./work-app-backbone.js?v=20260924-eight-jobs",
+  "./work-app-backbone.js?v=20260926-safe-sync",
   "./provider-connectors.js",
   "./android-app-backbone.js",
   "./offline-cache.js",

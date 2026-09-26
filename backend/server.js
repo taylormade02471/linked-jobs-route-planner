@@ -8,6 +8,7 @@ const {
   normalizeIncomingProviderJobs,
   upsertProviderJobs,
 } = require("./provider-jobs");
+const { isLoopbackAddress, isPrivateNetworkAddress } = require("./network-access");
 
 const rootDir = path.join(__dirname, "..");
 const frontendDir = path.join(rootDir, "frontend");
@@ -33,6 +34,20 @@ const SESSION_SECRET =
   process.env.AUTH_SESSION_SECRET || "change-this-before-sharing";
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "route_planner_session";
+const WEGO_FEEDS = {
+  vehiclePositions: process.env.WEGO_VEHICLE_POSITION_URL
+    ? [process.env.WEGO_VEHICLE_POSITION_URL]
+    : [
+        "http://transitdata.nashvillemta.org/TMGTFSRealTimeWebService/vehicle/vehiclepositions.pb",
+        "http://transitdata.nashvillemta.org/TMGTFSRealTimeWebService/gtfs-realtime/trapezerealtimefeed.pb",
+      ],
+  tripUpdates: process.env.WEGO_TRIP_UPDATES_URL
+    ? [process.env.WEGO_TRIP_UPDATES_URL]
+    : ["http://transitdata.nashvillemta.org/TMGTFSRealTimeWebService/tripupdate/tripupdates.pb"],
+  alerts: process.env.WEGO_ALERTS_URL
+    ? [process.env.WEGO_ALERTS_URL]
+    : ["http://transitdata.nashvillemta.org/TMGTFSRealTimeWebService/alert/alerts.pb"],
+};
 
 let jobs = loadJobs();
 let providerJobs = loadProviderJobs();
@@ -322,15 +337,25 @@ function isDashboardAuthed(req) {
 }
 
 function isLocalRequest(req) {
-  const address = req.socket && req.socket.remoteAddress;
-  return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
+  return isLoopbackAddress(req.socket && req.socket.remoteAddress);
 }
 
-function isProviderSyncAllowed(req) {
+function hasValidProviderSyncKey(req) {
   const syncKey = String(process.env.PROVIDER_SYNC_KEY || "");
   const providedKey = String(req.headers["x-planner-sync-key"] || "");
-  if (syncKey && providedKey && providedKey === syncKey) return true;
-  return isDashboardAuthed(req) || (!syncKey && isLocalRequest(req));
+  return Boolean(syncKey && providedKey && providedKey === syncKey);
+}
+
+function isProviderReadAllowed(req) {
+  const syncKey = String(process.env.PROVIDER_SYNC_KEY || "");
+  if (hasValidProviderSyncKey(req) || isDashboardAuthed(req)) return true;
+  return !syncKey && isPrivateNetworkAddress(req.socket && req.socket.remoteAddress);
+}
+
+function isProviderWriteAllowed(req) {
+  const syncKey = String(process.env.PROVIDER_SYNC_KEY || "");
+  if (hasValidProviderSyncKey(req) || isDashboardAuthed(req)) return true;
+  return !syncKey && isLocalRequest(req);
 }
 
 function requireAuth(req, res) {
@@ -427,6 +452,47 @@ function serveStatic(filePath, res) {
   }
 }
 
+async function fetchTransitBuffer(url) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: { "User-Agent": "linked-jobs-route-planner/wego-live" },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
+  return Buffer.from(await response.arrayBuffer()).toString("base64");
+}
+
+async function fetchFirstTransitBuffer(feedName) {
+  const errors = [];
+  for (const url of WEGO_FEEDS[feedName] || []) {
+    try {
+      return { data: await fetchTransitBuffer(url), sourceUrl: url };
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+  throw new Error(`${feedName} unavailable: ${errors.join("; ")}`);
+}
+
+async function fetchWegoLivePayload() {
+  const [vehiclePositions, tripUpdates, alerts] = await Promise.all([
+    fetchFirstTransitBuffer("vehiclePositions"),
+    fetchFirstTransitBuffer("tripUpdates"),
+    fetchFirstTransitBuffer("alerts"),
+  ]);
+  return {
+    fetchedAt: new Date().toISOString(),
+    vehiclePositions: vehiclePositions.data,
+    tripUpdates: tripUpdates.data,
+    alerts: alerts.data,
+    sourceUrls: {
+      vehiclePositions: vehiclePositions.sourceUrl,
+      tripUpdates: tripUpdates.sourceUrl,
+      alerts: alerts.sourceUrl,
+    },
+  };
+}
+
 function staticFileWithin(root, relativePath) {
   const rootPath = path.resolve(root);
   const relative = String(relativePath || "").replaceAll("\\", "/");
@@ -518,6 +584,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (method === "GET" && url.pathname === "/api/wego-live") {
+    try {
+      json(res, 200, await fetchWegoLivePayload());
+    } catch (error) {
+      json(res, 502, { error: error instanceof Error ? error.message : String(error) });
+    }
+    return;
+  }
+
   if (method === "GET" && url.pathname === "/api/health") {
     if (!requireAuth(req, res)) return;
     json(res, 200, {
@@ -536,7 +611,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "GET" && url.pathname === "/api/provider-jobs") {
-    if (!requireAuth(req, res)) return;
+    if (!isProviderReadAllowed(req)) {
+      json(res, 401, {
+        ok: false,
+        error: "Provider job access requires dashboard auth, private-network access, or x-planner-sync-key.",
+      });
+      return;
+    }
     json(res, 200, {
       jobs: filterProviderJobs(providerJobs, {
         provider: url.searchParams.get("provider") || url.searchParams.get("provider_id") || "all",
@@ -641,7 +722,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "POST" && url.pathname === "/api/provider-jobs") {
-    if (!isProviderSyncAllowed(req)) {
+    if (!isProviderWriteAllowed(req)) {
       json(res, 401, {
         ok: false,
         error: "Provider job sync requires dashboard auth, local access, or x-planner-sync-key.",
@@ -672,7 +753,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === "GET" && url.pathname === "/api/events") {
-    if (!requireAuth(req, res)) return;
+    if (!isProviderReadAllowed(req)) {
+      json(res, 401, {
+        ok: false,
+        error: "Provider event access requires dashboard auth, private-network access, or x-planner-sync-key.",
+      });
+      return;
+    }
     res.writeHead(200, {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-store, must-revalidate",

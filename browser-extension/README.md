@@ -1,6 +1,6 @@
 # Browser Extension
 
-This extension reads visible rows from the main Jobslinger page and syncs them to the local route planner.
+This extension reads visible job cards from the signed-in JobSlinger MegaLog page and syncs safe job fields to the existing local route planner.
 
 ## Load it in Chrome
 
@@ -11,12 +11,15 @@ This extension reads visible rows from the main Jobslinger page and syncs them t
 
 ## What it does
 
-- Watches the page for updates
-- Scrapes visible table rows
-- Posts them to `http://127.0.0.1:3300/api/jobs`
+- Watches the MegaLog page for added or changed job cards
+- Extracts the address, pay, due date, status, instructions, and verified details link
+- Posts only safe job fields to `http://127.0.0.1:3300/api/provider-jobs`
+- Checks immediately after a page change and every 30 minutes while MegaLog remains open
 
 ## Notes
 
-- Keep the local dashboard open at `http://localhost:3300/`
-- If the page uses different table columns or a different layout, the selector logic in `content.js` may need a small update
+- Keep the local server running at `http://127.0.0.1:3300/`
+- Sign in to JobSlinger yourself and keep `https://www.jobslingerplus.com/MegaLog` open
+- The extension never reads or sends passwords, cookies, session tokens, or MFA codes
+- In `chrome://extensions`, press **Reload** for this extension after updating these files
 

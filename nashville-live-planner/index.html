@@ -4,12 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nashville Live Audit Transit Planner</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--navy:#17324d;--bg:#f4f7f9;--card:#fff;--line:#d9e1e7;--muted:#5d6c78;--blue:#0b5fa5;--amber:#fff4d8}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#142434}
+*{box-sizing:border-box}html,body{width:100%;max-width:100%;overflow-x:hidden}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#142434}
 header{background:var(--navy);color:#fff;padding:14px}header h1{font-size:20px;margin:0 0 5px}header p{margin:0;font-size:12px}
-main{max-width:1150px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+main{width:100%;min-width:0;max-width:1150px;margin:auto;padding:12px}.card,.notice{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
 .notice{background:#eef6fb}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:end}label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:240px;flex:1}
 select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius:8px;background:#fff;min-height:44px}select{width:100%;max-width:100%;min-width:0}select[multiple]{min-height:126px}button{cursor:pointer;flex:0 0 auto}.pickerChip{background:#e6f2f8;color:#17324d;border-color:#b8d5e2;font-weight:bold;white-space:nowrap}
 #map{height:620px;border-radius:12px;border:1px solid #cbd5df;box-shadow:0 3px 12px rgba(23,50,77,.10)}.status{font-size:12px;padding:8px;border-radius:8px;background:#f5f7f9;margin-top:8px}
@@ -27,8 +28,8 @@ select,button{font-size:16px;padding:10px;border:1px solid #cbd5dd;border-radius
 .priorityJobCard{border-color:#92c89c;background:#fff}
 .priorityJobCard.needs{border-color:#f0b7b2;background:#fff7f6}
 .keyVaultPanel{border-color:#bfd9ec;background:#f7fbff}.keyVaultPanel .notice{margin-top:0}.kvGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:8px;margin-top:10px}.kvBinding{border:1px solid #cbdce8;border-radius:10px;padding:10px;background:#fff}.kvBinding h3{margin:0;color:var(--navy);font-size:15px}.kvBinding p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.4}.kvFields{display:grid;gap:7px;margin-top:8px}.kvFields label{min-width:0;font-size:11px}.kvFields input,.kvFields select{width:100%;min-height:38px;font-size:14px;padding:8px}.kvReferenceNote{font-size:11px;color:#426176;margin-top:8px}
-.appViewNav{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:rgba(244,247,249,.96);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(23,50,77,.12);backdrop-filter:blur(10px)}
-.appViewNav button,.appViewNav a{display:flex;align-items:center;justify-content:center;min-height:42px;padding:8px;border:1px solid #cbd5dd;border-radius:9px;background:#fff;color:var(--navy);font-size:13px;font-weight:800;text-align:center;text-decoration:none}
+.appViewNav{position:sticky;top:0;z-index:20;display:grid;width:100%;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px;background:rgba(244,247,249,.96);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(23,50,77,.12);backdrop-filter:blur(10px)}
+.appViewNav button,.appViewNav a{display:flex;align-items:center;justify-content:center;min-width:0;min-height:42px;padding:8px;border:1px solid #cbd5dd;border-radius:9px;background:#fff;color:var(--navy);font-size:13px;font-weight:800;text-align:center;text-decoration:none;overflow-wrap:anywhere}
 .appViewNav button.active{background:var(--navy);border-color:var(--navy);color:#fff}.connectionsIntro{margin:0 0 10px;color:var(--muted);font-size:13px;line-height:1.45}.advancedConnections{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.advancedConnections>summary{cursor:pointer;color:var(--navy);font-weight:800}.connectionsStack{display:grid;gap:10px}
 [data-app-panel][hidden]{display:none!important}
 main{display:flex;flex-direction:column}
@@ -312,10 +313,10 @@ main>#mainMap{order:1}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="./offline-cache.js"></script>
-<script src="./planner-data.js?v=20260924-eight-jobs"></script>
+<script src="./planner-data.js?v=20260926-four-active"></script>
 <script src="./route-planner-core.js?v=20260925-furthest-first"></script>
 <script src="./transit-picker.js"></script>
-<script src="./work-app-backbone.js?v=20260924-eight-jobs"></script>
+<script src="./work-app-backbone.js?v=20260926-safe-sync"></script>
 <script src="./provider-connectors.js"></script>
 <script src="./android-app-backbone.js"></script>
 <script>
@@ -406,6 +407,8 @@ let emailSyncSettings={};
 let keyVaultPlan={};
 let cameraStream=null,capturedPhotoDataUrl='';
 let providerSyncTimer=null;
+let providerRefreshTimer=null;
+let providerEventSource=null;
 let emailSyncTimer=null;
 let googleTokenClient=null,gmailBearer='',gmailTokenExpiresAt=0;
 let activeJobTab='accepted';
@@ -566,6 +569,7 @@ function submittedJobsFromPlannerData(){
    photos_required:job.photos_required==null?undefined:job.photos_required,
    purchase_required:job.purchase_required==null?undefined:job.purchase_required,
    requirements:job.requirements||job.description||'Verify full job instructions in the provider app before beginning.',
+   details_url:job.details_url||job.provider_url||'',
    authorization_required:Boolean(job.authorization_required),
    attachments_status:job.attachments_status||'',
    ready_state:job.ready_state||'',
@@ -972,6 +976,12 @@ function pinClassForJob(job){
 function providerNameForJob(job){
  return job?.provider_label||providerLabel(job?.provider_id);
 }
+function safeJobDetailsUrl(job){
+ try{
+  const url=new URL(String(job?.details_url||job?.provider_url||''),window.location.origin);
+  return url.protocol==='https:'||url.protocol==='http:'?url.toString():'';
+ }catch{return '';}
+}
 function workTimeLabel(job){
  return W.workTimeLabel?W.workTimeLabel(job):(job?.minutes?job.minutes+' min':'Work time not listed');
 }
@@ -1344,22 +1354,68 @@ async function syncSafeProviderJobsToBackend(){
   if(status)status.textContent=`Safe job sync is available on the planner backend after sign-in or local access. Nothing credential-related was sent. ${error.message}`;
  }
 }
-async function loadSyncedProviderJobsFromBackend(){
+function setAutomationOverview(message,isError=false){
+ const overview=document.getElementById('automationOverview');
+ if(!overview)return;
+ overview.textContent=message;
+ overview.classList.toggle('danger',Boolean(isError));
+}
+function canUseLocalProviderBackend(){
+ const host=window.location.hostname;
+ const privateLan=/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+ return window.location.port==='3300'&&(host==='127.0.0.1'||host==='localhost'||privateLan);
+}
+function acceptSyncedProviderJobs(jobs,sourceStatus='cached'){
+ const incoming=Array.isArray(jobs)?jobs:[];
+ if(incoming.length)mergeWorkJobs(incoming);
+ offlineSnapshotSource={provider_id:'multiple',provider_label:'Planner connector',mode:'local_provider_bridge',source_status:sourceStatus};
+ offlineSnapshotRetrievedAt=Date.now();
+ saveOfflineSnapshot(offlineSnapshotSource);
+ renderWorkJobs();render();
+ return incoming.length;
+}
+async function loadSyncedProviderJobsFromBackend(options={}){
  const status=document.getElementById('appJobStatus');
  try{
   const params=new URLSearchParams(activeWorkFilters());
   const response=await fetch('/api/provider-jobs?'+params.toString(),{cache:'no-store'});
   if(!response.ok)throw new Error('HTTP '+response.status);
   const result=await response.json();
-  mergeWorkJobs(result.jobs||[]);
-  offlineSnapshotSource={provider_id:'multiple',provider_label:'Planner backend',mode:'local_provider_bridge',source_status:'safe provider records'};
-  offlineSnapshotRetrievedAt=Date.now();
-  saveOfflineSnapshot(offlineSnapshotSource);
-  renderWorkJobs();render();
-  if(status)status.textContent=`Loaded ${result.jobs?.length||0} synced safe provider job(s) from the planner backend.`;
+  const count=acceptSyncedProviderJobs(result.jobs||[],'cached');
+  if(!options.silent&&status)status.textContent=`Loaded ${count} synced safe provider job(s) from the local planner connector.`;
+  setAutomationOverview(`Local connector active. ${count} safe job record(s) checked at ${new Date().toLocaleTimeString()}. MegaLog page changes arrive immediately; fallback refresh runs every 30 minutes while this planner is open.`);
+  return true;
  }catch(error){
-  if(status)status.textContent=`Synced provider jobs are not available from this page yet. ${error.message}`;
+  if(!options.silent&&status)status.textContent=`Synced provider jobs are not available from this page yet. ${error.message}`;
+  setAutomationOverview('Local connector is waiting. Keep the PC server running and reload the Chrome extension on the signed-in MegaLog page.',true);
+  return false;
  }
+}
+function startProviderAutomation(){
+ if(!canUseLocalProviderBackend()){
+  setAutomationOverview('This online planner keeps its saved offline jobs available. Automatic website capture is currently local-only: run the PC server and signed-in MegaLog Chrome extension to refresh source data.');
+  return;
+ }
+ loadSyncedProviderJobsFromBackend({silent:true});
+ providerRefreshTimer=setInterval(()=>{
+  if(document.visibilityState!=='hidden')loadSyncedProviderJobsFromBackend({silent:true});
+ },30*60*1000);
+ document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')loadSyncedProviderJobsFromBackend({silent:true});
+ });
+ if(typeof EventSource!=='function')return;
+ providerEventSource=new EventSource('/api/events');
+ providerEventSource.addEventListener('provider-jobs',(event)=>{
+  try{
+   const payload=JSON.parse(event.data||'{}');
+   const count=acceptSyncedProviderJobs(payload.jobs||[],'live');
+   setAutomationOverview(`Live local connector update received: ${count} safe job record(s) at ${new Date().toLocaleTimeString()}.`);
+  }catch{
+   setAutomationOverview('A local connector update arrived but did not contain valid safe job data.',true);
+  }
+ });
+ providerEventSource.addEventListener('open',()=>setAutomationOverview('Live local connector is listening for MegaLog page changes. Fallback refresh runs every 30 minutes while the planner is open.'));
+ providerEventSource.addEventListener('error',()=>setAutomationOverview('Local connector is reconnecting. Cached jobs remain available offline.'));
 }
 function escapeHtml(value){
  return String(value||'').replace(/[&<>"']/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -1502,7 +1558,9 @@ function renderWorkJobs(){
  }[activeJobTab];
  target.innerHTML=visible.length?visible.map((job,index)=>{
   const canRoute=W.isRouteVisibleJob(job);
-  const checkbox=canRoute?`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select for route or move</label>`:`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select to move</label>`;
+  let checkbox=canRoute?`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select for route or move</label>`:`<label class="jobSelect"><input type="checkbox" data-route-job-id="${escapeHtml(job.id)}" ${isSelectedJob(job)?'checked':''}> Select to move</label>`;
+  const detailsUrl=safeJobDetailsUrl(job);
+  if(detailsUrl)checkbox=`<span><a target="_blank" rel="noopener" href="${escapeHtml(detailsUrl)}">Open live job details</a></span>${checkbox}`;
   return `<div class="workjob"><b>${index+1}. ${escapeHtml(job.title)}</b><span><span class="${pinClassForJob(job)}"></span>${escapeHtml(providerNameForJob(job))} · ${escapeHtml(W.centsLabel(job.pay_cents))} · ${escapeHtml(workTimeLabel(job))} · ${escapeHtml(job.status)}</span><span><b>Location:</b> ${escapeHtml(job.location_name||'Location name not listed')}</span><span><b>Address:</b> ${escapeHtml(job.address||'Address not listed')}</span><span><b>Due/window:</b> ${escapeHtml(job.due||'Not listed')}</span><span><b>Ready state:</b> ${escapeHtml(job.ready_state||'Not listed')}</span><span><b>Timer after accept:</b> ${escapeHtml(job.timer_minutes?job.timer_minutes+' min':'Not listed')}</span><span><b>Photos:</b> ${escapeHtml(job.photos_required==null?'Not listed':job.photos_required)}</span><span><b>Purchase:</b> ${escapeHtml(job.purchase_required==null?'Not listed':job.purchase_required?'Required':'Not required')}</span><span><b>Requirements:</b> ${escapeHtml(job.requirements||'Not listed')}</span><span><b>Payment:</b> ${escapeHtml(job.payment_status||'Not listed')}</span><span><b>Source distance:</b> ${escapeHtml(job.distance_miles?job.distance_miles+' mi from provider app':'Not listed')}</span><span><b>Review note:</b> ${escapeHtml(job.review_note||'None')}</span><span><b>Map/source:</b> ${escapeHtml(job.recommendation_reason||'No route score needed')} ${job.coordinate?escapeHtml(' · '+job.coordinate.source):''}</span>${checkbox}${job.photo_data_url?'<span class="photoBadge">Camera photo attached</span>':''}</div>`;
  }).join(''):`<div class="workjob"><b>${activeJobTab==='open'?'No open jobs':'No '+activeJobTab+' jobs'} in this view</b><span>${emptyCopy}</span></div>`;
  syncRenderedJobSelections();
@@ -1604,6 +1662,7 @@ function initWorkApps(){
  renderProviderConnection();
  renderEmailSync();
  scheduleEmailSync();
+ startProviderAutomation();
  provider?.addEventListener('change',()=>{renderProviderConnection();renderProviderStats();});
  providerFilter?.addEventListener('change',()=>{renderWorkJobs();render();});
  document.getElementById('jobStatusFilter')?.addEventListener('change',()=>{renderWorkJobs();render();});
@@ -1748,7 +1807,8 @@ function drawFurthestFirstRoute(plan,bounds,details){
    return;
   }
   const provider=W.providerById(stop.provider_id);
-  const providerLink=provider?.boardUrl?`<a target="_blank" rel="noopener" href="${escapeHtml(provider.boardUrl)}">Open provider board</a>`:'Open the provider app to verify the live job card.';
+  const detailsUrl=safeJobDetailsUrl(stop);
+  const providerLink=detailsUrl?`<a target="_blank" rel="noopener" href="${escapeHtml(detailsUrl)}">Open live job details</a>`:(provider?.boardUrl?`<a target="_blank" rel="noopener" href="${escapeHtml(provider.boardUrl)}">Open provider board</a>`:'Open the provider app to verify the live job card.');
   const authorization=stop.authorization_required?'Required - confirm that the printed letter is in your route packet.':'No authorization letter was listed in the saved job data.';
   details.push(`<div class="leg"><div><span class="badge" style="background:#0b5fa5">STOP ${stop.sequence}</span><b>${escapeHtml(stop.name||stop.title||'Job')}</b></div><div class="row"><b>Address</b><span>${escapeHtml(stop.address||'Address not listed')}</span></div><div class="row"><b>From prior stop</b><span>${mapMilesLabel(stop.legMapMiles)}</span></div><div class="row"><b>Pay / work time</b><span>${escapeHtml(W.centsLabel(stop.pay_cents))} / ${escapeHtml(workTimeLabel(stop))}</span></div><div class="row"><b>Due / window</b><span>${escapeHtml(stop.due||'Not listed')}${stop.visit_window?` - visit ${escapeHtml(stop.visit_window)}`:''}</span></div><div class="row"><b>Authorization</b><span>${escapeHtml(authorization)}</span></div><div class="row"><b>Documents</b><span>${escapeHtml(stop.attachments_status||'Verify live provider card')}</span></div><div class="row"><b>Job instructions</b><span>${escapeHtml(stop.requirements||'Verify the live provider card before beginning.')}</span></div><div class="row"><b>Live job link</b><span>${providerLink}</span></div></div>`);
  });

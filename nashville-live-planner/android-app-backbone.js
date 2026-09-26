@@ -153,6 +153,7 @@
       "photos_required",
       "purchase_required",
       "requirements",
+      "details_url",
       "ready_state",
       "status",
       "payment_status",

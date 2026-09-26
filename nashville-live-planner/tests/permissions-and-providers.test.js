@@ -6,7 +6,7 @@ const test = require("node:test");
 const projectRoot = path.join(__dirname, "..", "..");
 const plannerRoot = path.join(__dirname, "..");
 
-test("Nashville planner exposes only the requested phone work providers", () => {
+test("Nashville planner keeps phone providers primary and limits MegaLog to safe connection status", () => {
   const index = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
   const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");
 
@@ -14,7 +14,9 @@ test("Nashville planner exposes only the requested phone work providers", () => 
   assert.match(index, /Clickworker/);
   assert.match(index, /Field Nation/);
   assert.match(index, /Field Agent/);
-  assert.doesNotMatch(index, /Jobslinger|MegaLog|SASSIE/i);
+  assert.match(index, /Connections &amp; sync/);
+  assert.match(index, /MegaLog page changes arrive immediately/);
+  assert.doesNotMatch(index, /SASSIE|MegaLog password|Jobslinger password/i);
   assert.doesNotMatch(backbone, /Jobslinger|MegaLog|SASSIE/i);
 });
 
@@ -133,6 +135,8 @@ test("Nashville planner links saved jobs to a separate active and passed history
   const backbone = fs.readFileSync(path.join(plannerRoot, "work-app-backbone.js"), "utf8");
 
   assert.match(index, /jobs\.html/);
+  assert.match(index, /function safeJobDetailsUrl\(/);
+  assert.match(index, /Open live job details/);
   assert.match(index, /Completed \/ passed \/ paid/);
   assert.match(history, /Saved jobs and passed history/);
   assert.match(history, /Available \/ active/);

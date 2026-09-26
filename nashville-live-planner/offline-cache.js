@@ -28,6 +28,7 @@ const SAFE_JOB_FIELDS = [
   "source_status",
   "source_url",
   "provider_url",
+  "details_url",
   "lat",
   "lon",
   "distance_miles",

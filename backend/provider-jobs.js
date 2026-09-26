@@ -29,6 +29,7 @@ const SAFE_FIELDS = [
   "photos_required",
   "purchase_required",
   "requirements",
+  "details_url",
   "ready_state",
   "status",
   "payment_status",
@@ -82,6 +83,16 @@ function normalizePositiveInteger(value) {
   return Number.isFinite(number) && number > 0 ? Math.round(number) : null;
 }
 
+function normalizeHttpUrl(value) {
+  try {
+    const url = new URL(asText(value));
+    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    return url.toString().slice(0, 2048);
+  } catch {
+    return "";
+  }
+}
+
 function safeJobId(job) {
   if (job.id) return asText(job.id).slice(0, 180);
   if (job.provider_id && job.external_id) return `${job.provider_id}:${job.external_id}`.slice(0, 180);
@@ -128,6 +139,7 @@ function sanitizeIncomingJob(job, index = 0) {
     photos_required: job.photos_required == null ? null : Math.max(0, Math.round(Number(job.photos_required || 0))),
     purchase_required: job.purchase_required == null ? null : Boolean(job.purchase_required),
     requirements: asText(job.requirements),
+    details_url: normalizeHttpUrl(job.details_url || job.detailsUrl || job.url),
     ready_state: asText(job.ready_state),
     status,
     payment_status: asText(job.payment_status),

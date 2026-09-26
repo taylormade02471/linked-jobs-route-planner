@@ -19,6 +19,9 @@ android/app/build/
 runtime-cache/
 cache/
 token-cache/*
+token-cache.*
+**/token-cache.*
+*.msalcache
 exports/
 .DS_Store
 Thumbs.db

@@ -98,6 +98,27 @@ test("phone planner separates map jobs and connections and returns route actions
   assert.match(html, /function planFurthestFirstRoute\(\)[\s\S]*?focusMapView\(\);/);
 });
 
+test("phone planner keeps its navigation inside a narrow handset viewport", () => {
+  const html = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(html, /html,body\{width:100%;max-width:100%;overflow-x:hidden\}/);
+  assert.match(html, /main\{[^}]*width:100%;min-width:0/);
+  assert.match(html, /\.appViewNav\{[^}]*width:100%;min-width:0/);
+  assert.match(html, /\.appViewNav button,\.appViewNav a\{[^}]*min-width:0;[^}]*overflow-wrap:anywhere/);
+});
+
+test("planner foreground automation receives local provider updates without exposing credentials", () => {
+  const html = fs.readFileSync(path.join(plannerRoot, "index.html"), "utf8");
+
+  assert.match(html, /function canUseLocalProviderBackend\(/);
+  assert.match(html, /function startProviderAutomation\(/);
+  assert.match(html, /new EventSource\('\/api\/events'\)/);
+  assert.match(html, /document\.addEventListener\('visibilitychange'/);
+  assert.match(html, /30\s*\*\s*60\s*\*\s*1000/);
+  assert.match(html, /loadSyncedProviderJobsFromBackend\(\{silent:true\}\)/);
+  assert.doesNotMatch(html, /x-planner-sync-key['"]\s*:/i);
+});
+
 test("recording batch refresh removes stale cards while preserving user job state", () => {
   const currentJob = {
     id: "recording-20260924-kroger-540-lunch-bowls",

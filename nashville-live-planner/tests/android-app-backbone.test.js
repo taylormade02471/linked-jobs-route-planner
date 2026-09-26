@@ -69,6 +69,7 @@ test("Android safe sync payload removes credentials but keeps route job details"
         ready_state: "ready_to_start",
         source_video: "Screen_Recording_20260828_130331.mp4",
         requirements: "arrival photo and notes",
+        details_url: "https://www.jobslingerplus.com/Info?id=fn-123",
         password: "do-not-send",
         source_text: "raw scrape text",
       },
@@ -83,6 +84,7 @@ test("Android safe sync payload removes credentials but keeps route job details"
   assert.equal(payload.jobs[0].duration_text, "Not visible in screen recording");
   assert.equal(payload.jobs[0].ready_state, "ready_to_start");
   assert.equal(payload.jobs[0].source_video, "Screen_Recording_20260828_130331.mp4");
+  assert.equal(payload.jobs[0].details_url, "https://www.jobslingerplus.com/Info?id=fn-123");
   assert.equal(JSON.stringify(payload).includes("do-not-send"), false);
   assert.equal(JSON.stringify(payload).includes("raw scrape text"), false);
 });
